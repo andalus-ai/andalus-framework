@@ -38,4 +38,14 @@ public interface ToolPolicy {
      * @return A {@link PolicyDecision}; never null.
      */
     PolicyDecision evaluate(ToolInvocation invocation, ToolPermissionContext context);
+
+    /**
+     * Evaluate the policy with a richer {@link PolicyEvaluationContext}.
+     *
+     * @param context The evaluation context.
+     * @return A {@link PolicyDecision}; never null.
+     */
+    default PolicyDecision evaluate(PolicyEvaluationContext context) {
+        return evaluate(context.invocation(), context.permissionContext());
+    }
 }
