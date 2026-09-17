@@ -14,32 +14,41 @@ import tech.kayys.wayang.harness.environment.HarnessEnvironment;
 import tech.kayys.wayang.harness.environment.HarnessResources;
 import tech.kayys.wayang.harness.lifecycle.DefaultHarnessLifecycle;
 import tech.kayys.wayang.harness.lifecycle.HarnessExecutionStatus;
+import tech.kayys.wayang.harness.resource.DefaultResourceScope;
+import tech.kayys.wayang.harness.resource.ResourceDecision;
+import tech.kayys.wayang.harness.resource.ResourceRequest;
+import tech.kayys.wayang.harness.resource.ResourceScope;
 
 import java.util.Objects;
-import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
 import java.util.concurrent.ForkJoinPool;
 
 /**
- * Default implementation of {@link Harness} governing agent execution admission, lifecycle, and environment.
+ * Default implementation of {@link Harness} governing agent execution admission, lifecycle, environment, and resources.
  */
 public class DefaultHarness implements Harness {
 
     private final HarnessCapabilities capabilities;
     private final HarnessResources resources;
+    private final ResourceScope resourceScope;
     private final Executor executor;
 
     public DefaultHarness(HarnessCapabilities capabilities) {
-        this(capabilities, new DefaultHarnessResources(), ForkJoinPool.commonPool());
+        this(capabilities, new DefaultHarnessResources(), DefaultResourceScope.allowAll(), ForkJoinPool.commonPool());
     }
 
     public DefaultHarness(HarnessCapabilities capabilities, HarnessResources resources) {
-        this(capabilities, resources, ForkJoinPool.commonPool());
+        this(capabilities, resources, DefaultResourceScope.allowAll(), ForkJoinPool.commonPool());
     }
 
     public DefaultHarness(HarnessCapabilities capabilities, HarnessResources resources, Executor executor) {
+        this(capabilities, resources, DefaultResourceScope.allowAll(), executor);
+    }
+
+    public DefaultHarness(HarnessCapabilities capabilities, HarnessResources resources, ResourceScope resourceScope, Executor executor) {
         this.capabilities = Objects.requireNonNull(capabilities, "capabilities");
         this.resources = Objects.requireNonNull(resources, "resources");
+        this.resourceScope = Objects.requireNonNull(resourceScope, "resourceScope");
         this.executor = Objects.requireNonNull(executor, "executor");
     }
 
@@ -59,9 +68,22 @@ public class DefaultHarness implements Harness {
             }
         }
 
+        // 2. Admission Control: check required resources (Scope & Quota)
+        for (ResourceRequest resourceReq : request.requiredResources()) {
+            ResourceDecision decision = resourceScope.evaluate(resourceReq);
+            if (!decision.isAllowed()) {
+                execution.completeFailure("Admission denied: resource rejected: " + decision.reason());
+                return execution;
+            }
+            if (!resources.quota().canAllocate(resourceReq)) {
+                execution.completeFailure("Admission denied: resource quota exceeded for type " + resourceReq.type());
+                return execution;
+            }
+        }
+
         lifecycle.transitionTo(HarnessExecutionStatus.ADMITTED);
 
-        // 2. Setup Environment & Context
+        // 3. Setup Environment & Context
         HarnessEnvironment environment = new DefaultHarnessEnvironment(
                 request.identity(),
                 request.session(),
@@ -76,7 +98,7 @@ public class DefaultHarness implements Harness {
 
         HarnessRuntime runtime = new RuntimeBackedHarnessRuntime(environment, context, lifecycle);
 
-        // 3. Dispatch asynchronous execution
+        // 4. Dispatch asynchronous execution
         lifecycle.transitionTo(HarnessExecutionStatus.INITIALIZING);
         executor.execute(() -> {
             try {
