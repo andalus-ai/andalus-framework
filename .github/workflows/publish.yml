@@ -37,7 +37,15 @@ jobs:
           server-username: GITHUB_ACTOR
           server-password: GITHUB_TOKEN
 
-      # ── Gollek SPI/SDK Bootstrap ────────────────────────────────────────────
+      # ── Alkhawarizm & Gollek SPI/SDK Bootstrap ──────────────────────────────
+      # gollek depends on alkhawarizm for low-level tensor & error-code modules.
+      - name: Checkout alkhawarizm (gollek dependency)
+        uses: actions/checkout@v4
+        with:
+          repository: bhangun/alkhawarizm
+          path: alkhawarizm
+          ref: main
+
       - name: Checkout gollek (SPI/SDK bootstrap)
         uses: actions/checkout@v4
         with:
@@ -60,6 +68,10 @@ jobs:
         env:
           GRADLE_OPTS: "-Xmx2G -Dorg.gradle.daemon=false"
         run: |
+          sed -i '/includeBuild("\.\.\/tafkir")/d' settings.gradle.kts || true
+          if [ ! -d "../alkhawarizm" ]; then
+            sed -i '/includeBuild("\.\.\/alkhawarizm")/d' settings.gradle.kts || true
+          fi
           TASKS=(
             :spi:gollek-spi:publishToMavenLocal
             :spi:gollek-spi-audio:publishToMavenLocal
