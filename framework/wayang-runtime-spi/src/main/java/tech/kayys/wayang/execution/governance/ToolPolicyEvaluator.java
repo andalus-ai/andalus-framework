@@ -28,6 +28,27 @@ public interface ToolPolicyEvaluator {
     PolicyDecision evaluate(ToolInvocation invocation, ToolPermissionContext context);
 
     /**
+     * Evaluate all registered policies for the given policy evaluation context.
+     *
+     * @param context The policy evaluation context.
+     * @return Aggregate decision; never null.
+     */
+    default PolicyDecision evaluate(PolicyEvaluationContext context) {
+        return evaluate(context.invocation(), context.permissionContext());
+    }
+
+    /**
+     * Evaluate all registered policies and return a detailed result including individual evaluations.
+     *
+     * @param invocation The tool invocation to check.
+     * @param context    The caller's permission context.
+     * @return Detailed evaluation result.
+     */
+    default PolicyEvaluationResult evaluateDetailed(ToolInvocation invocation, ToolPermissionContext context) {
+        return new PolicyEvaluationResult(evaluate(invocation, context), List.of());
+    }
+
+    /**
      * Returns all registered policies in evaluation order.
      */
     List<ToolPolicy> policies();
