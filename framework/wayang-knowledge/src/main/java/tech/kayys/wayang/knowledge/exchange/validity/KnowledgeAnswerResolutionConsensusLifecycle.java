@@ -44,6 +44,25 @@ import tech.kayys.wayang.knowledge.exchange.recovery.*;
 import java.time.Instant;
 import java.util.Map;
 
+/**
+ * Represents a knowledge answer resolution consensus lifecycle.
+ *
+ * <p>Its components capture `consensus id`, `key fingerprint`, `state`, `revocation reason`, `superseded by consensus id`, and other values.</p>
+ *
+ * @param consensusId the consensus id
+ * @param keyFingerprint the key fingerprint
+ * @param state the state
+ * @param revocationReason the revocation reason
+ * @param supersededByConsensusId the superseded by consensus id
+ * @param effectiveFrom the effective from
+ * @param effectiveUntil the effective until
+ * @param revokedAt the revoked at
+ * @param archivedAt the archived at
+ * @param actorRuntimeId the actor runtime id
+ * @param metadata the metadata
+ */
+
+
 public record KnowledgeAnswerResolutionConsensusLifecycle(
 
         String consensusId,

@@ -43,6 +43,11 @@ import tech.kayys.wayang.knowledge.exchange.recovery.*;
 
 import java.util.Optional;
 
+/**
+ * Defines the contract for knowledge verified answer artifact store operations in the Wayang framework.
+ */
+
+
 public interface KnowledgeVerifiedAnswerArtifactStore {
 
     KnowledgeVerifiedAnswerArtifact save(

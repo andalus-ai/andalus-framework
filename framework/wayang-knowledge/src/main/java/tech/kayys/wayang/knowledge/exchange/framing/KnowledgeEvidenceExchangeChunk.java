@@ -21,6 +21,25 @@ import tech.kayys.wayang.knowledge.exchange.framing.*;
 
 import java.util.Map;
 
+/**
+ * Represents a knowledge evidence exchange chunk.
+ *
+ * <p>Its components capture `artifact id`, `resource id`, `stream id`, `sequence`, `offset`, and other values.</p>
+ *
+ * @param artifactId the artifact id
+ * @param resourceId the resource id
+ * @param streamId the stream id
+ * @param sequence the sequence
+ * @param offset the offset
+ * @param totalLength the total length
+ * @param data the data
+ * @param fingerprint the fingerprint
+ * @param first the first
+ * @param last the last
+ * @param metadata the metadata
+ */
+
+
 public record KnowledgeEvidenceExchangeChunk(
 
         String artifactId,

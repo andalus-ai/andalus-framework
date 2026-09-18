@@ -21,6 +21,11 @@ import tech.kayys.wayang.knowledge.exchange.framing.*;
 
 import java.time.Instant;
 
+/**
+ * Defines the contract for knowledge evidence exchange runtime mutual trust service operations in the Wayang framework.
+ */
+
+
 public interface KnowledgeEvidenceExchangeRuntimeMutualTrustService {
 
     KnowledgeEvidenceExchangeRuntimeHandshakeResult establish(

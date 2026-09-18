@@ -45,6 +45,27 @@ import java.time.Instant;
 import java.util.List;
 import java.util.Map;
 
+/**
+ * Represents a knowledge answer resolution consensus attestation.
+ *
+ * <p>Its components capture `attestation certificate id`, `consensus id`, `key fingerprint`, `resolution fingerprint`, `dependency fingerprint`, and other values.</p>
+ *
+ * @param attestationCertificateId the attestation certificate id
+ * @param consensusId the consensus id
+ * @param keyFingerprint the key fingerprint
+ * @param resolutionFingerprint the resolution fingerprint
+ * @param dependencyFingerprint the dependency fingerprint
+ * @param participantSetFingerprint the participant set fingerprint
+ * @param quorum the quorum
+ * @param participantRuntimeIds the participant runtime ids
+ * @param attestations the attestations
+ * @param issuedAt the issued at
+ * @param expiresAt the expires at
+ * @param status the status
+ * @param metadata the metadata
+ */
+
+
 public record KnowledgeAnswerResolutionConsensusAttestation(
 
         String attestationCertificateId,

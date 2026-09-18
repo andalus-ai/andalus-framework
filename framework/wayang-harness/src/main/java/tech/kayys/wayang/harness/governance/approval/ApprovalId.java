@@ -3,6 +3,15 @@ package tech.kayys.wayang.harness.governance.approval;
 import java.util.Objects;
 import java.util.UUID;
 
+/**
+ * Represents a approval id.
+ *
+ * <p>Its components capture `value`.</p>
+ *
+ * @param value the value
+ */
+
+
 public record ApprovalId(String value) {
     public ApprovalId {
         Objects.requireNonNull(value, "value");

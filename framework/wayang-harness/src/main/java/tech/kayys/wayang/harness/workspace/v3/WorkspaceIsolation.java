@@ -13,6 +13,10 @@ public record WorkspaceIsolation(
         IsolationLevel level,
         Collection<CapabilityScope> scopes
 ) {
+    /**
+     * Enumerates the isolation level values used by the Wayang framework.
+     */
+
     public enum IsolationLevel {
         NONE,
         PROCESS,

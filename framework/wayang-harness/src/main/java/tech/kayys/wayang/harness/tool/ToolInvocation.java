@@ -2,6 +2,17 @@ package tech.kayys.wayang.harness.tool;
 
 import java.util.Objects;
 
+/**
+ * Represents a tool invocation.
+ *
+ * <p>Its components capture `id`, `tool id`, `arguments`.</p>
+ *
+ * @param id the id
+ * @param toolId the tool id
+ * @param arguments the arguments
+ */
+
+
 public record ToolInvocation(
         ToolInvocationId id,
         ToolId toolId,

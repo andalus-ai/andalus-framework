@@ -102,6 +102,10 @@ public class DefaultResourceQuota implements ResourceQuota {
             return counter;
         });
     }
+    /**
+     * Builder for constructing default resource quota instances.
+     */
+
 
     public static class Builder {
         private final Map<ResourceType, QuotaLimit> limits = new ConcurrentHashMap<>();

@@ -24,6 +24,23 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 
+/**
+ * Represents a knowledge evidence exchange protocol hello.
+ *
+ * <p>Its components capture `message id`, `runtime id`, `protocol version`, `supported protocol versions`, `correlation id`, and other values.</p>
+ *
+ * @param messageId the message id
+ * @param runtimeId the runtime id
+ * @param protocolVersion the protocol version
+ * @param supportedProtocolVersions the supported protocol versions
+ * @param correlationId the correlation id
+ * @param nonce the nonce
+ * @param issuedAt the issued at
+ * @param expiresAt the expires at
+ * @param metadata the metadata
+ */
+
+
 public record KnowledgeEvidenceExchangeProtocolHello(
 
         String messageId,

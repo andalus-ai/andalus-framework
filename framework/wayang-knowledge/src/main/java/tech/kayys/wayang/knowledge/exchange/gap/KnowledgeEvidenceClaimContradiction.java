@@ -43,6 +43,19 @@ import tech.kayys.wayang.knowledge.exchange.recovery.*;
 
 import java.util.Map;
 
+/**
+ * Represents a knowledge evidence claim contradiction.
+ *
+ * <p>Its components capture `claim id`, `evidence id`, `confidence`, `reason`, `metadata`.</p>
+ *
+ * @param claimId the claim id
+ * @param evidenceId the evidence id
+ * @param confidence the confidence
+ * @param reason the reason
+ * @param metadata the metadata
+ */
+
+
 public record KnowledgeEvidenceClaimContradiction(
 
         String claimId,

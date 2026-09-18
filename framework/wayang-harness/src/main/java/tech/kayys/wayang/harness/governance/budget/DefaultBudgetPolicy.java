@@ -5,6 +5,11 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
 
+/**
+ * Provides the default implementation of the budget policy contract.
+ */
+
+
 public class DefaultBudgetPolicy implements BudgetPolicy {
 
     private final Map<BudgetDimension, BudgetLimit> limits = new ConcurrentHashMap<>();

@@ -5,6 +5,17 @@ import tech.kayys.wayang.harness.execution.state.ExecutionState;
 import java.util.Map;
 import java.util.Objects;
 
+/**
+ * Represents a checkpoint context.
+ *
+ * <p>Its components capture `state`, `trigger`, `metadata`.</p>
+ *
+ * @param state the state
+ * @param trigger the trigger
+ * @param metadata the metadata
+ */
+
+
 public record CheckpointContext(
         ExecutionState state,
         String trigger,

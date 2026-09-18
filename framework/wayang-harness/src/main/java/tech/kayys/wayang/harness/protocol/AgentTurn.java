@@ -5,6 +5,19 @@ import tech.kayys.wayang.harness.execution.state.ExecutionId;
 import java.time.Instant;
 import java.util.Objects;
 
+/**
+ * Represents a agent turn.
+ *
+ * <p>Its components capture `id`, `execution id`, `decision`, `outcome`, `timestamp`.</p>
+ *
+ * @param id the id
+ * @param executionId the execution id
+ * @param decision the decision
+ * @param outcome the outcome
+ * @param timestamp the timestamp
+ */
+
+
 public record AgentTurn(
         TurnId id,
         ExecutionId executionId,

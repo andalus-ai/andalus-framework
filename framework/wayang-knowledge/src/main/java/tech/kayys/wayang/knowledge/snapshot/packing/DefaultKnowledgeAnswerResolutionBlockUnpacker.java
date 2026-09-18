@@ -2,6 +2,11 @@ package tech.kayys.wayang.knowledge.snapshot.packing;
 
 import java.util.Objects;
 
+/**
+ * Provides the default implementation of the knowledge answer resolution block unpacker contract.
+ */
+
+
 public final class DefaultKnowledgeAnswerResolutionBlockUnpacker
         implements KnowledgeAnswerResolutionBlockUnpacker {
 

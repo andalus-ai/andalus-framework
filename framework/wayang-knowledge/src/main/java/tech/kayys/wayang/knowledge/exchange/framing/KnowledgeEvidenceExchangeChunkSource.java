@@ -22,6 +22,11 @@ import tech.kayys.wayang.knowledge.exchange.framing.*;
 import java.io.IOException;
 import java.io.InputStream;
 
+/**
+ * Defines the contract for knowledge evidence exchange chunk source operations in the Wayang framework.
+ */
+
+
 public interface KnowledgeEvidenceExchangeChunkSource {
 
     InputStream open()

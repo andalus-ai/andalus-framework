@@ -3,6 +3,11 @@ package tech.kayys.wayang.harness.tool;
 import java.nio.charset.StandardCharsets;
 import java.util.Optional;
 
+/**
+ * Provides the default implementation of the tool output validator contract.
+ */
+
+
 public class DefaultToolOutputValidator implements ToolOutputValidator {
 
     public static final long DEFAULT_MAX_INLINE_BYTES = 64 * 1024; // 64 KB

@@ -44,6 +44,26 @@ import tech.kayys.wayang.knowledge.exchange.recovery.*;
 import java.time.Instant;
 import java.util.Map;
 
+/**
+ * Represents a knowledge answer resolution attestation.
+ *
+ * <p>Its components capture `attestation id`, `consensus id`, `key fingerprint`, `resolution fingerprint`, `dependency fingerprint`, and other values.</p>
+ *
+ * @param attestationId the attestation id
+ * @param consensusId the consensus id
+ * @param keyFingerprint the key fingerprint
+ * @param resolutionFingerprint the resolution fingerprint
+ * @param dependencyFingerprint the dependency fingerprint
+ * @param runtimeId the runtime id
+ * @param keyReference the key reference
+ * @param algorithm the algorithm
+ * @param signature the signature
+ * @param issuedAt the issued at
+ * @param expiresAt the expires at
+ * @param metadata the metadata
+ */
+
+
 public record KnowledgeAnswerResolutionAttestation(
 
         String attestationId,

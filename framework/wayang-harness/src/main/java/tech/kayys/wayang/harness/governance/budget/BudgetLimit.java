@@ -2,6 +2,16 @@ package tech.kayys.wayang.harness.governance.budget;
 
 import java.util.Objects;
 
+/**
+ * Represents a budget limit.
+ *
+ * <p>Its components capture `dimension`, `maximum`.</p>
+ *
+ * @param dimension the dimension
+ * @param maximum the maximum
+ */
+
+
 public record BudgetLimit(
         BudgetDimension dimension,
         BudgetAmount maximum

@@ -4,6 +4,11 @@ import tech.kayys.wayang.knowledge.snapshot.pack.KnowledgeSnapshotEvidencePackag
 
 import java.util.Optional;
 
+/**
+ * Defines the contract for knowledge snapshot evidence package store operations in the Wayang framework.
+ */
+
+
 public interface KnowledgeSnapshotEvidencePackageStore {
 
     KnowledgeSnapshotEvidencePackageArtifact put(

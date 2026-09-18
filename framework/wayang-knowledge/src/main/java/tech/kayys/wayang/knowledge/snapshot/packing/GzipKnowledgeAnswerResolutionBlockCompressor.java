@@ -6,6 +6,11 @@ import java.io.IOException;
 import java.util.zip.GZIPInputStream;
 import java.util.zip.GZIPOutputStream;
 
+/**
+ * Provides gzip knowledge answer resolution block compressor behavior for the Wayang framework.
+ */
+
+
 public final class GzipKnowledgeAnswerResolutionBlockCompressor
         implements KnowledgeAnswerResolutionBlockCompressor {
 

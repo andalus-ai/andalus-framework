@@ -4,6 +4,28 @@ import java.time.Instant;
 import java.util.Map;
 import java.util.Objects;
 
+/**
+ * Represents a knowledge evidence exchange session.
+ *
+ * <p>Its components capture `session id`, `local runtime id`, `remote runtime id`, `principal id`, `tenant id`, and other values.</p>
+ *
+ * @param sessionId the session id
+ * @param localRuntimeId the local runtime id
+ * @param remoteRuntimeId the remote runtime id
+ * @param principalId the principal id
+ * @param tenantId the tenant id
+ * @param workspaceId the workspace id
+ * @param projectId the project id
+ * @param createdAt the created at
+ * @param expiresAt the expires at
+ * @param status the status
+ * @param localNonce the local nonce
+ * @param remoteNonce the remote nonce
+ * @param sessionFingerprint the session fingerprint
+ * @param metadata the metadata
+ */
+
+
 public record KnowledgeEvidenceExchangeSession(
         String sessionId,
         String localRuntimeId,

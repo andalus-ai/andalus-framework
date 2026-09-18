@@ -23,6 +23,24 @@ import java.time.Instant;
 import java.util.List;
 import java.util.Map;
 
+/**
+ * Represents a knowledge evidence exchange negotiated session.
+ *
+ * <p>Its components capture `session id`, `local runtime id`, `remote runtime id`, `protocol version`, `capabilities`, and other values.</p>
+ *
+ * @param sessionId the session id
+ * @param localRuntimeId the local runtime id
+ * @param remoteRuntimeId the remote runtime id
+ * @param protocolVersion the protocol version
+ * @param capabilities the capabilities
+ * @param localManifestFingerprint the local manifest fingerprint
+ * @param remoteManifestFingerprint the remote manifest fingerprint
+ * @param establishedAt the established at
+ * @param expiresAt the expires at
+ * @param metadata the metadata
+ */
+
+
 public record KnowledgeEvidenceExchangeNegotiatedSession(
 
         String sessionId,

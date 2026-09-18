@@ -29,6 +29,29 @@ import java.time.Instant;
 import java.util.List;
 import java.util.Map;
 
+/**
+ * Represents a knowledge evidence semantic query.
+ *
+ * <p>Its components capture `query id`, `text`, `tenant id`, `workspace id`, `project id`, and other values.</p>
+ *
+ * @param queryId the query id
+ * @param text the text
+ * @param tenantId the tenant id
+ * @param workspaceId the workspace id
+ * @param projectId the project id
+ * @param agentId the agent id
+ * @param limit the limit
+ * @param minScore the min score
+ * @param effectiveAt the effective at
+ * @param requiredKnowledgeTypes the required knowledge types
+ * @param requiredTags the required tags
+ * @param strategy the strategy
+ * @param requireVerification the require verification
+ * @param allowRemote the allow remote
+ * @param metadata the metadata
+ */
+
+
 public record KnowledgeEvidenceSemanticQuery(
 
         String queryId,

@@ -21,6 +21,11 @@ import tech.kayys.wayang.knowledge.exchange.framing.*;
 
 import java.util.Map;
 
+/**
+ * Defines the contract for knowledge evidence exchange runtime enrollment decision operations in the Wayang framework.
+ */
+
+
 public sealed interface KnowledgeEvidenceExchangeRuntimeEnrollmentDecision
         permits
         KnowledgeEvidenceExchangeRuntimeEnrollmentDecision.Approved,

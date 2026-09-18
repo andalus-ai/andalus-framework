@@ -4,6 +4,20 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.UUID;
 
+/**
+ * Represents a context item.
+ *
+ * <p>Its components capture `id`, `kind`, `content`, `source`, `priority`, and other values.</p>
+ *
+ * @param id the id
+ * @param kind the kind
+ * @param content the content
+ * @param source the source
+ * @param priority the priority
+ * @param metadata the metadata
+ */
+
+
 public record ContextItem(
         String id,
         ContextKind kind,

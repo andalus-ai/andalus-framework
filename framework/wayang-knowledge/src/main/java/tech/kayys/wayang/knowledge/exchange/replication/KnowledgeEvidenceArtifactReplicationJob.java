@@ -28,6 +28,24 @@ import tech.kayys.wayang.knowledge.exchange.fusion.*;
 import java.time.Instant;
 import java.util.Map;
 
+/**
+ * Represents a knowledge evidence artifact replication job.
+ *
+ * <p>Its components capture `replication id`, `artifact id`, `source runtime id`, `desired replicas`, `state`, and other values.</p>
+ *
+ * @param replicationId the replication id
+ * @param artifactId the artifact id
+ * @param sourceRuntimeId the source runtime id
+ * @param desiredReplicas the desired replicas
+ * @param state the state
+ * @param successfulReplicas the successful replicas
+ * @param failedReplicas the failed replicas
+ * @param createdAt the created at
+ * @param updatedAt the updated at
+ * @param metadata the metadata
+ */
+
+
 public record KnowledgeEvidenceArtifactReplicationJob(
 
         String replicationId,

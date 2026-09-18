@@ -44,6 +44,26 @@ import tech.kayys.wayang.knowledge.exchange.recovery.*;
 import java.time.Instant;
 import java.util.Map;
 
+/**
+ * Represents a knowledge verified response envelope.
+ *
+ * <p>Its components capture `envelope id`, `response id`, `execution id`, `runtime id`, `agent id`, and other values.</p>
+ *
+ * @param envelopeId the envelope id
+ * @param responseId the response id
+ * @param executionId the execution id
+ * @param runtimeId the runtime id
+ * @param agentId the agent id
+ * @param status the status
+ * @param disposition the disposition
+ * @param responseFingerprint the response fingerprint
+ * @param response the response
+ * @param issuedAt the issued at
+ * @param expiresAt the expires at
+ * @param metadata the metadata
+ */
+
+
 public record KnowledgeVerifiedResponseEnvelope(
 
         String envelopeId,

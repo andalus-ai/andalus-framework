@@ -3,6 +3,18 @@ package tech.kayys.wayang.harness.memory;
 import java.time.Instant;
 import java.util.Objects;
 
+/**
+ * Represents a memory source.
+ *
+ * <p>Its components capture `agent id`, `execution id`, `source type`, `observed at`.</p>
+ *
+ * @param agentId the agent id
+ * @param executionId the execution id
+ * @param sourceType the source type
+ * @param observedAt the observed at
+ */
+
+
 public record MemorySource(
         String agentId,
         String executionId,

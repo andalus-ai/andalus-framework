@@ -23,6 +23,11 @@ import java.time.Instant;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Flow;
 
+/**
+ * Defines the contract for knowledge evidence exchange transport connection operations in the Wayang framework.
+ */
+
+
 public interface KnowledgeEvidenceExchangeTransportConnection
         extends AutoCloseable {
 

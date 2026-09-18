@@ -2,6 +2,16 @@ package tech.kayys.wayang.knowledge.snapshot.artifact;
 
 import java.util.Objects;
 
+/**
+ * Represents a knowledge evidence artifact id.
+ *
+ * <p>Its components capture `algorithm`, `digest`.</p>
+ *
+ * @param algorithm the algorithm
+ * @param digest the digest
+ */
+
+
 public record KnowledgeEvidenceArtifactId(
         String algorithm,
         String digest

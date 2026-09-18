@@ -2,6 +2,17 @@ package tech.kayys.wayang.harness.protocol;
 
 import java.util.Optional;
 
+/**
+ * Represents a turn outcome.
+ *
+ * <p>Its components capture `successful`, `result`, `error`.</p>
+ *
+ * @param successful the successful
+ * @param result the result
+ * @param error the error
+ */
+
+
 public record TurnOutcome(
         boolean successful,
         Object result,

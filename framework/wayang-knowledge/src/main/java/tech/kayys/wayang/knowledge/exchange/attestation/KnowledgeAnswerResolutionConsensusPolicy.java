@@ -40,6 +40,21 @@ import tech.kayys.wayang.knowledge.exchange.validity.*;
 import tech.kayys.wayang.knowledge.exchange.lease.*;
 import tech.kayys.wayang.knowledge.exchange.recovery.*;
 
+/**
+ * Represents a knowledge answer resolution consensus policy.
+ *
+ * <p>Its components capture `minimum participants`, `required votes`, `required ratio`, `require verified votes`, `require trusted participants`, and other values.</p>
+ *
+ * @param minimumParticipants the minimum participants
+ * @param requiredVotes the required votes
+ * @param requiredRatio the required ratio
+ * @param requireVerifiedVotes the require verified votes
+ * @param requireTrustedParticipants the require trusted participants
+ * @param rejectConcurrentVersions the reject concurrent versions
+ * @param requireDependencyAgreement the require dependency agreement
+ */
+
+
 
 public record KnowledgeAnswerResolutionConsensusPolicy(
 

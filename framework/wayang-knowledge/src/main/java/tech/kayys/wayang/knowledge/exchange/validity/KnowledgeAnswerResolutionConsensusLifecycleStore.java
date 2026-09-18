@@ -42,6 +42,10 @@ import tech.kayys.wayang.knowledge.exchange.recovery.*;
 
 
 import java.util.Optional;
+/**
+ * Defines the contract for knowledge answer resolution consensus lifecycle store operations in the Wayang framework. Implementations provide the save operation.
+ */
+
 
 public interface
 KnowledgeAnswerResolutionConsensusLifecycleStore {

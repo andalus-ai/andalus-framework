@@ -43,6 +43,11 @@ import tech.kayys.wayang.knowledge.exchange.recovery.*;
 
 import java.util.List;
 
+/**
+ * Defines the contract for knowledge evidence claim extractor operations in the Wayang framework.
+ */
+
+
 public interface KnowledgeEvidenceClaimExtractor {
 
     List<KnowledgeEvidenceClaim> extract(

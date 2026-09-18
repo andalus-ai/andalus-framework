@@ -4,6 +4,32 @@ import java.time.Instant;
 import java.util.Map;
 import java.util.Objects;
 
+/**
+ * Represents a knowledge evidence exchange signed envelope.
+ *
+ * <p>Its components capture `envelope id`, `request id`, `session id`, `nonce`, `runtime id`, and other values.</p>
+ *
+ * @param envelopeId the envelope id
+ * @param requestId the request id
+ * @param sessionId the session id
+ * @param nonce the nonce
+ * @param runtimeId the runtime id
+ * @param remoteRuntimeId the remote runtime id
+ * @param tenantId the tenant id
+ * @param workspaceId the workspace id
+ * @param projectId the project id
+ * @param messageType the message type
+ * @param messageFingerprint the message fingerprint
+ * @param authenticationAlgorithm the authentication algorithm
+ * @param keyId the key id
+ * @param keyVersion the key version
+ * @param authentication the authentication
+ * @param issuedAt the issued at
+ * @param expiresAt the expires at
+ * @param metadata the metadata
+ */
+
+
 public record KnowledgeEvidenceExchangeSignedEnvelope(
         String envelopeId,
         String requestId,

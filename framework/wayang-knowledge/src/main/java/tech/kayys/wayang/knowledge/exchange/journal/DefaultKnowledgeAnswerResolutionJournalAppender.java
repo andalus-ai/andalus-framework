@@ -3,6 +3,11 @@ package tech.kayys.wayang.knowledge.exchange.journal;
 import java.time.Instant;
 import java.util.Objects;
 
+/**
+ * Provides the default implementation of the knowledge answer resolution journal appender contract.
+ */
+
+
 public final class DefaultKnowledgeAnswerResolutionJournalAppender
         implements KnowledgeAnswerResolutionJournalAppender {
 

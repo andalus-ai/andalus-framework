@@ -43,6 +43,15 @@ import tech.kayys.wayang.knowledge.exchange.recovery.*;
 
 import java.util.Map;
 
+/**
+ * Represents a knowledge answer resolution version vector.
+ *
+ * <p>Its components capture `versions`.</p>
+ *
+ * @param versions the versions
+ */
+
+
 public record KnowledgeAnswerResolutionVersionVector(
 
         Map<String, Long> versions

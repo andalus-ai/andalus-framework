@@ -5,6 +5,11 @@ import tech.kayys.wayang.knowledge.snapshot.KnowledgeSnapshotId;
 import java.util.List;
 import java.util.Optional;
 
+/**
+ * Defines the contract for knowledge attestation store operations in the Wayang framework.
+ */
+
+
 public interface KnowledgeAttestationStore {
 
     void save(KnowledgeAttestation attestation);

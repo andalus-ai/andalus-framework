@@ -24,6 +24,19 @@ import tech.kayys.wayang.knowledge.exchange.federation.*;
 import tech.kayys.wayang.knowledge.exchange.routing.*;
 import tech.kayys.wayang.knowledge.exchange.fusion.*;
 
+/**
+ * Represents a knowledge evidence retrieval target.
+ *
+ * <p>Its components capture `runtime id`, `priority`, `limit`, `min score`, `required`.</p>
+ *
+ * @param runtimeId the runtime id
+ * @param priority the priority
+ * @param limit the limit
+ * @param minScore the min score
+ * @param required the required
+ */
+
+
 
 public record KnowledgeEvidenceRetrievalTarget(
 

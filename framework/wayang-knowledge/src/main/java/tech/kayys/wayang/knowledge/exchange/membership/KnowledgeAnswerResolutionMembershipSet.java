@@ -4,6 +4,21 @@ import java.time.Instant;
 import java.util.List;
 import java.util.Objects;
 
+/**
+ * Represents a knowledge answer resolution membership set.
+ *
+ * <p>Its components capture `epoch id`, `sequence`, `members`, `quorum`, `participant set fingerprint`, and other values.</p>
+ *
+ * @param epochId the epoch id
+ * @param sequence the sequence
+ * @param members the members
+ * @param quorum the quorum
+ * @param participantSetFingerprint the participant set fingerprint
+ * @param effectiveFrom the effective from
+ * @param effectiveUntil the effective until
+ */
+
+
 public record KnowledgeAnswerResolutionMembershipSet(
         String epochId,
         long sequence,

@@ -18,6 +18,16 @@ import tech.kayys.wayang.knowledge.exchange.protocol.*;
 import tech.kayys.wayang.knowledge.exchange.transport.*;
 import tech.kayys.wayang.knowledge.exchange.framing.*;
 
+/**
+ * Represents a knowledge evidence exchange transport message.
+ *
+ * <p>Its components capture `transport message id`, `protocol message`.</p>
+ *
+ * @param transportMessageId the transport message id
+ * @param protocolMessage the protocol message
+ */
+
+
 
 public record KnowledgeEvidenceExchangeTransportMessage(
 

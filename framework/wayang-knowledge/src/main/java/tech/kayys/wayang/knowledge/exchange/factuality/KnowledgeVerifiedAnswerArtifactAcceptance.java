@@ -44,6 +44,22 @@ import tech.kayys.wayang.knowledge.exchange.recovery.*;
 import java.time.Instant;
 import java.util.Map;
 
+/**
+ * Represents a knowledge verified answer artifact acceptance.
+ *
+ * <p>Its components capture `acceptance id`, `artifact id`, `response id`, `receiving runtime id`, `status`, and other values.</p>
+ *
+ * @param acceptanceId the acceptance id
+ * @param artifactId the artifact id
+ * @param responseId the response id
+ * @param receivingRuntimeId the receiving runtime id
+ * @param status the status
+ * @param verificationFingerprint the verification fingerprint
+ * @param acceptedAt the accepted at
+ * @param metadata the metadata
+ */
+
+
 public record KnowledgeVerifiedAnswerArtifactAcceptance(
 
         String acceptanceId,

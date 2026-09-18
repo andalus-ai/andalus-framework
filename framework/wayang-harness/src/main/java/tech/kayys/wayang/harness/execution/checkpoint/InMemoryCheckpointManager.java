@@ -10,6 +10,11 @@ import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 
+/**
+ * Provides in memory checkpoint manager behavior for the Wayang framework.
+ */
+
+
 public class InMemoryCheckpointManager implements CheckpointManager {
 
     private final Map<CheckpointId, Checkpoint> checkpoints = new ConcurrentHashMap<>();

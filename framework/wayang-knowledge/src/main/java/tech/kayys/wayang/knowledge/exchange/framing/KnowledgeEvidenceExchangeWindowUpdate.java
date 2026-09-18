@@ -18,6 +18,16 @@ import tech.kayys.wayang.knowledge.exchange.protocol.*;
 import tech.kayys.wayang.knowledge.exchange.transport.*;
 import tech.kayys.wayang.knowledge.exchange.framing.*;
 
+/**
+ * Represents a knowledge evidence exchange window update.
+ *
+ * <p>Its components capture `stream id`, `additional bytes`.</p>
+ *
+ * @param streamId the stream id
+ * @param additionalBytes the additional bytes
+ */
+
+
 
 public record KnowledgeEvidenceExchangeWindowUpdate(
 

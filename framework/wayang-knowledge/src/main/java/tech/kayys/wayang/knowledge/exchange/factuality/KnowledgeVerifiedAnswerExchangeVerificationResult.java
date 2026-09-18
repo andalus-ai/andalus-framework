@@ -44,6 +44,26 @@ import tech.kayys.wayang.knowledge.exchange.recovery.*;
 import java.util.List;
 import java.util.Map;
 
+/**
+ * Represents a knowledge verified answer exchange verification result.
+ *
+ * <p>Its components capture `status`, `artifact id`, `response id`, `snapshot id`, `artifact fingerprint`, and other values.</p>
+ *
+ * @param status the status
+ * @param artifactId the artifact id
+ * @param responseId the response id
+ * @param snapshotId the snapshot id
+ * @param artifactFingerprint the artifact fingerprint
+ * @param authorizationVerified the authorization verified
+ * @param provenanceVerified the provenance verified
+ * @param snapshotVerified the snapshot verified
+ * @param integrityVerified the integrity verified
+ * @param sealVerified the seal verified
+ * @param issues the issues
+ * @param diagnostics the diagnostics
+ */
+
+
 public record KnowledgeVerifiedAnswerExchangeVerificationResult(
 
         KnowledgeVerifiedAnswerExchangeVerificationStatus status,

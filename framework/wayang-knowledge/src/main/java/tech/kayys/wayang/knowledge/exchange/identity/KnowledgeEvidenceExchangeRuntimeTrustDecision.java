@@ -21,6 +21,11 @@ import tech.kayys.wayang.knowledge.exchange.framing.*;
 
 import java.util.Map;
 
+/**
+ * Defines the contract for knowledge evidence exchange runtime trust decision operations in the Wayang framework.
+ */
+
+
 public sealed interface KnowledgeEvidenceExchangeRuntimeTrustDecision
         permits
         KnowledgeEvidenceExchangeRuntimeTrustDecision.Trusted,

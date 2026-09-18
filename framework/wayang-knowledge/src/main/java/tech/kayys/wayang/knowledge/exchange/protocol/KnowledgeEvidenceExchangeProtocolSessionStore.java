@@ -21,6 +21,11 @@ import tech.kayys.wayang.knowledge.exchange.framing.*;
 
 import java.util.Optional;
 
+/**
+ * Defines the contract for knowledge evidence exchange protocol session store operations in the Wayang framework.
+ */
+
+
 public interface KnowledgeEvidenceExchangeProtocolSessionStore {
 
     void save(

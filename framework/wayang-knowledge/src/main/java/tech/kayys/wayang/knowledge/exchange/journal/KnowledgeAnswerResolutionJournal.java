@@ -3,6 +3,11 @@ package tech.kayys.wayang.knowledge.exchange.journal;
 import java.util.List;
 import java.util.Optional;
 
+/**
+ * Defines the contract for knowledge answer resolution journal operations in the Wayang framework.
+ */
+
+
 public interface KnowledgeAnswerResolutionJournal {
 
     KnowledgeAnswerResolutionLogEntry append(KnowledgeAnswerResolutionLogEntry entry);

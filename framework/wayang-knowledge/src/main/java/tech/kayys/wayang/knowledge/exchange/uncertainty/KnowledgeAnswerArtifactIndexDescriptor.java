@@ -43,6 +43,23 @@ import tech.kayys.wayang.knowledge.exchange.recovery.*;
 
 import java.util.Set;
 
+/**
+ * Represents a knowledge answer artifact index descriptor.
+ *
+ * <p>Its components capture `runtime id`, `tenant id`, `domains`, `tags`, `online`, and other values.</p>
+ *
+ * @param runtimeId the runtime id
+ * @param tenantId the tenant id
+ * @param domains the domains
+ * @param tags the tags
+ * @param online the online
+ * @param trusted the trusted
+ * @param semanticSearch the semantic search
+ * @param verifiedOnly the verified only
+ * @param estimatedArtifactCount the estimated artifact count
+ */
+
+
 public record KnowledgeAnswerArtifactIndexDescriptor(
 
         String runtimeId,

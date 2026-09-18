@@ -27,6 +27,11 @@ import tech.kayys.wayang.knowledge.exchange.fusion.*;
 
 import java.util.concurrent.CompletableFuture;
 
+/**
+ * Defines the contract for knowledge evidence artifact replication coordinator operations in the Wayang framework.
+ */
+
+
 public interface KnowledgeEvidenceArtifactReplicationCoordinator {
 
     CompletableFuture<

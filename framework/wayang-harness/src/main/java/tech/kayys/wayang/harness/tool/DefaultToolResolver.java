@@ -4,6 +4,11 @@ import java.util.Collection;
 import java.util.Objects;
 import java.util.Optional;
 
+/**
+ * Provides the default implementation of the tool resolver contract.
+ */
+
+
 public class DefaultToolResolver implements ToolResolver {
 
     private final ToolCatalog catalog;

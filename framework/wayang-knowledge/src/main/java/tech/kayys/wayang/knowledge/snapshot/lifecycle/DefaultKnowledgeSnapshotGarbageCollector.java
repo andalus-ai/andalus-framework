@@ -7,6 +7,11 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
+/**
+ * Provides the default implementation of the knowledge snapshot garbage collector contract.
+ */
+
+
 public final class DefaultKnowledgeSnapshotGarbageCollector implements KnowledgeSnapshotGarbageCollector {
 
     private final KnowledgeSnapshotRegistry registry;

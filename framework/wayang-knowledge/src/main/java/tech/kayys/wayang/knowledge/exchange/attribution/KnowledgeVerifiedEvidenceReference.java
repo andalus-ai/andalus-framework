@@ -43,6 +43,25 @@ import tech.kayys.wayang.knowledge.exchange.recovery.*;
 
 import java.util.Map;
 
+/**
+ * Represents a knowledge verified evidence reference.
+ *
+ * <p>Its components capture `evidence id`, `knowledge id`, `version id`, `artifact id`, `fragment id`, and other values.</p>
+ *
+ * @param evidenceId the evidence id
+ * @param knowledgeId the knowledge id
+ * @param versionId the version id
+ * @param artifactId the artifact id
+ * @param fragmentId the fragment id
+ * @param provenanceId the provenance id
+ * @param relevance the relevance
+ * @param authority the authority
+ * @param trust the trust
+ * @param verified the verified
+ * @param metadata the metadata
+ */
+
+
 public record KnowledgeVerifiedEvidenceReference(
 
         String evidenceId,

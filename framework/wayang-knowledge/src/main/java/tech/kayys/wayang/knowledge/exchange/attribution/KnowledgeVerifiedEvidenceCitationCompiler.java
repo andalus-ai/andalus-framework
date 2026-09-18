@@ -43,6 +43,11 @@ import tech.kayys.wayang.knowledge.exchange.recovery.*;
 
 import java.util.List;
 
+/**
+ * Defines the contract for knowledge verified evidence citation compiler operations in the Wayang framework.
+ */
+
+
 public interface KnowledgeVerifiedEvidenceCitationCompiler {
 
     List<KnowledgeVerifiedEvidenceReference> compile(

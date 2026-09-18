@@ -43,6 +43,10 @@ import tech.kayys.wayang.knowledge.exchange.recovery.*;
 
 import java.util.List;
 import java.util.Optional;
+/**
+ * Defines the contract for knowledge answer resolution consensus participant registry operations in the Wayang framework. Implementations provide the register operation.
+ */
+
 
 public interface
 KnowledgeAnswerResolutionConsensusParticipantRegistry {

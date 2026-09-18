@@ -27,6 +27,21 @@ import tech.kayys.wayang.knowledge.exchange.fusion.*;
 
 import java.util.Map;
 
+/**
+ * Represents a knowledge evidence artifact replica location.
+ *
+ * <p>Its components capture `runtime id`, `endpoint id`, `tenant id`, `region`, `local`, and other values.</p>
+ *
+ * @param runtimeId the runtime id
+ * @param endpointId the endpoint id
+ * @param tenantId the tenant id
+ * @param region the region
+ * @param local the local
+ * @param online the online
+ * @param metadata the metadata
+ */
+
+
 public record KnowledgeEvidenceArtifactReplicaLocation(
 
         String runtimeId,

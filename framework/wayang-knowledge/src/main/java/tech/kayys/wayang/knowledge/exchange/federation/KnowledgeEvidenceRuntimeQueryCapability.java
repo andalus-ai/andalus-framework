@@ -27,6 +27,21 @@ import tech.kayys.wayang.knowledge.exchange.fusion.*;
 
 import java.util.Set;
 
+/**
+ * Represents a knowledge evidence runtime query capability.
+ *
+ * <p>Its components capture `runtime id`, `search`, `remote retrieval`, `governed retrieval`, `verification`, and other values.</p>
+ *
+ * @param runtimeId the runtime id
+ * @param search the search
+ * @param remoteRetrieval the remote retrieval
+ * @param governedRetrieval the governed retrieval
+ * @param verification the verification
+ * @param partialVerification the partial verification
+ * @param queryFormats the query formats
+ */
+
+
 public record KnowledgeEvidenceRuntimeQueryCapability(
 
         String runtimeId,

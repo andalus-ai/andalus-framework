@@ -16,6 +16,11 @@ import java.util.Set;
 import java.util.TreeSet;
 import java.util.UUID;
 
+/**
+ * Provides the default implementation of the knowledge answer resolution state delta builder contract.
+ */
+
+
 public final class DefaultKnowledgeAnswerResolutionStateDeltaBuilder
         implements KnowledgeAnswerResolutionStateDeltaBuilder {
 

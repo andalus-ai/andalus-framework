@@ -6,6 +6,23 @@ import java.time.Instant;
 import java.util.Objects;
 import java.util.Optional;
 
+/**
+ * Represents a action record.
+ *
+ * <p>Its components capture `id`, `execution id`, `type`, `status`, `mode`, and other values.</p>
+ *
+ * @param id the id
+ * @param executionId the execution id
+ * @param type the type
+ * @param status the status
+ * @param mode the mode
+ * @param startedAt the started at
+ * @param completedAt the completed at
+ * @param output the output
+ * @param error the error
+ */
+
+
 public record ActionRecord(
         ActionId id,
         ExecutionId executionId,

@@ -21,6 +21,11 @@ import tech.kayys.wayang.knowledge.exchange.framing.*;
 
 import java.time.Instant;
 
+/**
+ * Defines the contract for knowledge evidence exchange key trust policy operations in the Wayang framework.
+ */
+
+
 public interface KnowledgeEvidenceExchangeKeyTrustPolicy {
 
     KnowledgeEvidenceExchangeKeyTrustDecision evaluate(

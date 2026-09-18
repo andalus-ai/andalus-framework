@@ -22,6 +22,11 @@ import tech.kayys.wayang.knowledge.exchange.framing.*;
 import java.io.InputStream;
 import java.io.OutputStream;
 
+/**
+ * Defines the contract for knowledge evidence exchange frame codec operations in the Wayang framework.
+ */
+
+
 public interface KnowledgeEvidenceExchangeFrameCodec {
 
     byte[] encode(

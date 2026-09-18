@@ -4,6 +4,11 @@ import tech.kayys.wayang.knowledge.exchange.auth.KnowledgeEvidenceExchangePrinci
 
 import java.time.Instant;
 
+/**
+ * Defines the contract for knowledge evidence exchange message verifier operations in the Wayang framework.
+ */
+
+
 public interface KnowledgeEvidenceExchangeMessageVerifier {
 
     KnowledgeEvidenceExchangeMessageAuthenticationStatus verify(

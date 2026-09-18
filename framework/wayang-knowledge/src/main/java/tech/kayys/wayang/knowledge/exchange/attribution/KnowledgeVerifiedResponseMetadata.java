@@ -44,6 +44,24 @@ import tech.kayys.wayang.knowledge.exchange.recovery.*;
 import java.time.Instant;
 import java.util.Map;
 
+/**
+ * Represents a knowledge verified response metadata.
+ *
+ * <p>Its components capture `response id`, `execution id`, `agent id`, `tenant id`, `workspace id`, and other values.</p>
+ *
+ * @param responseId the response id
+ * @param executionId the execution id
+ * @param agentId the agent id
+ * @param tenantId the tenant id
+ * @param workspaceId the workspace id
+ * @param projectId the project id
+ * @param createdAt the created at
+ * @param runtimeVersion the runtime version
+ * @param knowledgeEngineVersion the knowledge engine version
+ * @param metadata the metadata
+ */
+
+
 public record KnowledgeVerifiedResponseMetadata(
 
         String responseId,

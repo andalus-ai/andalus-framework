@@ -18,6 +18,16 @@ import tech.kayys.wayang.knowledge.exchange.protocol.*;
 import tech.kayys.wayang.knowledge.exchange.transport.*;
 import tech.kayys.wayang.knowledge.exchange.framing.*;
 
+/**
+ * Represents a knowledge evidence exchange authenticated capability manifest.
+ *
+ * <p>Its components capture `manifest`, `envelope`.</p>
+ *
+ * @param manifest the manifest
+ * @param envelope the envelope
+ */
+
+
 
 public record KnowledgeEvidenceExchangeAuthenticatedCapabilityManifest(
 

@@ -40,6 +40,11 @@ import tech.kayys.wayang.knowledge.exchange.validity.*;
 import tech.kayys.wayang.knowledge.exchange.lease.*;
 import tech.kayys.wayang.knowledge.exchange.recovery.*;
 
+/**
+ * Defines the contract for knowledge evidence claim verifier operations in the Wayang framework.
+ */
+
+
 
 public interface KnowledgeEvidenceClaimVerifier {
 

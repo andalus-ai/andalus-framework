@@ -44,6 +44,29 @@ import tech.kayys.wayang.knowledge.exchange.recovery.*;
 import java.time.Instant;
 import java.util.Map;
 
+/**
+ * Represents a knowledge answer resolution vote.
+ *
+ * <p>Its components capture `vote id`, `consensus id`, `key fingerprint`, `runtime id`, `tenant id`, and other values.</p>
+ *
+ * @param voteId the vote id
+ * @param consensusId the consensus id
+ * @param keyFingerprint the key fingerprint
+ * @param runtimeId the runtime id
+ * @param tenantId the tenant id
+ * @param workspaceId the workspace id
+ * @param projectId the project id
+ * @param resolutionFingerprint the resolution fingerprint
+ * @param dependencyFingerprint the dependency fingerprint
+ * @param versionVector the version vector
+ * @param eligible the eligible
+ * @param verified the verified
+ * @param issuedAt the issued at
+ * @param expiresAt the expires at
+ * @param metadata the metadata
+ */
+
+
 public record KnowledgeAnswerResolutionVote(
 
         String voteId,

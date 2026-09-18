@@ -44,6 +44,11 @@ import tech.kayys.wayang.knowledge.exchange.recovery.*;
 import java.time.Instant;
 import java.util.List;
 
+/**
+ * Defines the contract for knowledge answer resolution lease service operations in the Wayang framework.
+ */
+
+
 public interface KnowledgeAnswerResolutionLeaseService {
 
     KnowledgeAnswerResolutionLease issue(

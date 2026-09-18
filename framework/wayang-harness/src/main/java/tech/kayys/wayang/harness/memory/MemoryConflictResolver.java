@@ -3,6 +3,11 @@ package tech.kayys.wayang.harness.memory;
 import java.util.Comparator;
 import java.util.List;
 
+/**
+ * Defines the contract for memory conflict resolver operations in the Wayang framework.
+ */
+
+
 public interface MemoryConflictResolver {
 
     MemoryEntry resolve(List<MemoryEntry> candidates);

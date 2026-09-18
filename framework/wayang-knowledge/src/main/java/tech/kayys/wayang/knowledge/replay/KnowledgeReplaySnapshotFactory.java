@@ -5,6 +5,11 @@ import tech.kayys.wayang.knowledge.decision.KnowledgeDecisionTrace;
 import java.util.List;
 import java.util.Map;
 
+/**
+ * Provides knowledge replay snapshot factory behavior for the Wayang framework.
+ */
+
+
 public final class KnowledgeReplaySnapshotFactory {
 
     private KnowledgeReplaySnapshotFactory() {}

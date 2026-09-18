@@ -21,6 +21,11 @@ import tech.kayys.wayang.knowledge.exchange.framing.*;
 
 import java.util.concurrent.CompletableFuture;
 
+/**
+ * Provides knowledge evidence exchange mcp transport adapter behavior for the Wayang framework.
+ */
+
+
 public final class KnowledgeEvidenceExchangeMcpTransportAdapter {
 
     private final KnowledgeEvidenceExchangeMultiplexer multiplexer;

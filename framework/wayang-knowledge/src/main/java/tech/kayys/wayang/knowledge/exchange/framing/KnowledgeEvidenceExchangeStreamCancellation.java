@@ -21,6 +21,19 @@ import tech.kayys.wayang.knowledge.exchange.framing.*;
 
 import java.time.Instant;
 
+/**
+ * Represents a knowledge evidence exchange stream cancellation.
+ *
+ * <p>Its components capture `session id`, `stream id`, `request id`, `reason`, `created at`.</p>
+ *
+ * @param sessionId the session id
+ * @param streamId the stream id
+ * @param requestId the request id
+ * @param reason the reason
+ * @param createdAt the created at
+ */
+
+
 public record KnowledgeEvidenceExchangeStreamCancellation(
 
         String sessionId,

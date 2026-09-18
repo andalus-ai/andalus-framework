@@ -5,6 +5,17 @@ import tech.kayys.wayang.harness.resource.ResourceScope;
 
 import java.util.Map;
 
+/**
+ * Represents a model request context.
+ *
+ * <p>Its components capture `identity`, `resources`, `metadata`.</p>
+ *
+ * @param identity the identity
+ * @param resources the resources
+ * @param metadata the metadata
+ */
+
+
 public record ModelRequestContext(
         HarnessIdentity identity,
         ResourceScope resources,

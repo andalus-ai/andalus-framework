@@ -3,6 +3,20 @@ package tech.kayys.wayang.knowledge.snapshot.block;
 import java.util.Arrays;
 import java.util.Map;
 
+/**
+ * Represents a knowledge answer resolution state block.
+ *
+ * <p>Its components capture `block id`, `algorithm`, `fingerprint`, `data`, `size bytes`, and other values.</p>
+ *
+ * @param blockId the block id
+ * @param algorithm the algorithm
+ * @param fingerprint the fingerprint
+ * @param data the data
+ * @param sizeBytes the size bytes
+ * @param metadata the metadata
+ */
+
+
 public record KnowledgeAnswerResolutionStateBlock(
         String blockId,
         String algorithm,

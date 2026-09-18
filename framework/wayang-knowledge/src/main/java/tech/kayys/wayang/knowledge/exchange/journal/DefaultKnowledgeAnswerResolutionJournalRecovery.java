@@ -3,6 +3,11 @@ package tech.kayys.wayang.knowledge.exchange.journal;
 import java.util.List;
 import java.util.Optional;
 
+/**
+ * Provides the default implementation of the knowledge answer resolution journal recovery contract.
+ */
+
+
 public final class DefaultKnowledgeAnswerResolutionJournalRecovery
         implements KnowledgeAnswerResolutionJournalRecovery {
 

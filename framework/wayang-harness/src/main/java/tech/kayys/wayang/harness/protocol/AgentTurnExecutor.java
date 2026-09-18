@@ -15,6 +15,11 @@ import java.time.Instant;
 import java.util.Objects;
 import java.util.Optional;
 
+/**
+ * Provides agent turn executor behavior for the Wayang framework.
+ */
+
+
 public class AgentTurnExecutor {
 
     private final GovernedModelExecutor modelExecutor;

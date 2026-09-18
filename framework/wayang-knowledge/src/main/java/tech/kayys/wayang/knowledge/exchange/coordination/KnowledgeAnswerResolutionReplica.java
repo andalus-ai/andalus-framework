@@ -44,6 +44,24 @@ import tech.kayys.wayang.knowledge.exchange.recovery.*;
 import java.time.Instant;
 import java.util.Map;
 
+/**
+ * Represents a knowledge answer resolution replica.
+ *
+ * <p>Its components capture `key fingerprint`, `runtime id`, `tenant id`, `state`, `resolution fingerprint`, and other values.</p>
+ *
+ * @param keyFingerprint the key fingerprint
+ * @param runtimeId the runtime id
+ * @param tenantId the tenant id
+ * @param state the state
+ * @param resolutionFingerprint the resolution fingerprint
+ * @param dependencyFingerprint the dependency fingerprint
+ * @param createdAt the created at
+ * @param verifiedAt the verified at
+ * @param lastSeenAt the last seen at
+ * @param metadata the metadata
+ */
+
+
 public record KnowledgeAnswerResolutionReplica(
 
         String keyFingerprint,

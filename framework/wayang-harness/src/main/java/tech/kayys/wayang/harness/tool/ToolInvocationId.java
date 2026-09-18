@@ -3,6 +3,15 @@ package tech.kayys.wayang.harness.tool;
 import java.util.Objects;
 import java.util.UUID;
 
+/**
+ * Represents a tool invocation id.
+ *
+ * <p>Its components capture `value`.</p>
+ *
+ * @param value the value
+ */
+
+
 public record ToolInvocationId(String value) {
     public ToolInvocationId {
         Objects.requireNonNull(value, "ToolInvocationId value cannot be null");

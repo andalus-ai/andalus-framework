@@ -19,6 +19,11 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 
+/**
+ * Provides the default implementation of the execution coordinator contract.
+ */
+
+
 public class DefaultExecutionCoordinator implements ExecutionCoordinator {
 
     private final ExecutionStateStore stateStore;

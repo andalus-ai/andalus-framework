@@ -27,6 +27,11 @@ import tech.kayys.wayang.knowledge.exchange.fusion.*;
 
 import java.util.List;
 
+/**
+ * Defines the contract for knowledge evidence coherence selector operations in the Wayang framework.
+ */
+
+
 public interface KnowledgeEvidenceCoherenceSelector {
 
     List<KnowledgeEvidenceFusionCandidate> select(

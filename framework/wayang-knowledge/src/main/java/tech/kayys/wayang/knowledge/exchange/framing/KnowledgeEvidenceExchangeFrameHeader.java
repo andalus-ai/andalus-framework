@@ -18,6 +18,19 @@ import tech.kayys.wayang.knowledge.exchange.protocol.*;
 import tech.kayys.wayang.knowledge.exchange.transport.*;
 import tech.kayys.wayang.knowledge.exchange.framing.*;
 
+/**
+ * Represents a knowledge evidence exchange frame header.
+ *
+ * <p>Its components capture `version`, `type`, `flags`, `sequence`, `payload length`.</p>
+ *
+ * @param version the version
+ * @param type the type
+ * @param flags the flags
+ * @param sequence the sequence
+ * @param payloadLength the payload length
+ */
+
+
 
 public record KnowledgeEvidenceExchangeFrameHeader(
 

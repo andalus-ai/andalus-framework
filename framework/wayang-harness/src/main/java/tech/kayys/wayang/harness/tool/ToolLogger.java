@@ -1,5 +1,10 @@
 package tech.kayys.wayang.harness.tool;
 
+/**
+ * Defines the contract for tool logger operations in the Wayang framework.
+ */
+
+
 public interface ToolLogger {
 
     void info(String message);

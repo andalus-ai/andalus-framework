@@ -6,6 +6,11 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
+/**
+ * Provides knowledge decision trace comparator behavior for the Wayang framework.
+ */
+
+
 public final class KnowledgeDecisionTraceComparator {
 
     private KnowledgeDecisionTraceComparator() {}

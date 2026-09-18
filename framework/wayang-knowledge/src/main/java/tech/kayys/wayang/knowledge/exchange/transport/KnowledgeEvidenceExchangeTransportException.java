@@ -18,6 +18,11 @@ import tech.kayys.wayang.knowledge.exchange.protocol.*;
 import tech.kayys.wayang.knowledge.exchange.transport.*;
 import tech.kayys.wayang.knowledge.exchange.framing.*;
 
+/**
+ * Provides knowledge evidence exchange transport exception behavior for the Wayang framework.
+ */
+
+
 
 public class KnowledgeEvidenceExchangeTransportException
         extends RuntimeException {

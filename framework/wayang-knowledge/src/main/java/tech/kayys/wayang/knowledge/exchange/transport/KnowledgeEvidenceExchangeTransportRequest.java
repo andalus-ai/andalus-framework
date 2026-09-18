@@ -23,6 +23,22 @@ import java.time.Duration;
 import java.time.Instant;
 import java.util.Map;
 
+/**
+ * Represents a knowledge evidence exchange transport request.
+ *
+ * <p>Its components capture `request id`, `session id`, `message`, `issued at`, `expires at`, and other values.</p>
+ *
+ * @param requestId the request id
+ * @param sessionId the session id
+ * @param message the message
+ * @param issuedAt the issued at
+ * @param expiresAt the expires at
+ * @param deadline the deadline
+ * @param streaming the streaming
+ * @param metadata the metadata
+ */
+
+
 public record KnowledgeEvidenceExchangeTransportRequest(
 
         String requestId,

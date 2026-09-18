@@ -2,6 +2,11 @@ package tech.kayys.wayang.harness.protocol;
 
 import java.util.Set;
 
+/**
+ * Defines the contract for capability view operations in the Wayang framework.
+ */
+
+
 public interface CapabilityView {
 
     Set<String> permittedCapabilities();

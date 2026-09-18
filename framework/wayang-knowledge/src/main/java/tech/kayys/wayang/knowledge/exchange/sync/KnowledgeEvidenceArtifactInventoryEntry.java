@@ -28,6 +28,22 @@ import tech.kayys.wayang.knowledge.exchange.fusion.*;
 import java.time.Instant;
 import java.util.Map;
 
+/**
+ * Represents a knowledge evidence artifact inventory entry.
+ *
+ * <p>Its components capture `artifact id`, `size`, `fingerprint`, `merkle root`, `revoked`, and other values.</p>
+ *
+ * @param artifactId the artifact id
+ * @param size the size
+ * @param fingerprint the fingerprint
+ * @param merkleRoot the merkle root
+ * @param revoked the revoked
+ * @param createdAt the created at
+ * @param lastModifiedAt the last modified at
+ * @param metadata the metadata
+ */
+
+
 public record KnowledgeEvidenceArtifactInventoryEntry(
 
         String artifactId,

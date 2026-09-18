@@ -43,6 +43,22 @@ import tech.kayys.wayang.knowledge.exchange.recovery.*;
 
 import java.time.Instant;
 
+/**
+ * Represents a knowledge answer resolution freshness event.
+ *
+ * <p>Its components capture `event id`, `consensus id`, `key fingerprint`, `previous status`, `current status`, and other values.</p>
+ *
+ * @param eventId the event id
+ * @param consensusId the consensus id
+ * @param keyFingerprint the key fingerprint
+ * @param previousStatus the previous status
+ * @param currentStatus the current status
+ * @param liveness the liveness
+ * @param occurredAt the occurred at
+ * @param reason the reason
+ */
+
+
 public record KnowledgeAnswerResolutionFreshnessEvent(
         String eventId,
         String consensusId,

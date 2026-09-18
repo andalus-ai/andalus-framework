@@ -28,6 +28,23 @@ import tech.kayys.wayang.knowledge.exchange.fusion.*;
 import java.util.List;
 import java.util.Map;
 
+/**
+ * Represents a knowledge evidence artifact replication result.
+ *
+ * <p>Its components capture `replication id`, `artifact id`, `requested replicas`, `successful replicas`, `verified replicas`, and other values.</p>
+ *
+ * @param replicationId the replication id
+ * @param artifactId the artifact id
+ * @param requestedReplicas the requested replicas
+ * @param successfulReplicas the successful replicas
+ * @param verifiedReplicas the verified replicas
+ * @param successfulRuntimeIds the successful runtime ids
+ * @param failedRuntimeIds the failed runtime ids
+ * @param quorumSatisfied the quorum satisfied
+ * @param diagnostics the diagnostics
+ */
+
+
 public record KnowledgeEvidenceArtifactReplicationResult(
 
         String replicationId,

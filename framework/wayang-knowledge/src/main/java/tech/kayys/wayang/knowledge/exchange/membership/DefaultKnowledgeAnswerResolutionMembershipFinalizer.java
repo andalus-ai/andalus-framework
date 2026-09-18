@@ -1,5 +1,10 @@
 package tech.kayys.wayang.knowledge.exchange.membership;
 
+/**
+ * Provides the default implementation of the knowledge answer resolution membership finalizer contract.
+ */
+
+
 public final class DefaultKnowledgeAnswerResolutionMembershipFinalizer
         implements KnowledgeAnswerResolutionMembershipFinalizer {
 

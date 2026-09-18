@@ -2,6 +2,19 @@ package tech.kayys.wayang.harness.memory;
 
 import java.util.Objects;
 
+/**
+ * Represents a memory entry.
+ *
+ * <p>Its components capture `id`, `type`, `content`, `scope`, `metadata`.</p>
+ *
+ * @param id the id
+ * @param type the type
+ * @param content the content
+ * @param scope the scope
+ * @param metadata the metadata
+ */
+
+
 public record MemoryEntry(
         MemoryId id,
         MemoryType type,

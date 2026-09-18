@@ -44,6 +44,31 @@ import tech.kayys.wayang.knowledge.exchange.recovery.*;
 import java.time.Instant;
 import java.util.Map;
 
+/**
+ * Represents a knowledge verified answer exchange request.
+ *
+ * <p>Its components capture `request id`, `operation`, `artifact id`, `response id`, `snapshot id`, and other values.</p>
+ *
+ * @param requestId the request id
+ * @param operation the operation
+ * @param artifactId the artifact id
+ * @param responseId the response id
+ * @param snapshotId the snapshot id
+ * @param tenantId the tenant id
+ * @param workspaceId the workspace id
+ * @param projectId the project id
+ * @param requestingRuntimeId the requesting runtime id
+ * @param requireProvenance the require provenance
+ * @param requireSnapshot the require snapshot
+ * @param requireIntegrity the require integrity
+ * @param requireSeal the require seal
+ * @param allowRemoteFetch the allow remote fetch
+ * @param issuedAt the issued at
+ * @param expiresAt the expires at
+ * @param metadata the metadata
+ */
+
+
 public record KnowledgeVerifiedAnswerExchangeRequest(
 
         String requestId,

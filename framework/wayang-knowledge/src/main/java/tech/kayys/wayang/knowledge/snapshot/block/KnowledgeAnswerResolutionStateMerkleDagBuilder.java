@@ -8,6 +8,11 @@ import java.util.HexFormat;
 import java.util.List;
 import java.util.Map;
 
+/**
+ * Provides knowledge answer resolution state merkle dag builder behavior for the Wayang framework.
+ */
+
+
 public final class KnowledgeAnswerResolutionStateMerkleDagBuilder {
 
     public KnowledgeAnswerResolutionStateMerkleDag build(List<KnowledgeAnswerResolutionStateBlock> blocks) {

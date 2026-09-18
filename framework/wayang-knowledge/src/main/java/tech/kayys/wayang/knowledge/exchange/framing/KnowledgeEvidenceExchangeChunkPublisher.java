@@ -21,6 +21,11 @@ import tech.kayys.wayang.knowledge.exchange.framing.*;
 
 import java.util.concurrent.Flow;
 
+/**
+ * Defines the contract for knowledge evidence exchange chunk publisher operations in the Wayang framework.
+ */
+
+
 public interface KnowledgeEvidenceExchangeChunkPublisher
         extends Flow.Publisher<KnowledgeEvidenceExchangeChunk> {
 

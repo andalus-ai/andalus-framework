@@ -2,6 +2,18 @@ package tech.kayys.wayang.harness.model;
 
 import java.util.Map;
 
+/**
+ * Represents a model metadata.
+ *
+ * <p>Its components capture `family`, `architecture`, `local`, `attributes`.</p>
+ *
+ * @param family the family
+ * @param architecture the architecture
+ * @param local the local
+ * @param attributes the attributes
+ */
+
+
 public record ModelMetadata(
         String family,
         String architecture,

@@ -9,6 +9,10 @@ public record KnowledgeConflict(
         ConflictKind kind,
         String description
 ) {
+    /**
+     * Enumerates the conflict kind values used by the Wayang framework.
+     */
+
 
     public enum ConflictKind {
         DIRECT_CONTRADICTION,

@@ -27,6 +27,18 @@ import tech.kayys.wayang.knowledge.exchange.fusion.*;
 
 import java.util.List;
 
+/**
+ * Represents a knowledge evidence artifact synchronization plan.
+ *
+ * <p>Its components capture `pull`, `push`, `verify`, `revoked`.</p>
+ *
+ * @param pull the pull
+ * @param push the push
+ * @param verify the verify
+ * @param revoked the revoked
+ */
+
+
 public record KnowledgeEvidenceArtifactSynchronizationPlan(
 
         List<String> pull,

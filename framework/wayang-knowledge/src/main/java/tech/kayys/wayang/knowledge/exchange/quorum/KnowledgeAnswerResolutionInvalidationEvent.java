@@ -44,6 +44,20 @@ import tech.kayys.wayang.knowledge.exchange.recovery.*;
 import java.time.Instant;
 import java.util.Map;
 
+/**
+ * Represents a knowledge answer resolution invalidation event.
+ *
+ * <p>Its components capture `event id`, `key fingerprint`, `reason`, `source id`, `created at`, and other values.</p>
+ *
+ * @param eventId the event id
+ * @param keyFingerprint the key fingerprint
+ * @param reason the reason
+ * @param sourceId the source id
+ * @param createdAt the created at
+ * @param metadata the metadata
+ */
+
+
 public record KnowledgeAnswerResolutionInvalidationEvent(
 
         String eventId,

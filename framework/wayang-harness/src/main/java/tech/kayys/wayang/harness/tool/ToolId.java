@@ -2,6 +2,15 @@ package tech.kayys.wayang.harness.tool;
 
 import java.util.Objects;
 
+/**
+ * Represents a tool id.
+ *
+ * <p>Its components capture `value`.</p>
+ *
+ * @param value the value
+ */
+
+
 public record ToolId(String value) {
     public ToolId {
         Objects.requireNonNull(value, "ToolId value cannot be null");

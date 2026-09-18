@@ -4,6 +4,11 @@ import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.util.HexFormat;
 
+/**
+ * Provides the default implementation of the knowledge answer resolution membership fingerprinter contract.
+ */
+
+
 public final class DefaultKnowledgeAnswerResolutionMembershipFingerprinter
         implements KnowledgeAnswerResolutionMembershipFingerprinter {
 

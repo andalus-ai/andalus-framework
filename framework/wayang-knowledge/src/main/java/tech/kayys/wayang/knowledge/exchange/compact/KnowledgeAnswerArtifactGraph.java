@@ -44,6 +44,18 @@ import tech.kayys.wayang.knowledge.exchange.recovery.*;
 import java.util.List;
 import java.util.Map;
 
+/**
+ * Represents a knowledge answer artifact graph.
+ *
+ * <p>Its components capture `graph id`, `artifacts`, `relations`, `metadata`.</p>
+ *
+ * @param graphId the graph id
+ * @param artifacts the artifacts
+ * @param relations the relations
+ * @param metadata the metadata
+ */
+
+
 public record KnowledgeAnswerArtifactGraph(
 
         String graphId,

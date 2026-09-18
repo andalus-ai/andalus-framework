@@ -28,6 +28,21 @@ import tech.kayys.wayang.knowledge.exchange.fusion.*;
 import java.util.List;
 import java.util.Map;
 
+/**
+ * Represents a knowledge evidence fusion result.
+ *
+ * <p>Its components capture `candidates`, `selected`, `relations`, `conflicts`, `coherent`, and other values.</p>
+ *
+ * @param candidates the candidates
+ * @param selected the selected
+ * @param relations the relations
+ * @param conflicts the conflicts
+ * @param coherent the coherent
+ * @param ambiguous the ambiguous
+ * @param diagnostics the diagnostics
+ */
+
+
 public record KnowledgeEvidenceFusionResult(
 
         List<KnowledgeEvidenceFusionCandidate> candidates,

@@ -2,6 +2,17 @@ package tech.kayys.wayang.harness.governance.policy;
 
 import tech.kayys.wayang.harness.governance.approval.ApprovalRequest;
 
+/**
+ * Represents a approval decision.
+ *
+ * <p>Its components capture `policy id`, `reason`, `request`.</p>
+ *
+ * @param policyId the policy id
+ * @param reason the reason
+ * @param request the request
+ */
+
+
 public record ApprovalDecision(
         String policyId,
         String reason,

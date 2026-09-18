@@ -2,6 +2,18 @@ package tech.kayys.wayang.harness.model;
 
 import java.util.Objects;
 
+/**
+ * Represents a model invocation.
+ *
+ * <p>Its components capture `id`, `model id`, `input`, `parameters`.</p>
+ *
+ * @param id the id
+ * @param modelId the model id
+ * @param input the input
+ * @param parameters the parameters
+ */
+
+
 public record ModelInvocation(
         ModelInvocationId id,
         ModelId modelId,

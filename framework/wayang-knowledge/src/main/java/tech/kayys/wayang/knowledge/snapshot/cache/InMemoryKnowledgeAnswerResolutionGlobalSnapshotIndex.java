@@ -6,6 +6,11 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 
+/**
+ * Provides in memory knowledge answer resolution global snapshot index behavior for the Wayang framework.
+ */
+
+
 public final class InMemoryKnowledgeAnswerResolutionGlobalSnapshotIndex
         implements KnowledgeAnswerResolutionGlobalSnapshotIndex {
 

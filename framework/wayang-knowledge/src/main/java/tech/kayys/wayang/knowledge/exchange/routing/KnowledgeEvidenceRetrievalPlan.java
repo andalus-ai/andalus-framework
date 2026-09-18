@@ -28,6 +28,20 @@ import tech.kayys.wayang.knowledge.exchange.fusion.*;
 import java.util.List;
 import java.util.Map;
 
+/**
+ * Represents a knowledge evidence retrieval plan.
+ *
+ * <p>Its components capture `strategy`, `targets`, `maximum runtime calls`, `evidence budget`, `stop when satisfied`, and other values.</p>
+ *
+ * @param strategy the strategy
+ * @param targets the targets
+ * @param maximumRuntimeCalls the maximum runtime calls
+ * @param evidenceBudget the evidence budget
+ * @param stopWhenSatisfied the stop when satisfied
+ * @param metadata the metadata
+ */
+
+
 public record KnowledgeEvidenceRetrievalPlan(
 
         KnowledgeEvidenceFederatedRetrievalStrategy strategy,

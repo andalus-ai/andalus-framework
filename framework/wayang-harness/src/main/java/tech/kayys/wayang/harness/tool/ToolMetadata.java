@@ -3,6 +3,17 @@ package tech.kayys.wayang.harness.tool;
 import java.time.Duration;
 import java.util.Map;
 
+/**
+ * Represents a tool metadata.
+ *
+ * <p>Its components capture `duration`, `provider`, `attributes`.</p>
+ *
+ * @param duration the duration
+ * @param provider the provider
+ * @param attributes the attributes
+ */
+
+
 public record ToolMetadata(
         Duration duration,
         String provider,

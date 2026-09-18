@@ -27,6 +27,21 @@ import tech.kayys.wayang.knowledge.exchange.fusion.*;
 
 import java.util.Map;
 
+/**
+ * Represents a knowledge evidence runtime retrieval request.
+ *
+ * <p>Its components capture `request id`, `runtime id`, `query`, `intent`, `limit`, and other values.</p>
+ *
+ * @param requestId the request id
+ * @param runtimeId the runtime id
+ * @param query the query
+ * @param intent the intent
+ * @param limit the limit
+ * @param minScore the min score
+ * @param metadata the metadata
+ */
+
+
 public record KnowledgeEvidenceRuntimeRetrievalRequest(
 
         String requestId,

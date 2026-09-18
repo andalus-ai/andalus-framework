@@ -3,6 +3,11 @@ package tech.kayys.wayang.knowledge.snapshot.block;
 import java.security.MessageDigest;
 import java.util.HexFormat;
 
+/**
+ * Provides sha256 knowledge answer resolution state block fingerprinter behavior for the Wayang framework.
+ */
+
+
 public final class Sha256KnowledgeAnswerResolutionStateBlockFingerprinter
         implements KnowledgeAnswerResolutionStateBlockFingerprinter {
 

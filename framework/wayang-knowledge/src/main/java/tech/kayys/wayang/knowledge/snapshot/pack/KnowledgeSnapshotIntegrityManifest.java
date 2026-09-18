@@ -6,6 +6,21 @@ import java.time.Instant;
 import java.util.List;
 import java.util.Map;
 
+/**
+ * Represents a knowledge snapshot integrity manifest.
+ *
+ * <p>Its components capture `status`, `verifier id`, `verifier version`, `verified at`, `mismatches`, and other values.</p>
+ *
+ * @param status the status
+ * @param verifierId the verifier id
+ * @param verifierVersion the verifier version
+ * @param verifiedAt the verified at
+ * @param mismatches the mismatches
+ * @param aggregateFingerprint the aggregate fingerprint
+ * @param metadata the metadata
+ */
+
+
 public record KnowledgeSnapshotIntegrityManifest(
         String status,
         String verifierId,

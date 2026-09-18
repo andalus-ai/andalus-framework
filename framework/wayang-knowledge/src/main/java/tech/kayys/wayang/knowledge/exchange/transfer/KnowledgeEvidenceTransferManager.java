@@ -27,6 +27,11 @@ import tech.kayys.wayang.knowledge.exchange.fusion.*;
 
 import java.util.concurrent.CompletableFuture;
 
+/**
+ * Defines the contract for knowledge evidence transfer manager operations in the Wayang framework.
+ */
+
+
 public interface KnowledgeEvidenceTransferManager {
 
     CompletableFuture<

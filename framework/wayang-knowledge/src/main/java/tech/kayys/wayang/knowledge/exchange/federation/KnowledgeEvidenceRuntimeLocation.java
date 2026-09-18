@@ -28,6 +28,26 @@ import tech.kayys.wayang.knowledge.exchange.fusion.*;
 import java.time.Instant;
 import java.util.Map;
 
+/**
+ * Represents a knowledge evidence runtime location.
+ *
+ * <p>Its components capture `runtime id`, `tenant id`, `workspace id`, `project id`, `local`, and other values.</p>
+ *
+ * @param runtimeId the runtime id
+ * @param tenantId the tenant id
+ * @param workspaceId the workspace id
+ * @param projectId the project id
+ * @param local the local
+ * @param online the online
+ * @param trusted the trusted
+ * @param verified the verified
+ * @param lastSeenAt the last seen at
+ * @param estimatedLatencyMs the estimated latency ms
+ * @param availableBytes the available bytes
+ * @param metadata the metadata
+ */
+
+
 public record KnowledgeEvidenceRuntimeLocation(
 
         String runtimeId,

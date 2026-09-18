@@ -3,6 +3,18 @@ package tech.kayys.wayang.harness.memory;
 import java.util.Map;
 import java.util.Objects;
 
+/**
+ * Represents a memory query.
+ *
+ * <p>Its components capture `query`, `scope`, `limit`, `filters`.</p>
+ *
+ * @param query the query
+ * @param scope the scope
+ * @param limit the limit
+ * @param filters the filters
+ */
+
+
 public record MemoryQuery(
         String query,
         MemoryScope scope,

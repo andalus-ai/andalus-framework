@@ -26,6 +26,11 @@ import java.time.Instant;
 import java.util.*;
 import java.util.function.Consumer;
 
+/**
+ * Provides governed tool executor behavior for the Wayang framework.
+ */
+
+
 public class GovernedToolExecutor {
 
     private final ToolCatalog catalog;

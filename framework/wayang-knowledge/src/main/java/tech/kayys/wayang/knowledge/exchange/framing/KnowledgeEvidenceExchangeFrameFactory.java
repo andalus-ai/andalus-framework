@@ -22,6 +22,11 @@ import tech.kayys.wayang.knowledge.exchange.framing.*;
 import java.util.EnumSet;
 import java.util.Map;
 
+/**
+ * Provides knowledge evidence exchange frame factory behavior for the Wayang framework.
+ */
+
+
 public final class KnowledgeEvidenceExchangeFrameFactory {
 
     private final KnowledgeEvidenceExchangePayloadFingerprinter

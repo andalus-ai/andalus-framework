@@ -29,6 +29,27 @@ import java.time.Instant;
 import java.util.List;
 import java.util.Map;
 
+/**
+ * Represents a knowledge evidence artifact replication request.
+ *
+ * <p>Its components capture `replication id`, `artifact id`, `source runtime id`, `target runtime ids`, `tenant id`, and other values.</p>
+ *
+ * @param replicationId the replication id
+ * @param artifactId the artifact id
+ * @param sourceRuntimeId the source runtime id
+ * @param targetRuntimeIds the target runtime ids
+ * @param tenantId the tenant id
+ * @param workspaceId the workspace id
+ * @param projectId the project id
+ * @param desiredReplicas the desired replicas
+ * @param requireVerification the require verification
+ * @param requireMerkleProof the require merkle proof
+ * @param issuedAt the issued at
+ * @param expiresAt the expires at
+ * @param metadata the metadata
+ */
+
+
 public record KnowledgeEvidenceArtifactReplicationRequest(
 
         String replicationId,

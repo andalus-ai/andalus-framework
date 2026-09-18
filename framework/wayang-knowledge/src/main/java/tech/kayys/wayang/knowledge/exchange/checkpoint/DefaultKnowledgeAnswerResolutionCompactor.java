@@ -4,6 +4,11 @@ import tech.kayys.wayang.knowledge.exchange.journal.KnowledgeAnswerResolutionJou
 
 import java.util.Optional;
 
+/**
+ * Provides the default implementation of the knowledge answer resolution compactor contract.
+ */
+
+
 public final class DefaultKnowledgeAnswerResolutionCompactor
         implements KnowledgeAnswerResolutionCompactor {
 

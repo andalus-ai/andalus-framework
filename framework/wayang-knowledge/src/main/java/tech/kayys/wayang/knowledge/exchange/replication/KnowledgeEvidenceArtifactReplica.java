@@ -28,6 +28,25 @@ import tech.kayys.wayang.knowledge.exchange.fusion.*;
 import java.time.Instant;
 import java.util.Map;
 
+/**
+ * Represents a knowledge evidence artifact replica.
+ *
+ * <p>Its components capture `artifact id`, `runtime id`, `tenant id`, `state`, `size`, and other values.</p>
+ *
+ * @param artifactId the artifact id
+ * @param runtimeId the runtime id
+ * @param tenantId the tenant id
+ * @param state the state
+ * @param size the size
+ * @param fingerprint the fingerprint
+ * @param merkleRoot the merkle root
+ * @param discoveredAt the discovered at
+ * @param verifiedAt the verified at
+ * @param lastSeenAt the last seen at
+ * @param metadata the metadata
+ */
+
+
 public record KnowledgeEvidenceArtifactReplica(
 
         String artifactId,

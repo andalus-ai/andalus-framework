@@ -6,6 +6,30 @@ import java.time.Instant;
 import java.util.Map;
 import java.util.Objects;
 
+/**
+ * Represents a knowledge evidence exchange request binding.
+ *
+ * <p>Its components capture `request id`, `session id`, `nonce`, `runtime id`, `remote runtime id`, and other values.</p>
+ *
+ * @param requestId the request id
+ * @param sessionId the session id
+ * @param nonce the nonce
+ * @param runtimeId the runtime id
+ * @param remoteRuntimeId the remote runtime id
+ * @param tenantId the tenant id
+ * @param workspaceId the workspace id
+ * @param projectId the project id
+ * @param operation the operation
+ * @param artifactId the artifact id
+ * @param resourceId the resource id
+ * @param issuedAt the issued at
+ * @param expiresAt the expires at
+ * @param correlationId the correlation id
+ * @param bindingFingerprint the binding fingerprint
+ * @param metadata the metadata
+ */
+
+
 public record KnowledgeEvidenceExchangeRequestBinding(
         String requestId,
         String sessionId,

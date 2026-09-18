@@ -4,6 +4,11 @@ import tech.kayys.wayang.knowledge.exchange.attestation.KnowledgeAnswerResolutio
 
 import java.util.List;
 
+/**
+ * Defines the contract for knowledge answer resolution joint quorum evaluator operations in the Wayang framework.
+ */
+
+
 public interface KnowledgeAnswerResolutionJointQuorumEvaluator {
 
     KnowledgeAnswerResolutionJointQuorumDecision evaluate(

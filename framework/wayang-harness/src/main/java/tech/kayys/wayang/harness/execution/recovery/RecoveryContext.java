@@ -7,6 +7,18 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 
+/**
+ * Represents a recovery context.
+ *
+ * <p>Its components capture `execution id`, `last state`, `failure`, `metadata`.</p>
+ *
+ * @param executionId the execution id
+ * @param lastState the last state
+ * @param failure the failure
+ * @param metadata the metadata
+ */
+
+
 public record RecoveryContext(
         ExecutionId executionId,
         Optional<ExecutionState> lastState,

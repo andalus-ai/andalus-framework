@@ -5,6 +5,21 @@ import tech.kayys.wayang.knowledge.snapshot.KnowledgeSnapshotId;
 import java.time.Instant;
 import java.util.List;
 
+/**
+ * Represents a knowledge snapshot seal verification result.
+ *
+ * <p>Its components capture `verification id`, `snapshot id`, `status`, `key id`, `key version`, and other values.</p>
+ *
+ * @param verificationId the verification id
+ * @param snapshotId the snapshot id
+ * @param status the status
+ * @param keyId the key id
+ * @param keyVersion the key version
+ * @param verifiedAt the verified at
+ * @param diagnostics the diagnostics
+ */
+
+
 public record KnowledgeSnapshotSealVerificationResult(
         String verificationId,
         KnowledgeSnapshotId snapshotId,

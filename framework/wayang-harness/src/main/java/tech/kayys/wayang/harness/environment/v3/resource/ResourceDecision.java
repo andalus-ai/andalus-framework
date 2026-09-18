@@ -10,6 +10,10 @@ public record ResourceDecision(
         String reason,
         LeaseConstraints limits
 ) {
+    /**
+     * Enumerates the decision type values used by the Wayang framework.
+     */
+
     public enum DecisionType {
         ALLOW,
         DENY,

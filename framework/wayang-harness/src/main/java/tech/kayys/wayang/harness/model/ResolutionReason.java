@@ -1,5 +1,15 @@
 package tech.kayys.wayang.harness.model;
 
+/**
+ * Represents a resolution reason.
+ *
+ * <p>Its components capture `strategy`, `explanation`.</p>
+ *
+ * @param strategy the strategy
+ * @param explanation the explanation
+ */
+
+
 public record ResolutionReason(
         String strategy,
         String explanation

@@ -1,5 +1,10 @@
 package tech.kayys.wayang.knowledge.exchange.membership;
 
+/**
+ * Provides the default implementation of the knowledge answer resolution epoch finalization guard contract.
+ */
+
+
 public final class DefaultKnowledgeAnswerResolutionEpochFinalizationGuard
         implements KnowledgeAnswerResolutionEpochFinalizationGuard {
 

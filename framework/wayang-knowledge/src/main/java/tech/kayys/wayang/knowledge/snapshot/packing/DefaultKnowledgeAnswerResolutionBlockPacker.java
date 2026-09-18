@@ -9,6 +9,11 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 
+/**
+ * Provides the default implementation of the knowledge answer resolution block packer contract.
+ */
+
+
 public final class DefaultKnowledgeAnswerResolutionBlockPacker
         implements KnowledgeAnswerResolutionBlockPacker {
 

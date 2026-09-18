@@ -21,6 +21,10 @@ public record KnowledgeGraphView(
         String sessionId,
         Instant generatedAt
 ) {
+    /**
+     * Enumerates the knowledge graph type values used by the Wayang framework.
+     */
+
     public enum KnowledgeGraphType {
         ARTIFACT,
         PROVENANCE,
@@ -31,6 +35,13 @@ public record KnowledgeGraphView(
         SNAPSHOT_DEPENDENCY,
         FULL
     }
+    /**
+     * Represents a knowledge graph stats.
+     *
+     * @param nodeCount the node count
+     * @param edgeCount the edge count
+     */
+
 
     public record KnowledgeGraphStats(int nodeCount, int edgeCount) {}
 
@@ -44,6 +55,10 @@ public record KnowledgeGraphView(
     public static Builder builder(KnowledgeGraphType graphType) {
         return new Builder(graphType);
     }
+    /**
+     * Builder for constructing knowledge graph stats instances.
+     */
+
 
     public static final class Builder {
         private final KnowledgeGraphType graphType;

@@ -18,6 +18,18 @@ import tech.kayys.wayang.knowledge.exchange.protocol.*;
 import tech.kayys.wayang.knowledge.exchange.transport.*;
 import tech.kayys.wayang.knowledge.exchange.framing.*;
 
+/**
+ * Represents a knowledge evidence exchange chunk policy.
+ *
+ * <p>Its components capture `preferred chunk bytes`, `minimum chunk bytes`, `maximum chunk bytes`, `adaptive`.</p>
+ *
+ * @param preferredChunkBytes the preferred chunk bytes
+ * @param minimumChunkBytes the minimum chunk bytes
+ * @param maximumChunkBytes the maximum chunk bytes
+ * @param adaptive the adaptive
+ */
+
+
 
 public record KnowledgeEvidenceExchangeChunkPolicy(
 

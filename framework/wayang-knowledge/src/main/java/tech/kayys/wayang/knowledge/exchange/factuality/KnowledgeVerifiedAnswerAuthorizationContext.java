@@ -45,6 +45,23 @@ import java.time.Instant;
 import java.util.Map;
 import java.util.Set;
 
+/**
+ * Represents a knowledge verified answer authorization context.
+ *
+ * <p>Its components capture `requesting runtime id`, `artifact id`, `tenant id`, `workspace id`, `project id`, and other values.</p>
+ *
+ * @param requestingRuntimeId the requesting runtime id
+ * @param artifactId the artifact id
+ * @param tenantId the tenant id
+ * @param workspaceId the workspace id
+ * @param projectId the project id
+ * @param agentId the agent id
+ * @param roles the roles
+ * @param timestamp the timestamp
+ * @param attributes the attributes
+ */
+
+
 public record KnowledgeVerifiedAnswerAuthorizationContext(
 
         String requestingRuntimeId,

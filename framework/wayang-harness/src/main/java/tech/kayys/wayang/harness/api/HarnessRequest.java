@@ -13,6 +13,14 @@ import java.util.Set;
 
 /**
  * Comprehensive invocation request submitted to the Harness for execution.
+ *
+ * @param prompt the instruction or task to execute
+ * @param targetAgentId identifier of the agent that should handle the request
+ * @param identity caller identity used for governance decisions
+ * @param session session that owns the execution
+ * @param requiredCapabilities capabilities that must be available
+ * @param requiredResources resources that must be allocated
+ * @param attributes additional request-scoped attributes
  */
 public record HarnessRequest(
         String prompt,
@@ -44,14 +52,38 @@ public record HarnessRequest(
         this(prompt, targetAgentId, identity, session, requiredCapabilities, Set.of(), attributes);
     }
 
+    /**
+     * Creates a request with default identity, session, and empty constraints.
+     *
+     * @param targetAgentId identifier of the target agent
+     * @param prompt instruction to execute
+     * @return a normalized harness request
+     */
     public static HarnessRequest of(String targetAgentId, String prompt) {
         return new HarnessRequest(prompt, targetAgentId, null, null, Set.of(), Set.of(), Map.of());
     }
 
+    /**
+     * Creates a request with required capability constraints.
+     *
+     * @param targetAgentId identifier of the target agent
+     * @param prompt instruction to execute
+     * @param requiredCapabilities capabilities that must be available
+     * @return a normalized harness request
+     */
     public static HarnessRequest of(String targetAgentId, String prompt, Set<CapabilityId> requiredCapabilities) {
         return new HarnessRequest(prompt, targetAgentId, null, null, requiredCapabilities, Set.of(), Map.of());
     }
 
+    /**
+     * Creates a request with capability and resource constraints.
+     *
+     * @param targetAgentId identifier of the target agent
+     * @param prompt instruction to execute
+     * @param requiredCapabilities capabilities that must be available
+     * @param requiredResources resources that must be allocated
+     * @return a normalized harness request
+     */
     public static HarnessRequest of(String targetAgentId, String prompt, Set<CapabilityId> requiredCapabilities, Set<ResourceRequest> requiredResources) {
         return new HarnessRequest(prompt, targetAgentId, null, null, requiredCapabilities, requiredResources, Map.of());
     }

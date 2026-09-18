@@ -9,6 +9,19 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 
+/**
+ * Represents a default policy context.
+ *
+ * <p>Its components capture `identity`, `session`, `environment`, `workspace`, `attributes`.</p>
+ *
+ * @param identity the identity
+ * @param session the session
+ * @param environment the environment
+ * @param workspace the workspace
+ * @param attributes the attributes
+ */
+
+
 public record DefaultPolicyContext(
         HarnessIdentity identity,
         HarnessSession session,

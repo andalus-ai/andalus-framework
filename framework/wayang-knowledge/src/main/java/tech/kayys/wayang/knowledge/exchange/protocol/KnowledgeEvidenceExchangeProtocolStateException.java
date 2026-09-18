@@ -18,6 +18,11 @@ import tech.kayys.wayang.knowledge.exchange.protocol.*;
 import tech.kayys.wayang.knowledge.exchange.transport.*;
 import tech.kayys.wayang.knowledge.exchange.framing.*;
 
+/**
+ * Provides knowledge evidence exchange protocol state exception behavior for the Wayang framework.
+ */
+
+
 
 public final class KnowledgeEvidenceExchangeProtocolStateException
         extends IllegalStateException {

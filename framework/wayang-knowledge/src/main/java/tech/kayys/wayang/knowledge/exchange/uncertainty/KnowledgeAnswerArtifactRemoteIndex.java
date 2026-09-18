@@ -43,6 +43,11 @@ import tech.kayys.wayang.knowledge.exchange.recovery.*;
 
 import java.util.concurrent.CompletableFuture;
 
+/**
+ * Defines the contract for knowledge answer artifact remote index operations in the Wayang framework.
+ */
+
+
 public interface KnowledgeAnswerArtifactRemoteIndex {
 
     String runtimeId();

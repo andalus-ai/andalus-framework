@@ -6,6 +6,11 @@ import tech.kayys.wayang.knowledge.snapshot.block.Sha256KnowledgeAnswerResolutio
 import java.util.Map;
 import java.util.Objects;
 
+/**
+ * Provides knowledge answer resolution state block deduplication service behavior for the Wayang framework.
+ */
+
+
 public final class KnowledgeAnswerResolutionStateBlockDeduplicationService {
 
     private final KnowledgeAnswerResolutionSharedStateBlockStore store;

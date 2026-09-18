@@ -3,6 +3,19 @@ package tech.kayys.wayang.harness.memory;
 import java.time.Instant;
 import java.util.Map;
 
+/**
+ * Represents a memory metadata.
+ *
+ * <p>Its components capture `created at`, `updated at`, `source`, `confidence`, `attributes`.</p>
+ *
+ * @param createdAt the created at
+ * @param updatedAt the updated at
+ * @param source the source
+ * @param confidence the confidence
+ * @param attributes the attributes
+ */
+
+
 public record MemoryMetadata(
         Instant createdAt,
         Instant updatedAt,

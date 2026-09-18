@@ -4,6 +4,11 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 
+/**
+ * Provides in memory knowledge answer resolution shared state block store behavior for the Wayang framework.
+ */
+
+
 public final class InMemoryKnowledgeAnswerResolutionSharedStateBlockStore
         implements KnowledgeAnswerResolutionSharedStateBlockStore {
 

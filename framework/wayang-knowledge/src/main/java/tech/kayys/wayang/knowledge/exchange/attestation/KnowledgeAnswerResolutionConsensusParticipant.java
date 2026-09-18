@@ -44,6 +44,23 @@ import tech.kayys.wayang.knowledge.exchange.recovery.*;
 import java.time.Instant;
 import java.util.Map;
 
+/**
+ * Represents a knowledge answer resolution consensus participant.
+ *
+ * <p>Its components capture `runtime id`, `tenant id`, `workspace id`, `project id`, `trusted`, and other values.</p>
+ *
+ * @param runtimeId the runtime id
+ * @param tenantId the tenant id
+ * @param workspaceId the workspace id
+ * @param projectId the project id
+ * @param trusted the trusted
+ * @param eligible the eligible
+ * @param validFrom the valid from
+ * @param validUntil the valid until
+ * @param metadata the metadata
+ */
+
+
 public record KnowledgeAnswerResolutionConsensusParticipant(
 
         String runtimeId,

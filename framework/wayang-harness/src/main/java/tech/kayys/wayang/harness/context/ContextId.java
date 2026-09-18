@@ -3,6 +3,15 @@ package tech.kayys.wayang.harness.context;
 import java.util.Objects;
 import java.util.UUID;
 
+/**
+ * Represents a context id.
+ *
+ * <p>Its components capture `value`.</p>
+ *
+ * @param value the value
+ */
+
+
 public record ContextId(String value) {
     public ContextId {
         Objects.requireNonNull(value, "value");

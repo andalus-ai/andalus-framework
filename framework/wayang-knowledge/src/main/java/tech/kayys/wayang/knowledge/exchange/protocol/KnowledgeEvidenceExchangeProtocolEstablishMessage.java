@@ -22,6 +22,26 @@ import tech.kayys.wayang.knowledge.exchange.framing.*;
 import java.time.Instant;
 import java.util.Map;
 
+/**
+ * Represents a knowledge evidence exchange protocol establish message.
+ *
+ * <p>Its components capture `message id`, `correlation id`, `session id`, `handshake id`, `local runtime id`, and other values.</p>
+ *
+ * @param messageId the message id
+ * @param correlationId the correlation id
+ * @param sessionId the session id
+ * @param handshakeId the handshake id
+ * @param localRuntimeId the local runtime id
+ * @param remoteRuntimeId the remote runtime id
+ * @param negotiatedProtocolVersion the negotiated protocol version
+ * @param capabilityFingerprint the capability fingerprint
+ * @param sessionFingerprint the session fingerprint
+ * @param issuedAt the issued at
+ * @param expiresAt the expires at
+ * @param metadata the metadata
+ */
+
+
 public record KnowledgeEvidenceExchangeProtocolEstablishMessage(
 
         String messageId,

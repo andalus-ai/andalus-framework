@@ -3,6 +3,15 @@ package tech.kayys.wayang.harness.execution.state;
 import java.util.Objects;
 import java.util.UUID;
 
+/**
+ * Represents a execution id.
+ *
+ * <p>Its components capture `value`.</p>
+ *
+ * @param value the value
+ */
+
+
 public record ExecutionId(String value) {
     public ExecutionId {
         Objects.requireNonNull(value, "value");

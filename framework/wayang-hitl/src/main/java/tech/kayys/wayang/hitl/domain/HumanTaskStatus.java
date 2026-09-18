@@ -1,5 +1,10 @@
 package tech.kayys.wayang.hitl.domain;
 
+/**
+ * Defines the human task status values used by the Wayang framework.
+ */
+
+
 public enum HumanTaskStatus {
     CREATED,
     ASSIGNED,

@@ -5,6 +5,19 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.UUID;
 
+/**
+ * Represents a tool event.
+ *
+ * <p>Its components capture `event id`, `invocation id`, `type`, `payload`, `timestamp`.</p>
+ *
+ * @param eventId the event id
+ * @param invocationId the invocation id
+ * @param type the type
+ * @param payload the payload
+ * @param timestamp the timestamp
+ */
+
+
 public record ToolEvent(
         String eventId,
         ToolInvocationId invocationId,

@@ -1,5 +1,10 @@
 package tech.kayys.wayang.harness.tool;
 
+/**
+ * Provides the default implementation of the tool input validator contract.
+ */
+
+
 public class DefaultToolInputValidator implements ToolInputValidator {
 
     @Override

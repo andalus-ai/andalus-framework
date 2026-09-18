@@ -43,6 +43,19 @@ import tech.kayys.wayang.knowledge.exchange.recovery.*;
 
 import java.time.Duration;
 
+/**
+ * Represents a knowledge answer resolution consensus lifecycle policy.
+ *
+ * <p>Its components capture `maximum consensus lifetime`, `allow supersession`, `allow revocation`, `archive revoked`, `archive expired`.</p>
+ *
+ * @param maximumConsensusLifetime the maximum consensus lifetime
+ * @param allowSupersession the allow supersession
+ * @param allowRevocation the allow revocation
+ * @param archiveRevoked the archive revoked
+ * @param archiveExpired the archive expired
+ */
+
+
 public record KnowledgeAnswerResolutionConsensusLifecyclePolicy(
 
         Duration maximumConsensusLifetime,

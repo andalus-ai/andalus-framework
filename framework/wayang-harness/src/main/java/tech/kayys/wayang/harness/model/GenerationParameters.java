@@ -1,5 +1,18 @@
 package tech.kayys.wayang.harness.model;
 
+/**
+ * Represents a generation parameters.
+ *
+ * <p>Its components capture `temperature`, `max tokens`, `top p`, `seed`, `stop conditions`.</p>
+ *
+ * @param temperature the temperature
+ * @param maxTokens the max tokens
+ * @param topP the top p
+ * @param seed the seed
+ * @param stopConditions the stop conditions
+ */
+
+
 public record GenerationParameters(
         Double temperature,
         Integer maxTokens,

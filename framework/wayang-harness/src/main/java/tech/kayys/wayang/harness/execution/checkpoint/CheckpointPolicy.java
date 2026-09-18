@@ -1,5 +1,10 @@
 package tech.kayys.wayang.harness.execution.checkpoint;
 
+/**
+ * Defines the contract for checkpoint policy operations in the Wayang framework.
+ */
+
+
 public interface CheckpointPolicy {
 
     boolean shouldCheckpoint(CheckpointContext context);

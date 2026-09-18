@@ -4,6 +4,11 @@ import tech.kayys.wayang.knowledge.exchange.statemachine.DefaultKnowledgeAnswerR
 import tech.kayys.wayang.knowledge.exchange.statemachine.KnowledgeAnswerResolutionState;
 import tech.kayys.wayang.knowledge.exchange.statemachine.KnowledgeAnswerResolutionStateFingerprinter;
 
+/**
+ * Provides the default implementation of the knowledge answer resolution state delta validator contract.
+ */
+
+
 public final class DefaultKnowledgeAnswerResolutionStateDeltaValidator
         implements KnowledgeAnswerResolutionStateDeltaValidator {
 

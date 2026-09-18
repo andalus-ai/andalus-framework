@@ -5,6 +5,11 @@ import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentSkipListMap;
 
+/**
+ * Provides in memory knowledge answer resolution checkpoint store behavior for the Wayang framework.
+ */
+
+
 public final class InMemoryKnowledgeAnswerResolutionCheckpointStore
         implements KnowledgeAnswerResolutionCheckpointStore {
 

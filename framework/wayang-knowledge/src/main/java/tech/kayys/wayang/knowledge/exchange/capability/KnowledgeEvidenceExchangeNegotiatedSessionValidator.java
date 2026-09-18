@@ -21,6 +21,11 @@ import tech.kayys.wayang.knowledge.exchange.framing.*;
 
 import java.time.Instant;
 
+/**
+ * Defines the contract for knowledge evidence exchange negotiated session validator operations in the Wayang framework.
+ */
+
+
 public interface KnowledgeEvidenceExchangeNegotiatedSessionValidator {
 
     boolean supports(

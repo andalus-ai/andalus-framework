@@ -22,6 +22,22 @@ import tech.kayys.wayang.knowledge.exchange.framing.*;
 import java.time.Instant;
 import java.util.Map;
 
+/**
+ * Represents a knowledge evidence exchange runtime peer.
+ *
+ * <p>Its components capture `local runtime id`, `remote runtime id`, `remote identity fingerprint`, `trust anchor id`, `trusted from`, and other values.</p>
+ *
+ * @param localRuntimeId the local runtime id
+ * @param remoteRuntimeId the remote runtime id
+ * @param remoteIdentityFingerprint the remote identity fingerprint
+ * @param trustAnchorId the trust anchor id
+ * @param trustedFrom the trusted from
+ * @param trustedUntil the trusted until
+ * @param trusted the trusted
+ * @param metadata the metadata
+ */
+
+
 public record KnowledgeEvidenceExchangeRuntimePeer(
 
         String localRuntimeId,

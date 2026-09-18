@@ -8,6 +8,11 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 
+/**
+ * Provides the default implementation of the knowledge answer resolution state machine contract.
+ */
+
+
 public final class DefaultKnowledgeAnswerResolutionStateMachine
         implements KnowledgeAnswerResolutionStateMachine {
 

@@ -2,6 +2,20 @@ package tech.kayys.wayang.knowledge.exchange.transfer;
 
 import java.util.Arrays;
 
+/**
+ * Represents a knowledge answer resolution snapshot transfer chunk.
+ *
+ * <p>Its components capture `transfer id`, `snapshot id`, `offset`, `data`, `chunk fingerprint`, and other values.</p>
+ *
+ * @param transferId the transfer id
+ * @param snapshotId the snapshot id
+ * @param offset the offset
+ * @param data the data
+ * @param chunkFingerprint the chunk fingerprint
+ * @param merkleProof the merkle proof
+ */
+
+
 public record KnowledgeAnswerResolutionSnapshotTransferChunk(
         String transferId,
         String snapshotId,

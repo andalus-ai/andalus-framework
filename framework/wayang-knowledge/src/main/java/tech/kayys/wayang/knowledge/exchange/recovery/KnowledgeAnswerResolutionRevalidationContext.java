@@ -44,6 +44,21 @@ import tech.kayys.wayang.knowledge.exchange.recovery.*;
 import java.time.Instant;
 import java.util.List;
 
+/**
+ * Represents a knowledge answer resolution revalidation context.
+ *
+ * <p>Its components capture `tenant id`, `workspace id`, `project id`, `requesting runtime id`, `effective at`, and other values.</p>
+ *
+ * @param tenantId the tenant id
+ * @param workspaceId the workspace id
+ * @param projectId the project id
+ * @param requestingRuntimeId the requesting runtime id
+ * @param effectiveAt the effective at
+ * @param participantRuntimeIds the participant runtime ids
+ * @param policy the policy
+ */
+
+
 public record KnowledgeAnswerResolutionRevalidationContext(
         String tenantId,
         String workspaceId,

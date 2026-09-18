@@ -43,6 +43,21 @@ import tech.kayys.wayang.knowledge.exchange.recovery.*;
 
 import java.util.Map;
 
+/**
+ * Represents a knowledge verified answer exchange response.
+ *
+ * <p>Its components capture `success`, `operation`, `artifact id`, `artifact`, `error code`, and other values.</p>
+ *
+ * @param success the success
+ * @param operation the operation
+ * @param artifactId the artifact id
+ * @param artifact the artifact
+ * @param errorCode the error code
+ * @param errorMessage the error message
+ * @param metadata the metadata
+ */
+
+
 public record KnowledgeVerifiedAnswerExchangeResponse(
 
         boolean success,

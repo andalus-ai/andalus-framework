@@ -44,6 +44,20 @@ import tech.kayys.wayang.knowledge.exchange.recovery.*;
 import java.util.List;
 import java.util.Map;
 
+/**
+ * Represents a knowledge evidence claim graph.
+ *
+ * <p>Its components capture `graph id`, `query id`, `claims`, `supports`, `contradictions`, and other values.</p>
+ *
+ * @param graphId the graph id
+ * @param queryId the query id
+ * @param claims the claims
+ * @param supports the supports
+ * @param contradictions the contradictions
+ * @param metadata the metadata
+ */
+
+
 public record KnowledgeEvidenceClaimGraph(
 
         String graphId,

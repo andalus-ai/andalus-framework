@@ -5,6 +5,11 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
+/**
+ * Provides knowledge snapshot evidence package builder behavior for the Wayang framework.
+ */
+
+
 public final class KnowledgeSnapshotEvidencePackageBuilder {
 
     private String packageId;

@@ -23,6 +23,25 @@ import java.time.Instant;
 import java.util.Map;
 import java.util.Objects;
 
+/**
+ * Represents a knowledge evidence exchange trusted key.
+ *
+ * <p>Its components capture `key id`, `key version`, `algorithm`, `runtime id`, `tenant id`, and other values.</p>
+ *
+ * @param keyId the key id
+ * @param keyVersion the key version
+ * @param algorithm the algorithm
+ * @param runtimeId the runtime id
+ * @param tenantId the tenant id
+ * @param validFrom the valid from
+ * @param validUntil the valid until
+ * @param trusted the trusted
+ * @param revoked the revoked
+ * @param trustAnchorId the trust anchor id
+ * @param metadata the metadata
+ */
+
+
 public record KnowledgeEvidenceExchangeTrustedKey(
 
         String keyId,

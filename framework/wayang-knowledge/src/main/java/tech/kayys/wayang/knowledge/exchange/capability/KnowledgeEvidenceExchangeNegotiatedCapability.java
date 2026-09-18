@@ -21,6 +21,18 @@ import tech.kayys.wayang.knowledge.exchange.framing.*;
 
 import java.util.Set;
 
+/**
+ * Represents a knowledge evidence exchange negotiated capability.
+ *
+ * <p>Its components capture `type`, `algorithms`, `formats`, `max artifact bytes`.</p>
+ *
+ * @param type the type
+ * @param algorithms the algorithms
+ * @param formats the formats
+ * @param maxArtifactBytes the max artifact bytes
+ */
+
+
 public record KnowledgeEvidenceExchangeNegotiatedCapability(
 
         KnowledgeEvidenceExchangeCapabilityType type,

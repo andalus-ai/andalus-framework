@@ -1,5 +1,23 @@
 package tech.kayys.wayang.knowledge.exchange.transfer;
 
+/**
+ * Represents a knowledge answer resolution snapshot transfer request.
+ *
+ * <p>Its components capture `transfer id`, `snapshot id`, `source runtime id`, `target runtime id`, `tenant id`, and other values.</p>
+ *
+ * @param transferId the transfer id
+ * @param snapshotId the snapshot id
+ * @param sourceRuntimeId the source runtime id
+ * @param targetRuntimeId the target runtime id
+ * @param tenantId the tenant id
+ * @param epochId the epoch id
+ * @param offset the offset
+ * @param length the length
+ * @param requireMerkleProof the require merkle proof
+ * @param expectedFingerprint the expected fingerprint
+ */
+
+
 public record KnowledgeAnswerResolutionSnapshotTransferRequest(
         String transferId,
         String snapshotId,

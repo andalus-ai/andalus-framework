@@ -3,6 +3,11 @@ package tech.kayys.wayang.knowledge.exchange.session;
 import java.time.Duration;
 import java.time.Instant;
 
+/**
+ * Defines the contract for knowledge evidence exchange session service operations in the Wayang framework.
+ */
+
+
 public interface KnowledgeEvidenceExchangeSessionService {
 
     KnowledgeEvidenceExchangeSession createSession(

@@ -4,6 +4,18 @@ import java.time.Duration;
 import java.util.Map;
 import java.util.Objects;
 
+/**
+ * Represents a tool result.
+ *
+ * <p>Its components capture `invocation id`, `status`, `output`, `metadata`.</p>
+ *
+ * @param invocationId the invocation id
+ * @param status the status
+ * @param output the output
+ * @param metadata the metadata
+ */
+
+
 public record ToolResult(
         ToolInvocationId invocationId,
         ToolResultStatus status,

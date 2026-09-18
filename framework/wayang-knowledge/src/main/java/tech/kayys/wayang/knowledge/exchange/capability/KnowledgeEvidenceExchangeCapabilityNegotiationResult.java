@@ -22,6 +22,21 @@ import tech.kayys.wayang.knowledge.exchange.framing.*;
 import java.util.List;
 import java.util.Map;
 
+/**
+ * Represents a knowledge evidence exchange capability negotiation result.
+ *
+ * <p>Its components capture `status`, `protocol version`, `capabilities`, `local manifest fingerprint`, `remote manifest fingerprint`, and other values.</p>
+ *
+ * @param status the status
+ * @param protocolVersion the protocol version
+ * @param capabilities the capabilities
+ * @param localManifestFingerprint the local manifest fingerprint
+ * @param remoteManifestFingerprint the remote manifest fingerprint
+ * @param diagnostics the diagnostics
+ * @param metadata the metadata
+ */
+
+
 public record KnowledgeEvidenceExchangeCapabilityNegotiationResult(
 
         KnowledgeEvidenceExchangeCapabilityNegotiationStatus status,

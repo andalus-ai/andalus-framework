@@ -28,6 +28,20 @@ import tech.kayys.wayang.knowledge.exchange.fusion.*;
 import java.util.List;
 import java.util.Map;
 
+/**
+ * Represents a knowledge evidence query intent.
+ *
+ * <p>Its components capture `original query`, `concepts`, `entities`, `keywords`, `filters`, and other values.</p>
+ *
+ * @param originalQuery the original query
+ * @param concepts the concepts
+ * @param entities the entities
+ * @param keywords the keywords
+ * @param filters the filters
+ * @param metadata the metadata
+ */
+
+
 public record KnowledgeEvidenceQueryIntent(
 
         String originalQuery,

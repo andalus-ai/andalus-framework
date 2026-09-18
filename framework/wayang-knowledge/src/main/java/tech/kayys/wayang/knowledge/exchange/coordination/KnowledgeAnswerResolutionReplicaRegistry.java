@@ -44,6 +44,11 @@ import tech.kayys.wayang.knowledge.exchange.recovery.*;
 import java.util.List;
 import java.util.Optional;
 
+/**
+ * Defines the contract for knowledge answer resolution replica registry operations in the Wayang framework.
+ */
+
+
 public interface KnowledgeAnswerResolutionReplicaRegistry {
 
     void register(

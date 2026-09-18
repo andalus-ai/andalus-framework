@@ -24,6 +24,11 @@ import tech.kayys.wayang.knowledge.exchange.federation.*;
 import tech.kayys.wayang.knowledge.exchange.routing.*;
 import tech.kayys.wayang.knowledge.exchange.fusion.*;
 
+/**
+ * Defines the contract for knowledge evidence artifact inventory fingerprinter operations in the Wayang framework.
+ */
+
+
 
 public interface KnowledgeEvidenceArtifactInventoryFingerprinter {
 

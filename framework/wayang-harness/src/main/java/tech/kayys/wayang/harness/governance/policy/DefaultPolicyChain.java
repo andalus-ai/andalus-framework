@@ -52,6 +52,10 @@ public class DefaultPolicyChain implements PolicyChain, HarnessPolicy {
 
         return new AllowDecision("policy-chain", "All policies permitted action: " + action.id());
     }
+    /**
+     * Builder for constructing default policy chain instances.
+     */
+
 
     public static class Builder {
         private final List<HarnessPolicy> policies = new ArrayList<>();

@@ -7,6 +7,11 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 
+/**
+ * Provides audited knowledge decision trace service behavior for the Wayang framework.
+ */
+
+
 public final class AuditedKnowledgeDecisionTraceService implements KnowledgeDecisionTraceService {
 
     private final KnowledgeDecisionTraceService delegate;

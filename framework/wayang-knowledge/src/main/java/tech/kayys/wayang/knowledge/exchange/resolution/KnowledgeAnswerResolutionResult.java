@@ -44,6 +44,25 @@ import tech.kayys.wayang.knowledge.exchange.recovery.*;
 import java.util.List;
 import java.util.Map;
 
+/**
+ * Represents a knowledge answer resolution result.
+ *
+ * <p>Its components capture `resolution id`, `status`, `decision`, `preferred artifact id`, `accepted artifact ids`, and other values.</p>
+ *
+ * @param resolutionId the resolution id
+ * @param status the status
+ * @param decision the decision
+ * @param preferredArtifactId the preferred artifact id
+ * @param acceptedArtifactIds the accepted artifact ids
+ * @param rejectedArtifactIds the rejected artifact ids
+ * @param conflictingArtifactIds the conflicting artifact ids
+ * @param confidence the confidence
+ * @param candidates the candidates
+ * @param relations the relations
+ * @param diagnostics the diagnostics
+ */
+
+
 public record KnowledgeAnswerResolutionResult(
 
         String resolutionId,

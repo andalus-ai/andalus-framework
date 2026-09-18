@@ -21,6 +21,16 @@ import tech.kayys.wayang.knowledge.exchange.framing.*;
 
 import java.time.Duration;
 
+/**
+ * Represents a knowledge evidence exchange deadline policy.
+ *
+ * <p>Its components capture `default deadline`, `maximum deadline`.</p>
+ *
+ * @param defaultDeadline the default deadline
+ * @param maximumDeadline the maximum deadline
+ */
+
+
 public record KnowledgeEvidenceExchangeDeadlinePolicy(
 
         Duration defaultDeadline,

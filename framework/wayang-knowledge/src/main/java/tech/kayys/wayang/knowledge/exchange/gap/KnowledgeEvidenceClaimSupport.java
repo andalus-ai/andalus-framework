@@ -43,6 +43,22 @@ import tech.kayys.wayang.knowledge.exchange.recovery.*;
 
 import java.util.Map;
 
+/**
+ * Represents a knowledge evidence claim support.
+ *
+ * <p>Its components capture `claim id`, `evidence id`, `support score`, `direct`, `authoritative`, and other values.</p>
+ *
+ * @param claimId the claim id
+ * @param evidenceId the evidence id
+ * @param supportScore the support score
+ * @param direct the direct
+ * @param authoritative the authoritative
+ * @param verified the verified
+ * @param reason the reason
+ * @param metadata the metadata
+ */
+
+
 public record KnowledgeEvidenceClaimSupport(
 
         String claimId,

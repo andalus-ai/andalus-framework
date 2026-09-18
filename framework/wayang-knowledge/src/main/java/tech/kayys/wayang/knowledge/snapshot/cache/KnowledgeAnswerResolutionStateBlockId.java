@@ -1,5 +1,15 @@
 package tech.kayys.wayang.knowledge.snapshot.cache;
 
+/**
+ * Represents a knowledge answer resolution state block id.
+ *
+ * <p>Its components capture `algorithm`, `digest`.</p>
+ *
+ * @param algorithm the algorithm
+ * @param digest the digest
+ */
+
+
 public record KnowledgeAnswerResolutionStateBlockId(
         String algorithm,
         String digest

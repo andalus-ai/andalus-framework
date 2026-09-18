@@ -18,6 +18,18 @@ import tech.kayys.wayang.knowledge.exchange.protocol.*;
 import tech.kayys.wayang.knowledge.exchange.transport.*;
 import tech.kayys.wayang.knowledge.exchange.framing.*;
 
+/**
+ * Represents a knowledge evidence exchange backpressure policy.
+ *
+ * <p>Its components capture `max buffered messages`, `max buffered bytes`, `reject when full`, `block producer`.</p>
+ *
+ * @param maxBufferedMessages the max buffered messages
+ * @param maxBufferedBytes the max buffered bytes
+ * @param rejectWhenFull the reject when full
+ * @param blockProducer the block producer
+ */
+
+
 
 public record KnowledgeEvidenceExchangeBackpressurePolicy(
 

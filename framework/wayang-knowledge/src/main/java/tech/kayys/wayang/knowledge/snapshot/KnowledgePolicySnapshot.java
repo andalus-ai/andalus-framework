@@ -3,6 +3,17 @@ package tech.kayys.wayang.knowledge.snapshot;
 import java.util.List;
 import java.util.Map;
 
+/**
+ * Represents a knowledge policy snapshot.
+ *
+ * <p>Its components capture `policies`, `aggregate fingerprint`, `metadata`.</p>
+ *
+ * @param policies the policies
+ * @param aggregateFingerprint the aggregate fingerprint
+ * @param metadata the metadata
+ */
+
+
 public record KnowledgePolicySnapshot(
         List<KnowledgeVersionReference> policies,
         String aggregateFingerprint,

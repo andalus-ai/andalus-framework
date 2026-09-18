@@ -4,6 +4,20 @@ import tech.kayys.wayang.harness.context.HarnessContext;
 
 import java.util.Objects;
 
+/**
+ * Represents a default execution state.
+ *
+ * <p>Its components capture `execution id`, `status`, `version`, `context`, `cursor`, and other values.</p>
+ *
+ * @param executionId the execution id
+ * @param status the status
+ * @param version the version
+ * @param context the context
+ * @param cursor the cursor
+ * @param data the data
+ */
+
+
 public record DefaultExecutionState(
         ExecutionId executionId,
         ExecutionStatus status,

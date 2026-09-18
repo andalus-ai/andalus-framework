@@ -22,6 +22,27 @@ import tech.kayys.wayang.knowledge.exchange.framing.*;
 import java.time.Instant;
 import java.util.Map;
 
+/**
+ * Represents a knowledge evidence exchange protocol security context.
+ *
+ * <p>Its components capture `local runtime id`, `remote runtime id`, `tenant id`, `workspace id`, `project id`, and other values.</p>
+ *
+ * @param localRuntimeId the local runtime id
+ * @param remoteRuntimeId the remote runtime id
+ * @param tenantId the tenant id
+ * @param workspaceId the workspace id
+ * @param projectId the project id
+ * @param sessionId the session id
+ * @param localKeyId the local key id
+ * @param localKeyVersion the local key version
+ * @param remoteKeyId the remote key id
+ * @param remoteKeyVersion the remote key version
+ * @param establishedAt the established at
+ * @param expiresAt the expires at
+ * @param metadata the metadata
+ */
+
+
 public record KnowledgeEvidenceExchangeProtocolSecurityContext(
 
         String localRuntimeId,

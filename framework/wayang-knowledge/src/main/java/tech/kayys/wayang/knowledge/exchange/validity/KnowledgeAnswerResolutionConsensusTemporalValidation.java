@@ -44,6 +44,21 @@ import tech.kayys.wayang.knowledge.exchange.recovery.*;
 import java.time.Instant;
 import java.util.List;
 
+/**
+ * Represents a knowledge answer resolution consensus temporal validation.
+ *
+ * <p>Its components capture `valid`, `active`, `expired`, `revoked`, `superseded`, and other values.</p>
+ *
+ * @param valid the valid
+ * @param active the active
+ * @param expired the expired
+ * @param revoked the revoked
+ * @param superseded the superseded
+ * @param checkedAt the checked at
+ * @param diagnostics the diagnostics
+ */
+
+
 public record KnowledgeAnswerResolutionConsensusTemporalValidation(
 
         boolean valid,

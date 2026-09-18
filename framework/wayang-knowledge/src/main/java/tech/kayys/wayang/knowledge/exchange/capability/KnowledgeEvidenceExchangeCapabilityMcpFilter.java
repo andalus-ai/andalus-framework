@@ -22,6 +22,11 @@ import tech.kayys.wayang.knowledge.exchange.framing.*;
 import java.time.Instant;
 import java.util.Objects;
 
+/**
+ * Provides knowledge evidence exchange capability mcp filter behavior for the Wayang framework.
+ */
+
+
 public final class KnowledgeEvidenceExchangeCapabilityMcpFilter {
 
     private final KnowledgeEvidenceExchangeNegotiatedSessionValidator

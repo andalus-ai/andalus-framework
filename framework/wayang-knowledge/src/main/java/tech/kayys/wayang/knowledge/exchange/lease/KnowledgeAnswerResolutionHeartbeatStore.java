@@ -44,6 +44,11 @@ import tech.kayys.wayang.knowledge.exchange.recovery.*;
 import java.util.Collection;
 import java.util.Optional;
 
+/**
+ * Defines the contract for knowledge answer resolution heartbeat store operations in the Wayang framework.
+ */
+
+
 public interface KnowledgeAnswerResolutionHeartbeatStore {
 
     void put(

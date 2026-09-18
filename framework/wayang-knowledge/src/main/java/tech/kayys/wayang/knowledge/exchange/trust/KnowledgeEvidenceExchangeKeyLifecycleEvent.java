@@ -22,6 +22,24 @@ import tech.kayys.wayang.knowledge.exchange.framing.*;
 import java.time.Instant;
 import java.util.Map;
 
+/**
+ * Represents a knowledge evidence exchange key lifecycle event.
+ *
+ * <p>Its components capture `event id`, `key id`, `key version`, `runtime id`, `tenant id`, and other values.</p>
+ *
+ * @param eventId the event id
+ * @param keyId the key id
+ * @param keyVersion the key version
+ * @param runtimeId the runtime id
+ * @param tenantId the tenant id
+ * @param type the type
+ * @param actorId the actor id
+ * @param reason the reason
+ * @param createdAt the created at
+ * @param metadata the metadata
+ */
+
+
 public record KnowledgeEvidenceExchangeKeyLifecycleEvent(
 
         String eventId,
@@ -45,6 +63,10 @@ public record KnowledgeEvidenceExchangeKeyLifecycleEvent(
         Map<String, String> metadata
 
 ) {
+    /**
+     * Enumerates the type values used by the Wayang framework.
+     */
+
 
     public enum Type {
         REGISTERED,

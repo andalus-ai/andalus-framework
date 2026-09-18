@@ -23,6 +23,26 @@ import java.time.Instant;
 import java.util.Map;
 import java.util.Objects;
 
+/**
+ * Represents a knowledge evidence exchange protocol envelope.
+ *
+ * <p>Its components capture `message id`, `type`, `protocol version`, `sender runtime id`, `receiver runtime id`, and other values.</p>
+ *
+ * @param messageId the message id
+ * @param type the type
+ * @param protocolVersion the protocol version
+ * @param senderRuntimeId the sender runtime id
+ * @param receiverRuntimeId the receiver runtime id
+ * @param sessionId the session id
+ * @param correlationId the correlation id
+ * @param nonce the nonce
+ * @param issuedAt the issued at
+ * @param expiresAt the expires at
+ * @param payloadFingerprint the payload fingerprint
+ * @param metadata the metadata
+ */
+
+
 public record KnowledgeEvidenceExchangeProtocolEnvelope(
 
         String messageId,

@@ -4,6 +4,22 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 
+/**
+ * Represents a knowledge answer resolution packed state block.
+ *
+ * <p>Its components capture `block id`, `algorithm`, `compression`, `data`, `uncompressed bytes`, and other values.</p>
+ *
+ * @param blockId the block id
+ * @param algorithm the algorithm
+ * @param compression the compression
+ * @param data the data
+ * @param uncompressedBytes the uncompressed bytes
+ * @param compressedBytes the compressed bytes
+ * @param logicalBlockIds the logical block ids
+ * @param metadata the metadata
+ */
+
+
 public record KnowledgeAnswerResolutionPackedStateBlock(
         String blockId,
         String algorithm,

@@ -43,6 +43,21 @@ import tech.kayys.wayang.knowledge.exchange.recovery.*;
 
 import java.util.Map;
 
+/**
+ * Represents a knowledge verified response seal.
+ *
+ * <p>Its components capture `seal id`, `response fingerprint`, `algorithm`, `key id`, `key version`, and other values.</p>
+ *
+ * @param sealId the seal id
+ * @param responseFingerprint the response fingerprint
+ * @param algorithm the algorithm
+ * @param keyId the key id
+ * @param keyVersion the key version
+ * @param signature the signature
+ * @param metadata the metadata
+ */
+
+
 public record KnowledgeVerifiedResponseSeal(
 
         String sealId,

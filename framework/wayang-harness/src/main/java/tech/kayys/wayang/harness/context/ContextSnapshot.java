@@ -5,6 +5,18 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.UUID;
 
+/**
+ * Represents a context snapshot.
+ *
+ * <p>Its components capture `snapshot id`, `timestamp`, `assembled`, `metadata`.</p>
+ *
+ * @param snapshotId the snapshot id
+ * @param timestamp the timestamp
+ * @param assembled the assembled
+ * @param metadata the metadata
+ */
+
+
 public record ContextSnapshot(
         String snapshotId,
         Instant timestamp,

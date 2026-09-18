@@ -27,6 +27,11 @@ import tech.kayys.wayang.knowledge.exchange.fusion.*;
 
 import java.time.Instant;
 
+/**
+ * Defines the contract for knowledge evidence freshness scorer operations in the Wayang framework.
+ */
+
+
 public interface KnowledgeEvidenceFreshnessScorer {
 
     double score(

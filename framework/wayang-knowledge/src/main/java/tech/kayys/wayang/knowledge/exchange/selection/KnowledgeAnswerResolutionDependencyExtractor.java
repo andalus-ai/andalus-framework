@@ -42,6 +42,10 @@ import tech.kayys.wayang.knowledge.exchange.recovery.*;
 
 
 import java.util.List;
+/**
+ * Defines the contract for knowledge answer resolution dependency extractor operations in the Wayang framework. Implementations provide the extract operation.
+ */
+
 
 public interface
 KnowledgeAnswerResolutionDependencyExtractor {

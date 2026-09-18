@@ -7,6 +7,11 @@ import tech.kayys.wayang.knowledge.snapshot.pack.KnowledgeSnapshotVerificationMa
 
 import java.util.Optional;
 
+/**
+ * Defines the contract for knowledge evidence remote resolver operations in the Wayang framework.
+ */
+
+
 public interface KnowledgeEvidenceRemoteResolver {
 
     Optional<KnowledgeEvidenceArtifact> resolve(

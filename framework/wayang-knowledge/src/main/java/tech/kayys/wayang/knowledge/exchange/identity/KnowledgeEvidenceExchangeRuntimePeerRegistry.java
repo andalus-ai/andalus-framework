@@ -22,6 +22,11 @@ import tech.kayys.wayang.knowledge.exchange.framing.*;
 import java.time.Instant;
 import java.util.Optional;
 
+/**
+ * Defines the contract for knowledge evidence exchange runtime peer registry operations in the Wayang framework.
+ */
+
+
 public interface KnowledgeEvidenceExchangeRuntimePeerRegistry {
 
     void trust(

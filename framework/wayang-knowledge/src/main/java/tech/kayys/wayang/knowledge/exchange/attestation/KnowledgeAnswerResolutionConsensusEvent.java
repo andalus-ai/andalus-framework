@@ -44,6 +44,22 @@ import tech.kayys.wayang.knowledge.exchange.recovery.*;
 import java.time.Instant;
 import java.util.Map;
 
+/**
+ * Represents a knowledge answer resolution consensus event.
+ *
+ * <p>Its components capture `event id`, `consensus id`, `key fingerprint`, `status`, `winning resolution fingerprint`, and other values.</p>
+ *
+ * @param eventId the event id
+ * @param consensusId the consensus id
+ * @param keyFingerprint the key fingerprint
+ * @param status the status
+ * @param winningResolutionFingerprint the winning resolution fingerprint
+ * @param runtimeId the runtime id
+ * @param createdAt the created at
+ * @param metadata the metadata
+ */
+
+
 public record KnowledgeAnswerResolutionConsensusEvent(
 
         String eventId,

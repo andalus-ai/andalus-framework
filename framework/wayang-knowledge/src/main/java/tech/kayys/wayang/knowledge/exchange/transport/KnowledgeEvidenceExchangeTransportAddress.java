@@ -21,6 +21,20 @@ import tech.kayys.wayang.knowledge.exchange.framing.*;
 
 import java.util.Map;
 
+/**
+ * Represents a knowledge evidence exchange transport address.
+ *
+ * <p>Its components capture `type`, `scheme`, `host`, `port`, `path`, and other values.</p>
+ *
+ * @param type the type
+ * @param scheme the scheme
+ * @param host the host
+ * @param port the port
+ * @param path the path
+ * @param metadata the metadata
+ */
+
+
 public record KnowledgeEvidenceExchangeTransportAddress(
 
         KnowledgeEvidenceExchangeTransportType type,

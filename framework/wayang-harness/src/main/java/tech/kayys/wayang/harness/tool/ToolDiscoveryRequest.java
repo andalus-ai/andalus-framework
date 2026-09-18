@@ -5,6 +5,17 @@ import tech.kayys.wayang.harness.resource.ResourceScope;
 
 import java.util.Set;
 
+/**
+ * Represents a tool discovery request.
+ *
+ * <p>Its components capture `capabilities`, `identity`, `resources`.</p>
+ *
+ * @param capabilities the capabilities
+ * @param identity the identity
+ * @param resources the resources
+ */
+
+
 public record ToolDiscoveryRequest(
         Set<String> capabilities,
         HarnessIdentity identity,

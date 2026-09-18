@@ -27,6 +27,20 @@ import tech.kayys.wayang.knowledge.exchange.fusion.*;
 
 import java.util.Map;
 
+/**
+ * Represents a knowledge evidence fusion relation.
+ *
+ * <p>Its components capture `source evidence id`, `target evidence id`, `type`, `confidence`, `reason`, and other values.</p>
+ *
+ * @param sourceEvidenceId the source evidence id
+ * @param targetEvidenceId the target evidence id
+ * @param type the type
+ * @param confidence the confidence
+ * @param reason the reason
+ * @param metadata the metadata
+ */
+
+
 public record KnowledgeEvidenceFusionRelation(
 
         String sourceEvidenceId,

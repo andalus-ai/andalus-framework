@@ -4,6 +4,18 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
+/**
+ * Represents a model input.
+ *
+ * <p>Its components capture `prompt`, `messages`, `system instructions`, `structured schema`.</p>
+ *
+ * @param prompt the prompt
+ * @param messages the messages
+ * @param systemInstructions the system instructions
+ * @param structuredSchema the structured schema
+ */
+
+
 public record ModelInput(
         String prompt,
         List<Map<String, Object>> messages,

@@ -6,6 +6,22 @@ import java.time.Instant;
 import java.util.Map;
 import java.util.Objects;
 
+/**
+ * Represents a knowledge snapshot retention root.
+ *
+ * <p>Its components capture `root id`, `snapshot id`, `type`, `tenant id`, `owner id`, and other values.</p>
+ *
+ * @param rootId the root id
+ * @param snapshotId the snapshot id
+ * @param type the type
+ * @param tenantId the tenant id
+ * @param ownerId the owner id
+ * @param createdAt the created at
+ * @param expiresAt the expires at
+ * @param metadata the metadata
+ */
+
+
 public record KnowledgeSnapshotRetentionRoot(
         String rootId,
         KnowledgeSnapshotId snapshotId,

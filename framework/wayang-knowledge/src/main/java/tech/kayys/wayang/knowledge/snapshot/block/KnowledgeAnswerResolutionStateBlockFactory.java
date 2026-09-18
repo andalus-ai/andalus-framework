@@ -3,6 +3,11 @@ package tech.kayys.wayang.knowledge.snapshot.block;
 import java.util.Map;
 import java.util.Objects;
 
+/**
+ * Provides knowledge answer resolution state block factory behavior for the Wayang framework.
+ */
+
+
 public final class KnowledgeAnswerResolutionStateBlockFactory {
 
     private final KnowledgeAnswerResolutionStateBlockFingerprinter fingerprinter;

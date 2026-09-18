@@ -44,6 +44,19 @@ import tech.kayys.wayang.knowledge.exchange.recovery.*;
 import java.util.List;
 import java.util.Map;
 
+/**
+ * Represents a knowledge answer provenance graph.
+ *
+ * <p>Its components capture `graph id`, `response id`, `nodes`, `edges`, `metadata`.</p>
+ *
+ * @param graphId the graph id
+ * @param responseId the response id
+ * @param nodes the nodes
+ * @param edges the edges
+ * @param metadata the metadata
+ */
+
+
 public record KnowledgeAnswerProvenanceGraph(
 
         String graphId,

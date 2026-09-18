@@ -3,6 +3,20 @@ package tech.kayys.wayang.knowledge.exchange;
 import java.util.Map;
 import java.util.Set;
 
+/**
+ * Represents a knowledge evidence exchange capabilities.
+ *
+ * <p>Its components capture `operations`, `hash algorithms`, `seal algorithms`, `streaming`, `partial verification`, and other values.</p>
+ *
+ * @param operations the operations
+ * @param hashAlgorithms the hash algorithms
+ * @param sealAlgorithms the seal algorithms
+ * @param streaming the streaming
+ * @param partialVerification the partial verification
+ * @param metadata the metadata
+ */
+
+
 public record KnowledgeEvidenceExchangeCapabilities(
         Set<KnowledgeEvidenceExchangeOperation> operations,
         Set<String> hashAlgorithms,

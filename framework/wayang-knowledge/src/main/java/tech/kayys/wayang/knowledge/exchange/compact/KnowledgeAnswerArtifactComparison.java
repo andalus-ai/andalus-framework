@@ -43,6 +43,21 @@ import tech.kayys.wayang.knowledge.exchange.recovery.*;
 
 import java.util.Map;
 
+/**
+ * Represents a knowledge answer artifact comparison.
+ *
+ * <p>Its components capture `left artifact id`, `right artifact id`, `type`, `similarity`, `confidence`, and other values.</p>
+ *
+ * @param leftArtifactId the left artifact id
+ * @param rightArtifactId the right artifact id
+ * @param type the type
+ * @param similarity the similarity
+ * @param confidence the confidence
+ * @param reason the reason
+ * @param metadata the metadata
+ */
+
+
 public record KnowledgeAnswerArtifactComparison(
 
         String leftArtifactId,

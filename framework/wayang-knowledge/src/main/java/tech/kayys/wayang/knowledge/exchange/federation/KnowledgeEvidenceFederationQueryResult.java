@@ -28,6 +28,21 @@ import tech.kayys.wayang.knowledge.exchange.fusion.*;
 import java.util.List;
 import java.util.Map;
 
+/**
+ * Represents a knowledge evidence federation query result.
+ *
+ * <p>Its components capture `query id`, `runtime id`, `evidence`, `verified`, `authorized`, and other values.</p>
+ *
+ * @param queryId the query id
+ * @param runtimeId the runtime id
+ * @param evidence the evidence
+ * @param verified the verified
+ * @param authorized the authorized
+ * @param status the status
+ * @param diagnostics the diagnostics
+ */
+
+
 public record KnowledgeEvidenceFederationQueryResult(
 
         String queryId,

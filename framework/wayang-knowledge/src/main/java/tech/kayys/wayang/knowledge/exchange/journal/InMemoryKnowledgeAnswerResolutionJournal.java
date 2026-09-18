@@ -5,6 +5,11 @@ import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentSkipListMap;
 
+/**
+ * Provides in memory knowledge answer resolution journal behavior for the Wayang framework.
+ */
+
+
 public final class InMemoryKnowledgeAnswerResolutionJournal
         implements KnowledgeAnswerResolutionJournal {
 

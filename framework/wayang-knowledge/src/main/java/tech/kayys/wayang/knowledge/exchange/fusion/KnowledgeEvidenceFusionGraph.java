@@ -27,6 +27,16 @@ import tech.kayys.wayang.knowledge.exchange.fusion.*;
 
 import java.util.List;
 
+/**
+ * Represents a knowledge evidence fusion graph.
+ *
+ * <p>Its components capture `candidates`, `relations`.</p>
+ *
+ * @param candidates the candidates
+ * @param relations the relations
+ */
+
+
 public record KnowledgeEvidenceFusionGraph(
 
         List<KnowledgeEvidenceFusionCandidate> candidates,

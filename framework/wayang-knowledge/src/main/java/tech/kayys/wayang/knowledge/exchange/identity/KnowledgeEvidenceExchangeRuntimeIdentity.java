@@ -23,6 +23,29 @@ import java.time.Instant;
 import java.util.Map;
 import java.util.Objects;
 
+/**
+ * Represents a knowledge evidence exchange runtime identity.
+ *
+ * <p>Its components capture `runtime id`, `identity version`, `display name`, `runtime type`, `organization id`, and other values.</p>
+ *
+ * @param runtimeId the runtime id
+ * @param identityVersion the identity version
+ * @param displayName the display name
+ * @param runtimeType the runtime type
+ * @param organizationId the organization id
+ * @param tenantId the tenant id
+ * @param createdAt the created at
+ * @param validFrom the valid from
+ * @param validUntil the valid until
+ * @param status the status
+ * @param identityFingerprint the identity fingerprint
+ * @param primaryKeyId the primary key id
+ * @param primaryKeyVersion the primary key version
+ * @param trustAnchorId the trust anchor id
+ * @param metadata the metadata
+ */
+
+
 public record KnowledgeEvidenceExchangeRuntimeIdentity(
 
         String runtimeId,

@@ -1,5 +1,10 @@
 package tech.kayys.wayang.knowledge.decision;
 
+/**
+ * Provides knowledge decision pipeline recorder behavior for the Wayang framework.
+ */
+
+
 public final class KnowledgeDecisionPipelineRecorder {
 
     private final KnowledgeDecisionTraceService traceService;

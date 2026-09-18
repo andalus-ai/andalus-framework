@@ -24,6 +24,20 @@ import tech.kayys.wayang.knowledge.exchange.federation.*;
 import tech.kayys.wayang.knowledge.exchange.routing.*;
 import tech.kayys.wayang.knowledge.exchange.fusion.*;
 
+/**
+ * Represents a knowledge evidence retrieval candidate.
+ *
+ * <p>Its components capture `runtime id`, `score`, `reason`, `local`, `trusted`, and other values.</p>
+ *
+ * @param runtimeId the runtime id
+ * @param score the score
+ * @param reason the reason
+ * @param local the local
+ * @param trusted the trusted
+ * @param verified the verified
+ */
+
+
 
 public record KnowledgeEvidenceRetrievalCandidate(
 

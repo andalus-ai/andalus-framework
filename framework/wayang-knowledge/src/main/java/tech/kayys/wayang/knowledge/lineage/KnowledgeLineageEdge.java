@@ -15,6 +15,10 @@ public record KnowledgeLineageEdge(
         Instant establishedAt,
         Map<String, Object> metadata
 ) {
+    /**
+     * Enumerates the lineage relation values used by the Wayang framework.
+     */
+
 
     public enum LineageRelation {
         DERIVED_FROM,

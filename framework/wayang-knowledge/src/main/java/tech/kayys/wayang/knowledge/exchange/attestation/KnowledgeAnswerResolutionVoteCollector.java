@@ -43,6 +43,10 @@ import tech.kayys.wayang.knowledge.exchange.recovery.*;
 
 import java.time.Instant;
 import java.util.List;
+/**
+ * Defines the contract for knowledge answer resolution vote collector operations in the Wayang framework. Implementations provide the collect operation.
+ */
+
 
 public interface
 KnowledgeAnswerResolutionVoteCollector {

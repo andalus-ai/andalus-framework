@@ -2,6 +2,17 @@ package tech.kayys.wayang.harness.model;
 
 import java.math.BigDecimal;
 
+/**
+ * Represents a model pricing.
+ *
+ * <p>Its components capture `cost per million input tokens`, `cost per million output tokens`, `currency`.</p>
+ *
+ * @param costPerMillionInputTokens the cost per million input tokens
+ * @param costPerMillionOutputTokens the cost per million output tokens
+ * @param currency the currency
+ */
+
+
 public record ModelPricing(
         BigDecimal costPerMillionInputTokens,
         BigDecimal costPerMillionOutputTokens,

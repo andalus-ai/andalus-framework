@@ -44,6 +44,27 @@ import tech.kayys.wayang.knowledge.exchange.recovery.*;
 import java.time.Instant;
 import java.util.Map;
 
+/**
+ * Represents a knowledge verified answer artifact.
+ *
+ * <p>Its components capture `artifact id`, `response id`, `execution id`, `agent id`, `tenant id`, and other values.</p>
+ *
+ * @param artifactId the artifact id
+ * @param responseId the response id
+ * @param executionId the execution id
+ * @param agentId the agent id
+ * @param tenantId the tenant id
+ * @param workspaceId the workspace id
+ * @param projectId the project id
+ * @param response the response
+ * @param provenance the provenance
+ * @param snapshotId the snapshot id
+ * @param responseFingerprint the response fingerprint
+ * @param createdAt the created at
+ * @param metadata the metadata
+ */
+
+
 public record KnowledgeVerifiedAnswerArtifact(
 
         String artifactId,

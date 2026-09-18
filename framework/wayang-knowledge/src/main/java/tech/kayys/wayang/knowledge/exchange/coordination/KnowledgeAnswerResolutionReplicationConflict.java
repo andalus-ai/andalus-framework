@@ -43,6 +43,23 @@ import tech.kayys.wayang.knowledge.exchange.recovery.*;
 
 import java.util.Map;
 
+/**
+ * Represents a knowledge answer resolution replication conflict.
+ *
+ * <p>Its components capture `conflict id`, `key fingerprint`, `left runtime id`, `right runtime id`, `type`, and other values.</p>
+ *
+ * @param conflictId the conflict id
+ * @param keyFingerprint the key fingerprint
+ * @param leftRuntimeId the left runtime id
+ * @param rightRuntimeId the right runtime id
+ * @param type the type
+ * @param leftResolutionFingerprint the left resolution fingerprint
+ * @param rightResolutionFingerprint the right resolution fingerprint
+ * @param reason the reason
+ * @param metadata the metadata
+ */
+
+
 public record KnowledgeAnswerResolutionReplicationConflict(
 
         String conflictId,

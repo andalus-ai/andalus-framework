@@ -24,6 +24,11 @@ import tech.kayys.wayang.knowledge.exchange.federation.*;
 import tech.kayys.wayang.knowledge.exchange.routing.*;
 import tech.kayys.wayang.knowledge.exchange.fusion.*;
 
+/**
+ * Defines the knowledge evidence federated retrieval strategy values used by the Wayang framework.
+ */
+
+
 
 public enum KnowledgeEvidenceFederatedRetrievalStrategy {
 

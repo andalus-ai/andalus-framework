@@ -28,6 +28,31 @@ import tech.kayys.wayang.knowledge.exchange.fusion.*;
 import java.time.Instant;
 import java.util.Map;
 
+/**
+ * Represents a knowledge evidence transfer session.
+ *
+ * <p>Its components capture `transfer id`, `operation`, `session id`, `stream id`, `artifact id`, and other values.</p>
+ *
+ * @param transferId the transfer id
+ * @param operation the operation
+ * @param sessionId the session id
+ * @param streamId the stream id
+ * @param artifactId the artifact id
+ * @param resourceId the resource id
+ * @param startOffset the start offset
+ * @param currentOffset the current offset
+ * @param totalLength the total length
+ * @param nextSequence the next sequence
+ * @param state the state
+ * @param artifactFingerprint the artifact fingerprint
+ * @param resourceFingerprint the resource fingerprint
+ * @param merkleRoot the merkle root
+ * @param createdAt the created at
+ * @param updatedAt the updated at
+ * @param metadata the metadata
+ */
+
+
 public record KnowledgeEvidenceTransferSession(
 
         String transferId,

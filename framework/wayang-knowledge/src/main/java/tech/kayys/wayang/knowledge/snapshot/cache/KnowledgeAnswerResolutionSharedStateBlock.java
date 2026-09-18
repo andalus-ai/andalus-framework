@@ -3,6 +3,19 @@ package tech.kayys.wayang.knowledge.snapshot.cache;
 import java.util.Arrays;
 import java.util.Map;
 
+/**
+ * Represents a knowledge answer resolution shared state block.
+ *
+ * <p>Its components capture `id`, `data`, `size bytes`, `created at epoch millis`, `metadata`.</p>
+ *
+ * @param id the id
+ * @param data the data
+ * @param sizeBytes the size bytes
+ * @param createdAtEpochMillis the created at epoch millis
+ * @param metadata the metadata
+ */
+
+
 public record KnowledgeAnswerResolutionSharedStateBlock(
         KnowledgeAnswerResolutionStateBlockId id,
         byte[] data,

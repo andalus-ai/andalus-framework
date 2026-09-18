@@ -6,6 +6,11 @@ import tech.kayys.wayang.harness.resource.ResourceScope;
 import tech.kayys.wayang.harness.tool.CancellationToken;
 import tech.kayys.wayang.harness.tool.ToolLogger;
 
+/**
+ * Defines the contract for model execution context operations in the Wayang framework.
+ */
+
+
 public interface ModelExecutionContext {
 
     ExecutionId executionId();

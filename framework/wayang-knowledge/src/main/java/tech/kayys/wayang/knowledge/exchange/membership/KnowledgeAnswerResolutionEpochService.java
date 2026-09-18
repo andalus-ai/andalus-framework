@@ -4,6 +4,11 @@ import tech.kayys.wayang.knowledge.exchange.attestation.KnowledgeAnswerResolutio
 
 import java.time.Instant;
 
+/**
+ * Defines the contract for knowledge answer resolution epoch service operations in the Wayang framework.
+ */
+
+
 public interface KnowledgeAnswerResolutionEpochService {
 
     KnowledgeAnswerResolutionConsensusEpoch create(

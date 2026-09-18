@@ -2,6 +2,17 @@ package tech.kayys.wayang.harness.governance.budget;
 
 import java.util.Objects;
 
+/**
+ * Represents a budget request.
+ *
+ * <p>Its components capture `dimension`, `estimated cost`, `operation`.</p>
+ *
+ * @param dimension the dimension
+ * @param estimatedCost the estimated cost
+ * @param operation the operation
+ */
+
+
 public record BudgetRequest(
         BudgetDimension dimension,
         BudgetAmount estimatedCost,

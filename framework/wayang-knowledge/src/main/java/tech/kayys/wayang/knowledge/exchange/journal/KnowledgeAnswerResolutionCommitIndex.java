@@ -1,5 +1,17 @@
 package tech.kayys.wayang.knowledge.exchange.journal;
 
+/**
+ * Represents a knowledge answer resolution commit index.
+ *
+ * <p>Its components capture `committed index`, `applied index`, `last index`, `current term`.</p>
+ *
+ * @param committedIndex the committed index
+ * @param appliedIndex the applied index
+ * @param lastIndex the last index
+ * @param currentTerm the current term
+ */
+
+
 public record KnowledgeAnswerResolutionCommitIndex(
         long committedIndex,
         long appliedIndex,

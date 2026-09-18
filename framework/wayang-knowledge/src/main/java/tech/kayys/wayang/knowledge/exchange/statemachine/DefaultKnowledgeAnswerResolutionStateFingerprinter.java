@@ -5,6 +5,11 @@ import java.security.MessageDigest;
 import java.util.HexFormat;
 import java.util.Objects;
 
+/**
+ * Provides the default implementation of the knowledge answer resolution state fingerprinter contract.
+ */
+
+
 public final class DefaultKnowledgeAnswerResolutionStateFingerprinter
         implements KnowledgeAnswerResolutionStateFingerprinter {
 

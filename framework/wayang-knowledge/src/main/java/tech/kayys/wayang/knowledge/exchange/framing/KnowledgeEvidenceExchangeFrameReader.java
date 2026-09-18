@@ -21,6 +21,11 @@ import tech.kayys.wayang.knowledge.exchange.framing.*;
 
 import java.io.InputStream;
 
+/**
+ * Provides knowledge evidence exchange frame reader behavior for the Wayang framework.
+ */
+
+
 public final class KnowledgeEvidenceExchangeFrameReader {
 
     private final KnowledgeEvidenceExchangeFrameCodec codec;

@@ -6,6 +6,26 @@ import java.time.Instant;
 import java.util.Map;
 import java.util.Objects;
 
+/**
+ * Represents a knowledge snapshot secure seal.
+ *
+ * <p>Its components capture `seal id`, `snapshot id`, `snapshot fingerprint`, `algorithm`, `anchor type`, and other values.</p>
+ *
+ * @param sealId the seal id
+ * @param snapshotId the snapshot id
+ * @param snapshotFingerprint the snapshot fingerprint
+ * @param algorithm the algorithm
+ * @param anchorType the anchor type
+ * @param keyId the key id
+ * @param keyVersion the key version
+ * @param signature the signature
+ * @param createdAt the created at
+ * @param expiresAt the expires at
+ * @param status the status
+ * @param metadata the metadata
+ */
+
+
 public record KnowledgeSnapshotSecureSeal(
         String sealId,
         KnowledgeSnapshotId snapshotId,

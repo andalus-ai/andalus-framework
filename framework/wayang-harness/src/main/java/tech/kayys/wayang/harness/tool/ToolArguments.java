@@ -3,6 +3,11 @@ package tech.kayys.wayang.harness.tool;
 import java.util.Map;
 import java.util.Set;
 
+/**
+ * Defines the contract for tool arguments operations in the Wayang framework.
+ */
+
+
 public interface ToolArguments {
 
     Object value(String name);

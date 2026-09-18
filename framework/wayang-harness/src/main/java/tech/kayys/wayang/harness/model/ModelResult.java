@@ -2,6 +2,19 @@ package tech.kayys.wayang.harness.model;
 
 import java.util.Objects;
 
+/**
+ * Represents a model result.
+ *
+ * <p>Its components capture `invocation id`, `status`, `output`, `usage`, `metadata`.</p>
+ *
+ * @param invocationId the invocation id
+ * @param status the status
+ * @param output the output
+ * @param usage the usage
+ * @param metadata the metadata
+ */
+
+
 public record ModelResult(
         ModelInvocationId invocationId,
         ModelResultStatus status,

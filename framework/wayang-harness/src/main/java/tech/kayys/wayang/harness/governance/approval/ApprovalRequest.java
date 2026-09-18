@@ -6,6 +6,19 @@ import java.time.Instant;
 import java.util.Map;
 import java.util.Objects;
 
+/**
+ * Represents a approval request.
+ *
+ * <p>Its components capture `id`, `action`, `reason`, `evidence`, `expires at`.</p>
+ *
+ * @param id the id
+ * @param action the action
+ * @param reason the reason
+ * @param evidence the evidence
+ * @param expiresAt the expires at
+ */
+
+
 public record ApprovalRequest(
         ApprovalId id,
         HarnessAction action,

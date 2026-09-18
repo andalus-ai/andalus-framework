@@ -1,5 +1,10 @@
 package tech.kayys.wayang.knowledge.exchange.membership;
 
+/**
+ * Provides the default implementation of the knowledge answer resolution membership change validator contract.
+ */
+
+
 public final class DefaultKnowledgeAnswerResolutionMembershipChangeValidator
         implements KnowledgeAnswerResolutionMembershipChangeValidator {
 

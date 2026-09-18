@@ -3,6 +3,22 @@ package tech.kayys.wayang.knowledge.exchange.statemachine;
 import java.util.Map;
 import java.util.Set;
 
+/**
+ * Represents a knowledge answer resolution state.
+ *
+ * <p>Its components capture `last applied index`, `current term`, `current epoch id`, `consensuses`, `revoked consensus ids`, and other values.</p>
+ *
+ * @param lastAppliedIndex the last applied index
+ * @param currentTerm the current term
+ * @param currentEpochId the current epoch id
+ * @param consensuses the consensuses
+ * @param revokedConsensusIds the revoked consensus ids
+ * @param activeLeaseIds the active lease ids
+ * @param activeRuntimeIds the active runtime ids
+ * @param entries the entries
+ */
+
+
 public record KnowledgeAnswerResolutionState(
         long lastAppliedIndex,
         long currentTerm,

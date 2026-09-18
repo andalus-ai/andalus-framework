@@ -27,6 +27,11 @@ import tech.kayys.wayang.knowledge.exchange.fusion.*;
 
 import java.util.List;
 
+/**
+ * Defines the contract for knowledge evidence distributed retrieval planner operations in the Wayang framework.
+ */
+
+
 public interface KnowledgeEvidenceDistributedRetrievalPlanner {
 
     KnowledgeEvidenceRetrievalPlan plan(

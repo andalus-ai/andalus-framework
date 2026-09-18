@@ -21,6 +21,18 @@ import tech.kayys.wayang.knowledge.exchange.framing.*;
 
 import java.util.Map;
 
+/**
+ * Represents a knowledge evidence exchange runtime handshake result.
+ *
+ * <p>Its components capture `status`, `handshake`, `reason`, `metadata`.</p>
+ *
+ * @param status the status
+ * @param handshake the handshake
+ * @param reason the reason
+ * @param metadata the metadata
+ */
+
+
 public record KnowledgeEvidenceExchangeRuntimeHandshakeResult(
 
         KnowledgeEvidenceExchangeRuntimeHandshakeStatus status,

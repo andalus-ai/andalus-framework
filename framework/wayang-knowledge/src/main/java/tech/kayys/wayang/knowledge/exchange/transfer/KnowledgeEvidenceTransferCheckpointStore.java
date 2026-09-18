@@ -27,6 +27,11 @@ import tech.kayys.wayang.knowledge.exchange.fusion.*;
 
 import java.util.Optional;
 
+/**
+ * Defines the contract for knowledge evidence transfer checkpoint store operations in the Wayang framework.
+ */
+
+
 public interface KnowledgeEvidenceTransferCheckpointStore {
 
     void save(

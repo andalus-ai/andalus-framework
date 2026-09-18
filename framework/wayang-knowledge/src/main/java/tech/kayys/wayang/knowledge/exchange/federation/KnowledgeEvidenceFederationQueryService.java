@@ -27,6 +27,11 @@ import tech.kayys.wayang.knowledge.exchange.fusion.*;
 
 import java.util.concurrent.CompletableFuture;
 
+/**
+ * Defines the contract for knowledge evidence federation query service operations in the Wayang framework.
+ */
+
+
 public interface KnowledgeEvidenceFederationQueryService {
 
     CompletableFuture<

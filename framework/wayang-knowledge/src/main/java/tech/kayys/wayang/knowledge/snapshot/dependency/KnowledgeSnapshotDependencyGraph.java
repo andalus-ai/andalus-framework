@@ -4,6 +4,11 @@ import tech.kayys.wayang.knowledge.snapshot.KnowledgeSnapshotId;
 
 import java.util.List;
 
+/**
+ * Defines the contract for knowledge snapshot dependency graph operations in the Wayang framework.
+ */
+
+
 public interface KnowledgeSnapshotDependencyGraph {
 
     void addDependency(KnowledgeSnapshotDependency dependency);

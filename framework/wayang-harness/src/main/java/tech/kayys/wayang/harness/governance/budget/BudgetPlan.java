@@ -2,6 +2,15 @@ package tech.kayys.wayang.harness.governance.budget;
 
 import java.util.List;
 
+/**
+ * Represents a budget plan.
+ *
+ * <p>Its components capture `options`.</p>
+ *
+ * @param options the options
+ */
+
+
 public record BudgetPlan(
         List<BudgetOption> options
 ) {

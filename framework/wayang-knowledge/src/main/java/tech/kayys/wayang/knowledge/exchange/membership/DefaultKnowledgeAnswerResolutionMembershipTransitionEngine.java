@@ -6,6 +6,11 @@ import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * Provides the default implementation of the knowledge answer resolution membership transition engine contract.
+ */
+
+
 public final class DefaultKnowledgeAnswerResolutionMembershipTransitionEngine
         implements KnowledgeAnswerResolutionMembershipTransitionEngine {
 

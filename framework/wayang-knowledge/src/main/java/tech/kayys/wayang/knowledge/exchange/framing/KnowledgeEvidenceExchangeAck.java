@@ -18,6 +18,17 @@ import tech.kayys.wayang.knowledge.exchange.protocol.*;
 import tech.kayys.wayang.knowledge.exchange.transport.*;
 import tech.kayys.wayang.knowledge.exchange.framing.*;
 
+/**
+ * Represents a knowledge evidence exchange ack.
+ *
+ * <p>Its components capture `stream id`, `acknowledged sequence`, `acknowledged offset`.</p>
+ *
+ * @param streamId the stream id
+ * @param acknowledgedSequence the acknowledged sequence
+ * @param acknowledgedOffset the acknowledged offset
+ */
+
+
 
 public record KnowledgeEvidenceExchangeAck(
 

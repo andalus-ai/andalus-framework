@@ -28,6 +28,11 @@ import tech.kayys.wayang.knowledge.exchange.fusion.*;
 import java.io.IOException;
 import java.io.OutputStream;
 
+/**
+ * Defines the contract for knowledge evidence transfer sink operations in the Wayang framework.
+ */
+
+
 public interface KnowledgeEvidenceTransferSink {
 
     String artifactId();

@@ -21,6 +21,11 @@ import tech.kayys.wayang.knowledge.exchange.framing.*;
 
 import java.util.concurrent.atomic.AtomicLong;
 
+/**
+ * Provides knowledge evidence exchange flow control window behavior for the Wayang framework.
+ */
+
+
 public final class KnowledgeEvidenceExchangeFlowControlWindow {
 
     private final AtomicLong availableBytes;

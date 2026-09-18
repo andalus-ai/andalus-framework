@@ -43,6 +43,23 @@ import tech.kayys.wayang.knowledge.exchange.recovery.*;
 
 import java.util.Map;
 
+/**
+ * Represents a knowledge answer provenance node.
+ *
+ * <p>Its components capture `node id`, `type`, `external id`, `version id`, `fingerprint`, and other values.</p>
+ *
+ * @param nodeId the node id
+ * @param type the type
+ * @param externalId the external id
+ * @param versionId the version id
+ * @param fingerprint the fingerprint
+ * @param tenantId the tenant id
+ * @param workspaceId the workspace id
+ * @param projectId the project id
+ * @param metadata the metadata
+ */
+
+
 public record KnowledgeAnswerProvenanceNode(
 
         String nodeId,

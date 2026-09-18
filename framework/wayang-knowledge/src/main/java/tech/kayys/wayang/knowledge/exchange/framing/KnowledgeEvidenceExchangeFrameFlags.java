@@ -22,6 +22,11 @@ import tech.kayys.wayang.knowledge.exchange.framing.*;
 import java.util.EnumSet;
 import java.util.Set;
 
+/**
+ * Defines the knowledge evidence exchange frame flags values used by the Wayang framework.
+ */
+
+
 public enum KnowledgeEvidenceExchangeFrameFlags {
 
     FIRST,

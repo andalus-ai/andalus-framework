@@ -44,6 +44,24 @@ import tech.kayys.wayang.knowledge.exchange.recovery.*;
 import java.time.Instant;
 import java.util.Map;
 
+/**
+ * Represents a knowledge answer resolution replication.
+ *
+ * <p>Its components capture `replication id`, `key fingerprint`, `source runtime id`, `target runtime id`, `version vector`, and other values.</p>
+ *
+ * @param replicationId the replication id
+ * @param keyFingerprint the key fingerprint
+ * @param sourceRuntimeId the source runtime id
+ * @param targetRuntimeId the target runtime id
+ * @param versionVector the version vector
+ * @param resolutionFingerprint the resolution fingerprint
+ * @param dependencyFingerprint the dependency fingerprint
+ * @param issuedAt the issued at
+ * @param expiresAt the expires at
+ * @param metadata the metadata
+ */
+
+
 public record KnowledgeAnswerResolutionReplication(
 
         String replicationId,

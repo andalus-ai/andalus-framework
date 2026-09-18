@@ -44,6 +44,20 @@ import tech.kayys.wayang.knowledge.exchange.recovery.*;
 import java.util.List;
 import java.util.Map;
 
+/**
+ * Represents a knowledge answer artifact discovery result.
+ *
+ * <p>Its components capture `query id`, `candidates`, `selected`, `complete`, `remote used`, and other values.</p>
+ *
+ * @param queryId the query id
+ * @param candidates the candidates
+ * @param selected the selected
+ * @param complete the complete
+ * @param remoteUsed the remote used
+ * @param diagnostics the diagnostics
+ */
+
+
 public record KnowledgeAnswerArtifactDiscoveryResult(
 
         String queryId,

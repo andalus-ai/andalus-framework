@@ -27,6 +27,11 @@ import tech.kayys.wayang.knowledge.exchange.fusion.*;
 
 import java.io.OutputStream;
 
+/**
+ * Defines the contract for knowledge evidence artifact atomic publisher operations in the Wayang framework.
+ */
+
+
 public interface KnowledgeEvidenceArtifactAtomicPublisher {
 
     OutputStream begin(

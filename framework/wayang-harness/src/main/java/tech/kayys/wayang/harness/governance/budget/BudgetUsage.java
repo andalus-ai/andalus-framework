@@ -2,6 +2,17 @@ package tech.kayys.wayang.harness.governance.budget;
 
 import java.util.Objects;
 
+/**
+ * Represents a budget usage.
+ *
+ * <p>Its components capture `dimension`, `consumed`, `reserved`.</p>
+ *
+ * @param dimension the dimension
+ * @param consumed the consumed
+ * @param reserved the reserved
+ */
+
+
 public record BudgetUsage(
         BudgetDimension dimension,
         BudgetAmount consumed,

@@ -45,6 +45,28 @@ import java.time.Instant;
 import java.util.List;
 import java.util.Map;
 
+/**
+ * Represents a knowledge answer resolution consensus result.
+ *
+ * <p>Its components capture `consensus id`, `key fingerprint`, `status`, `winning resolution fingerprint`, `winning dependency fingerprint`, and other values.</p>
+ *
+ * @param consensusId the consensus id
+ * @param keyFingerprint the key fingerprint
+ * @param status the status
+ * @param winningResolutionFingerprint the winning resolution fingerprint
+ * @param winningDependencyFingerprint the winning dependency fingerprint
+ * @param eligibleParticipants the eligible participants
+ * @param receivedVotes the received votes
+ * @param agreeingVotes the agreeing votes
+ * @param requiredVotes the required votes
+ * @param agreementRatio the agreement ratio
+ * @param votes the votes
+ * @param diagnostics the diagnostics
+ * @param decidedAt the decided at
+ * @param metadata the metadata
+ */
+
+
 public record KnowledgeAnswerResolutionConsensusResult(
 
         String consensusId,

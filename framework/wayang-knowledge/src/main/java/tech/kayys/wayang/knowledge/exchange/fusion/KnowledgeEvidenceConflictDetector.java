@@ -27,6 +27,11 @@ import tech.kayys.wayang.knowledge.exchange.fusion.*;
 
 import java.util.List;
 
+/**
+ * Defines the contract for knowledge evidence conflict detector operations in the Wayang framework.
+ */
+
+
 public interface KnowledgeEvidenceConflictDetector {
 
     List<KnowledgeEvidenceFusionConflict> detect(

@@ -44,6 +44,23 @@ import tech.kayys.wayang.knowledge.exchange.recovery.*;
 import java.time.Duration;
 import java.util.Objects;
 
+/**
+ * Represents a knowledge answer resolution freshness policy.
+ *
+ * <p>Its components capture `lease duration`, `grace period`, `heartbeat timeout`, `maximum clock skew`, `minimum live participants`, and other values.</p>
+ *
+ * @param leaseDuration the lease duration
+ * @param gracePeriod the grace period
+ * @param heartbeatTimeout the heartbeat timeout
+ * @param maximumClockSkew the maximum clock skew
+ * @param minimumLiveParticipants the minimum live participants
+ * @param requireParticipantLiveness the require participant liveness
+ * @param requireLease the require lease
+ * @param allowGracePeriod the allow grace period
+ * @param allowOfflineGrace the allow offline grace
+ */
+
+
 public record KnowledgeAnswerResolutionFreshnessPolicy(
         Duration leaseDuration,
         Duration gracePeriod,

@@ -3,6 +3,19 @@ package tech.kayys.wayang.harness.tool;
 import java.time.Duration;
 import java.util.Objects;
 
+/**
+ * Represents a tool execution profile.
+ *
+ * <p>Its components capture `deterministic`, `read only`, `idempotent`, `estimated duration`, `kind`.</p>
+ *
+ * @param deterministic the deterministic
+ * @param readOnly the read only
+ * @param idempotent the idempotent
+ * @param estimatedDuration the estimated duration
+ * @param kind the kind
+ */
+
+
 public record ToolExecutionProfile(
         boolean deterministic,
         boolean readOnly,

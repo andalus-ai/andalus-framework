@@ -24,6 +24,18 @@ import tech.kayys.wayang.knowledge.exchange.federation.*;
 import tech.kayys.wayang.knowledge.exchange.routing.*;
 import tech.kayys.wayang.knowledge.exchange.fusion.*;
 
+/**
+ * Represents a knowledge evidence federation candidate.
+ *
+ * <p>Its components capture `location`, `capability`, `routing score`, `reason`.</p>
+ *
+ * @param location the location
+ * @param capability the capability
+ * @param routingScore the routing score
+ * @param reason the reason
+ */
+
+
 
 public record KnowledgeEvidenceFederationCandidate(
 

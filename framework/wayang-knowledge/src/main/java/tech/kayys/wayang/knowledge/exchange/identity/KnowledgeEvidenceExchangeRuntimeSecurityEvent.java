@@ -22,6 +22,22 @@ import tech.kayys.wayang.knowledge.exchange.framing.*;
 import java.time.Instant;
 import java.util.Map;
 
+/**
+ * Represents a knowledge evidence exchange runtime security event.
+ *
+ * <p>Its components capture `event id`, `local runtime id`, `remote runtime id`, `type`, `successful`, and other values.</p>
+ *
+ * @param eventId the event id
+ * @param localRuntimeId the local runtime id
+ * @param remoteRuntimeId the remote runtime id
+ * @param type the type
+ * @param successful the successful
+ * @param reason the reason
+ * @param createdAt the created at
+ * @param metadata the metadata
+ */
+
+
 public record KnowledgeEvidenceExchangeRuntimeSecurityEvent(
 
         String eventId,
@@ -41,6 +57,10 @@ public record KnowledgeEvidenceExchangeRuntimeSecurityEvent(
         Map<String, String> metadata
 
 ) {
+    /**
+     * Enumerates the type values used by the Wayang framework.
+     */
+
 
     public enum Type {
 

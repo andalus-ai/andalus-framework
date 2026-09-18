@@ -4,6 +4,23 @@ import java.time.Instant;
 import java.util.List;
 import java.util.Objects;
 
+/**
+ * Represents a knowledge answer resolution joint membership.
+ *
+ * <p>Its components capture `transition id`, `old epoch id`, `new epoch id`, `old runtime ids`, `new runtime ids`, and other values.</p>
+ *
+ * @param transitionId the transition id
+ * @param oldEpochId the old epoch id
+ * @param newEpochId the new epoch id
+ * @param oldRuntimeIds the old runtime ids
+ * @param newRuntimeIds the new runtime ids
+ * @param oldQuorum the old quorum
+ * @param newQuorum the new quorum
+ * @param effectiveFrom the effective from
+ * @param effectiveUntil the effective until
+ */
+
+
 public record KnowledgeAnswerResolutionJointMembership(
         String transitionId,
         String oldEpochId,

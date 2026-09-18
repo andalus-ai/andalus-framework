@@ -22,6 +22,23 @@ import tech.kayys.wayang.knowledge.exchange.framing.*;
 import java.time.Instant;
 import java.util.Map;
 
+/**
+ * Represents a knowledge evidence exchange protocol negotiation message.
+ *
+ * <p>Its components capture `message id`, `correlation id`, `result`, `local manifest fingerprint`, `remote manifest fingerprint`, and other values.</p>
+ *
+ * @param messageId the message id
+ * @param correlationId the correlation id
+ * @param result the result
+ * @param localManifestFingerprint the local manifest fingerprint
+ * @param remoteManifestFingerprint the remote manifest fingerprint
+ * @param selectedProtocolVersion the selected protocol version
+ * @param issuedAt the issued at
+ * @param expiresAt the expires at
+ * @param metadata the metadata
+ */
+
+
 public record KnowledgeEvidenceExchangeProtocolNegotiationMessage(
 
         String messageId,

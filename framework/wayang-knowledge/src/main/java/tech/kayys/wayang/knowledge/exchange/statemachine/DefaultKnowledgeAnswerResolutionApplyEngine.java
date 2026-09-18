@@ -5,6 +5,11 @@ import tech.kayys.wayang.knowledge.exchange.journal.KnowledgeAnswerResolutionLog
 
 import java.util.Objects;
 
+/**
+ * Provides the default implementation of the knowledge answer resolution apply engine contract.
+ */
+
+
 public final class DefaultKnowledgeAnswerResolutionApplyEngine
         implements KnowledgeAnswerResolutionApplyEngine {
 

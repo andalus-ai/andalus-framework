@@ -7,6 +7,21 @@ import tech.kayys.wayang.harness.execution.state.ExecutionId;
 
 import java.util.Objects;
 
+/**
+ * Represents a default agent turn context.
+ *
+ * <p>Its components capture `execution id`, `identity`, `context`, `capabilities`, `budget`, and other values.</p>
+ *
+ * @param executionId the execution id
+ * @param identity the identity
+ * @param context the context
+ * @param capabilities the capabilities
+ * @param budget the budget
+ * @param tools the tools
+ * @param models the models
+ */
+
+
 public record DefaultAgentTurnContext(
         ExecutionId executionId,
         HarnessIdentity identity,

@@ -1,5 +1,15 @@
 package tech.kayys.wayang.knowledge.snapshot.artifact;
 
+/**
+ * Represents a knowledge evidence artifact.
+ *
+ * <p>Its components capture `metadata`, `content`.</p>
+ *
+ * @param metadata the metadata
+ * @param content the content
+ */
+
+
 public record KnowledgeEvidenceArtifact(
         KnowledgeEvidenceArtifactMetadata metadata,
         byte[] content

@@ -43,6 +43,18 @@ import tech.kayys.wayang.knowledge.exchange.recovery.*;
 
 import java.util.List;
 
+/**
+ * Represents a knowledge answer artifact query intent.
+ *
+ * <p>Its components capture `original query`, `terms`, `concepts`, `entities`.</p>
+ *
+ * @param originalQuery the original query
+ * @param terms the terms
+ * @param concepts the concepts
+ * @param entities the entities
+ */
+
+
 public record KnowledgeAnswerArtifactQueryIntent(
 
         String originalQuery,

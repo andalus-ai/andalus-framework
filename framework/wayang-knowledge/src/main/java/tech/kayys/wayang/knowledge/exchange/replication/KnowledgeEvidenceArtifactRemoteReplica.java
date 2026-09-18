@@ -27,6 +27,11 @@ import tech.kayys.wayang.knowledge.exchange.fusion.*;
 
 import java.util.concurrent.CompletableFuture;
 
+/**
+ * Defines the contract for knowledge evidence artifact remote replica operations in the Wayang framework.
+ */
+
+
 public interface KnowledgeEvidenceArtifactRemoteReplica {
 
     String runtimeId();

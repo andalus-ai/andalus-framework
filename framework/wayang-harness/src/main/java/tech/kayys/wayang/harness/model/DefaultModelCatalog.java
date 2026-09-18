@@ -3,6 +3,11 @@ package tech.kayys.wayang.harness.model;
 import java.util.*;
 import java.util.concurrent.CopyOnWriteArrayList;
 
+/**
+ * Provides the default implementation of the model catalog contract.
+ */
+
+
 public class DefaultModelCatalog implements ModelCatalog {
 
     private final List<ModelProvider> providers = new CopyOnWriteArrayList<>();

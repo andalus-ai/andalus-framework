@@ -4,6 +4,11 @@ import tech.kayys.wayang.harness.context.ContextSnapshot;
 import tech.kayys.wayang.harness.context.HarnessIdentity;
 import tech.kayys.wayang.harness.execution.state.ExecutionId;
 
+/**
+ * Defines the contract for agent turn context operations in the Wayang framework.
+ */
+
+
 public interface AgentTurnContext {
 
     ExecutionId executionId();

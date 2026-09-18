@@ -3,6 +3,11 @@ package tech.kayys.wayang.harness.tool;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
+/**
+ * Defines the contract for tool scheduler operations in the Wayang framework.
+ */
+
+
 public interface ToolScheduler {
 
     ToolExecutionHandle submit(

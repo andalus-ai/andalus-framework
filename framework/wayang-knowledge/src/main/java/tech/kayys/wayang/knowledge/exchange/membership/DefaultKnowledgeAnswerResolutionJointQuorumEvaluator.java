@@ -7,6 +7,11 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+/**
+ * Provides the default implementation of the knowledge answer resolution joint quorum evaluator contract.
+ */
+
+
 public final class DefaultKnowledgeAnswerResolutionJointQuorumEvaluator
         implements KnowledgeAnswerResolutionJointQuorumEvaluator {
 

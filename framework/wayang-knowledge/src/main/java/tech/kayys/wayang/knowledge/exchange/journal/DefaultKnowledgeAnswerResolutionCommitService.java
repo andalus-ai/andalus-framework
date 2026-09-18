@@ -1,5 +1,10 @@
 package tech.kayys.wayang.knowledge.exchange.journal;
 
+/**
+ * Provides the default implementation of the knowledge answer resolution commit service contract.
+ */
+
+
 public final class DefaultKnowledgeAnswerResolutionCommitService
         implements KnowledgeAnswerResolutionCommitService {
 

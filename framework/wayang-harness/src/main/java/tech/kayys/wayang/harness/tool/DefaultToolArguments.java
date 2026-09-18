@@ -3,6 +3,11 @@ package tech.kayys.wayang.harness.tool;
 import java.util.Map;
 import java.util.Set;
 
+/**
+ * Provides the default implementation of the tool arguments contract.
+ */
+
+
 public final class DefaultToolArguments implements ToolArguments {
 
     public static final DefaultToolArguments EMPTY = new DefaultToolArguments(Map.of());

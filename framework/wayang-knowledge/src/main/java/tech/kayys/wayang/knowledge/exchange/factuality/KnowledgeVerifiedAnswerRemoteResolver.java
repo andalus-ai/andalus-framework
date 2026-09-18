@@ -43,6 +43,11 @@ import tech.kayys.wayang.knowledge.exchange.recovery.*;
 
 import java.util.concurrent.CompletableFuture;
 
+/**
+ * Defines the contract for knowledge verified answer remote resolver operations in the Wayang framework.
+ */
+
+
 public interface KnowledgeVerifiedAnswerRemoteResolver {
 
     CompletableFuture<

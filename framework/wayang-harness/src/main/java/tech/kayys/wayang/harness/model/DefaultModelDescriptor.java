@@ -3,6 +3,22 @@ package tech.kayys.wayang.harness.model;
 import java.util.Objects;
 import java.util.Set;
 
+/**
+ * Represents a default model descriptor.
+ *
+ * <p>Its components capture `id`, `name`, `version`, `tasks`, `capabilities`, and other values.</p>
+ *
+ * @param id the id
+ * @param name the name
+ * @param version the version
+ * @param tasks the tasks
+ * @param capabilities the capabilities
+ * @param limits the limits
+ * @param pricing the pricing
+ * @param metadata the metadata
+ */
+
+
 public record DefaultModelDescriptor(
         ModelId id,
         String name,
@@ -28,6 +44,10 @@ public record DefaultModelDescriptor(
     public static Builder builder(ModelId id, String name) {
         return new Builder(id, name);
     }
+    /**
+     * Builder for constructing default model descriptor instances.
+     */
+
 
     public static class Builder {
         private final ModelId id;

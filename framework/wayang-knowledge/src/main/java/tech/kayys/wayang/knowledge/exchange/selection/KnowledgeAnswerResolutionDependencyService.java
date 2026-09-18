@@ -42,6 +42,10 @@ import tech.kayys.wayang.knowledge.exchange.recovery.*;
 
 
 import java.util.List;
+/**
+ * Defines the contract for knowledge answer resolution dependency service operations in the Wayang framework. Implementations provide the register operation.
+ */
+
 
 public interface
 KnowledgeAnswerResolutionDependencyService {

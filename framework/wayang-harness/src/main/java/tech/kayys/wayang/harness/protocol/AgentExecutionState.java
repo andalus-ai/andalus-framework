@@ -1,5 +1,10 @@
 package tech.kayys.wayang.harness.protocol;
 
+/**
+ * Defines the agent execution state values used by the Wayang framework.
+ */
+
+
 public enum AgentExecutionState {
     CREATED,
     READY,

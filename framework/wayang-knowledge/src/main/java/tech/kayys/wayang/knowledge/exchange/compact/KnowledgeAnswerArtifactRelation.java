@@ -44,6 +44,22 @@ import tech.kayys.wayang.knowledge.exchange.recovery.*;
 import java.time.Instant;
 import java.util.Map;
 
+/**
+ * Represents a knowledge answer artifact relation.
+ *
+ * <p>Its components capture `relation id`, `source artifact id`, `target artifact id`, `type`, `confidence`, and other values.</p>
+ *
+ * @param relationId the relation id
+ * @param sourceArtifactId the source artifact id
+ * @param targetArtifactId the target artifact id
+ * @param type the type
+ * @param confidence the confidence
+ * @param reason the reason
+ * @param createdAt the created at
+ * @param metadata the metadata
+ */
+
+
 public record KnowledgeAnswerArtifactRelation(
 
         String relationId,

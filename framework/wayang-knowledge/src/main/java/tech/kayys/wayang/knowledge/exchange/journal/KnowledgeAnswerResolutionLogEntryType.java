@@ -1,5 +1,10 @@
 package tech.kayys.wayang.knowledge.exchange.journal;
 
+/**
+ * Defines the knowledge answer resolution log entry type values used by the Wayang framework.
+ */
+
+
 public enum KnowledgeAnswerResolutionLogEntryType {
     PROPOSAL_CREATED,
     VOTE_RECORDED,

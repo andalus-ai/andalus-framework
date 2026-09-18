@@ -4,6 +4,29 @@ import java.time.Instant;
 import java.util.List;
 import java.util.Map;
 
+/**
+ * Represents a knowledge decision snapshot.
+ *
+ * <p>Its components capture `snapshot id`, `execution id`, `trace id`, `agent id`, `operation`, and other values.</p>
+ *
+ * @param snapshotId the snapshot id
+ * @param executionId the execution id
+ * @param traceId the trace id
+ * @param agentId the agent id
+ * @param operation the operation
+ * @param query the query
+ * @param effectiveAt the effective at
+ * @param knowledge the knowledge
+ * @param policies the policies
+ * @param rules the rules
+ * @param governance the governance
+ * @param runtime the runtime
+ * @param aggregateFingerprint the aggregate fingerprint
+ * @param createdAt the created at
+ * @param metadata the metadata
+ */
+
+
 public record KnowledgeDecisionSnapshot(
         KnowledgeSnapshotId snapshotId,
         String executionId,

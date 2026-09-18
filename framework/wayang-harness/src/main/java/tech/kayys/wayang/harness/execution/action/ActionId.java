@@ -3,6 +3,15 @@ package tech.kayys.wayang.harness.execution.action;
 import java.util.Objects;
 import java.util.UUID;
 
+/**
+ * Represents a action id.
+ *
+ * <p>Its components capture `value`.</p>
+ *
+ * @param value the value
+ */
+
+
 public record ActionId(String value) {
     public ActionId {
         Objects.requireNonNull(value, "value");

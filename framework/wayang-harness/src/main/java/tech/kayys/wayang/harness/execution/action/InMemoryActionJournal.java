@@ -10,6 +10,11 @@ import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 
+/**
+ * Provides in memory action journal behavior for the Wayang framework.
+ */
+
+
 public class InMemoryActionJournal implements ActionJournal {
 
     private final Map<ActionId, ActionRecord> records = new ConcurrentHashMap<>();

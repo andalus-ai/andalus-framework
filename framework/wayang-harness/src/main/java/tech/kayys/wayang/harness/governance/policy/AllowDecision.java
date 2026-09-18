@@ -1,5 +1,15 @@
 package tech.kayys.wayang.harness.governance.policy;
 
+/**
+ * Represents a allow decision.
+ *
+ * <p>Its components capture `policy id`, `reason`.</p>
+ *
+ * @param policyId the policy id
+ * @param reason the reason
+ */
+
+
 public record AllowDecision(
         String policyId,
         String reason

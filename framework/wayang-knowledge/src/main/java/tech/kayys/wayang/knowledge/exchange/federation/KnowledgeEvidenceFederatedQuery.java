@@ -28,6 +28,28 @@ import tech.kayys.wayang.knowledge.exchange.fusion.*;
 import java.time.Instant;
 import java.util.Map;
 
+/**
+ * Represents a knowledge evidence federated query.
+ *
+ * <p>Its components capture `query id`, `tenant id`, `workspace id`, `project id`, `agent id`, and other values.</p>
+ *
+ * @param queryId the query id
+ * @param tenantId the tenant id
+ * @param workspaceId the workspace id
+ * @param projectId the project id
+ * @param agentId the agent id
+ * @param text the text
+ * @param limit the limit
+ * @param minScore the min score
+ * @param effectiveAt the effective at
+ * @param requireVerification the require verification
+ * @param requireAuthorization the require authorization
+ * @param allowRemote the allow remote
+ * @param filters the filters
+ * @param metadata the metadata
+ */
+
+
 public record KnowledgeEvidenceFederatedQuery(
 
         String queryId,

@@ -1,5 +1,10 @@
 package tech.kayys.wayang.knowledge.exchange.binding;
 
+/**
+ * Defines the knowledge evidence exchange response verification status values used by the Wayang framework.
+ */
+
+
 public enum KnowledgeEvidenceExchangeResponseVerificationStatus {
     VALID,
     REQUEST_MISMATCH,

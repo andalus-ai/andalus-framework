@@ -2,6 +2,17 @@ package tech.kayys.wayang.harness.tool;
 
 import java.util.*;
 
+/**
+ * Represents a default tool input schema.
+ *
+ * <p>Its components capture `root type`, `properties`, `required`.</p>
+ *
+ * @param rootType the root type
+ * @param properties the properties
+ * @param required the required
+ */
+
+
 public record DefaultToolInputSchema(
         SchemaType rootType,
         Map<String, SchemaProperty> properties,

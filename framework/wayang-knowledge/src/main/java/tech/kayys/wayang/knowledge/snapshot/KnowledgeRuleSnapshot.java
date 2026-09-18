@@ -3,6 +3,17 @@ package tech.kayys.wayang.knowledge.snapshot;
 import java.util.List;
 import java.util.Map;
 
+/**
+ * Represents a knowledge rule snapshot.
+ *
+ * <p>Its components capture `rules`, `aggregate fingerprint`, `metadata`.</p>
+ *
+ * @param rules the rules
+ * @param aggregateFingerprint the aggregate fingerprint
+ * @param metadata the metadata
+ */
+
+
 public record KnowledgeRuleSnapshot(
         List<KnowledgeVersionReference> rules,
         String aggregateFingerprint,

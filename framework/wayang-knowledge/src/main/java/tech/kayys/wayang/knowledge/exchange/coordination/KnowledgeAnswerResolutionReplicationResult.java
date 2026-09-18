@@ -44,6 +44,23 @@ import tech.kayys.wayang.knowledge.exchange.recovery.*;
 import java.util.List;
 import java.util.Map;
 
+/**
+ * Represents a knowledge answer resolution replication result.
+ *
+ * <p>Its components capture `replication id`, `key fingerprint`, `requested replicas`, `successful replicas`, `verified replicas`, and other values.</p>
+ *
+ * @param replicationId the replication id
+ * @param keyFingerprint the key fingerprint
+ * @param requestedReplicas the requested replicas
+ * @param successfulReplicas the successful replicas
+ * @param verifiedReplicas the verified replicas
+ * @param successfulRuntimeIds the successful runtime ids
+ * @param failedRuntimeIds the failed runtime ids
+ * @param quorumSatisfied the quorum satisfied
+ * @param diagnostics the diagnostics
+ */
+
+
 public record KnowledgeAnswerResolutionReplicationResult(
 
         String replicationId,

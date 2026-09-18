@@ -27,6 +27,23 @@ import tech.kayys.wayang.knowledge.exchange.fusion.*;
 
 import java.util.Map;
 
+/**
+ * Represents a knowledge evidence fusion candidate.
+ *
+ * <p>Its components capture `evidence`, `runtime id`, `retrieval score`, `semantic score`, `authority score`, and other values.</p>
+ *
+ * @param evidence the evidence
+ * @param runtimeId the runtime id
+ * @param retrievalScore the retrieval score
+ * @param semanticScore the semantic score
+ * @param authorityScore the authority score
+ * @param trustScore the trust score
+ * @param freshnessScore the freshness score
+ * @param finalScore the final score
+ * @param metadata the metadata
+ */
+
+
 public record KnowledgeEvidenceFusionCandidate(
 
         KnowledgeEvidenceReference evidence,

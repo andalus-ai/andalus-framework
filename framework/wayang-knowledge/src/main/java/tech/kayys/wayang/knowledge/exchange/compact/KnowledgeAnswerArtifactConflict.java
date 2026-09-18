@@ -43,6 +43,21 @@ import tech.kayys.wayang.knowledge.exchange.recovery.*;
 
 import java.util.Map;
 
+/**
+ * Represents a knowledge answer artifact conflict.
+ *
+ * <p>Its components capture `conflict id`, `left artifact id`, `right artifact id`, `type`, `confidence`, and other values.</p>
+ *
+ * @param conflictId the conflict id
+ * @param leftArtifactId the left artifact id
+ * @param rightArtifactId the right artifact id
+ * @param type the type
+ * @param confidence the confidence
+ * @param reason the reason
+ * @param metadata the metadata
+ */
+
+
 public record KnowledgeAnswerArtifactConflict(
 
         String conflictId,

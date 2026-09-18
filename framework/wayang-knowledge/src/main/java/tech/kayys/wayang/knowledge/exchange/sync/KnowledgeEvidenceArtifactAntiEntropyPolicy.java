@@ -27,6 +27,21 @@ import tech.kayys.wayang.knowledge.exchange.fusion.*;
 
 import java.time.Duration;
 
+/**
+ * Represents a knowledge evidence artifact anti entropy policy.
+ *
+ * <p>Its components capture `interval`, `timeout`, `max artifacts per round`, `repair missing`, `verify divergent`, and other values.</p>
+ *
+ * @param interval the interval
+ * @param timeout the timeout
+ * @param maxArtifactsPerRound the max artifacts per round
+ * @param repairMissing the repair missing
+ * @param verifyDivergent the verify divergent
+ * @param propagateRevocations the propagate revocations
+ * @param requireAuthorization the require authorization
+ */
+
+
 public record KnowledgeEvidenceArtifactAntiEntropyPolicy(
 
         Duration interval,

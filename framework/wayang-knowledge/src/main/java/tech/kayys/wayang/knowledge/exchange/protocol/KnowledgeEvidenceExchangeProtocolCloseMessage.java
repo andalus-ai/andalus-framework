@@ -22,6 +22,20 @@ import tech.kayys.wayang.knowledge.exchange.framing.*;
 import java.time.Instant;
 import java.util.Map;
 
+/**
+ * Represents a knowledge evidence exchange protocol close message.
+ *
+ * <p>Its components capture `message id`, `correlation id`, `session id`, `reason`, `issued at`, and other values.</p>
+ *
+ * @param messageId the message id
+ * @param correlationId the correlation id
+ * @param sessionId the session id
+ * @param reason the reason
+ * @param issuedAt the issued at
+ * @param metadata the metadata
+ */
+
+
 public record KnowledgeEvidenceExchangeProtocolCloseMessage(
 
         String messageId,

@@ -28,6 +28,22 @@ import tech.kayys.wayang.knowledge.exchange.fusion.*;
 import java.time.Instant;
 import java.util.Map;
 
+/**
+ * Represents a knowledge evidence artifact revocation tombstone.
+ *
+ * <p>Its components capture `artifact id`, `tombstone id`, `tenant id`, `reason`, `revoked by`, and other values.</p>
+ *
+ * @param artifactId the artifact id
+ * @param tombstoneId the tombstone id
+ * @param tenantId the tenant id
+ * @param reason the reason
+ * @param revokedBy the revoked by
+ * @param revokedAt the revoked at
+ * @param expiresAt the expires at
+ * @param metadata the metadata
+ */
+
+
 public record KnowledgeEvidenceArtifactRevocationTombstone(
 
         String artifactId,

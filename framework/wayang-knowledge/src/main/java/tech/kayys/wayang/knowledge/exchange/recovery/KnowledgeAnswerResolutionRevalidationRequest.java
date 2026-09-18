@@ -44,6 +44,23 @@ import tech.kayys.wayang.knowledge.exchange.recovery.*;
 import java.time.Instant;
 import java.util.Objects;
 
+/**
+ * Represents a knowledge answer resolution revalidation request.
+ *
+ * <p>Its components capture `consensus id`, `key fingerprint`, `requesting runtime id`, `reason`, `requested at`, and other values.</p>
+ *
+ * @param consensusId the consensus id
+ * @param keyFingerprint the key fingerprint
+ * @param requestingRuntimeId the requesting runtime id
+ * @param reason the reason
+ * @param requestedAt the requested at
+ * @param requireQuorum the require quorum
+ * @param requireFreshEvidence the require fresh evidence
+ * @param requireCurrentSnapshot the require current snapshot
+ * @param metadata the metadata
+ */
+
+
 public record KnowledgeAnswerResolutionRevalidationRequest(
         String consensusId,
         String keyFingerprint,

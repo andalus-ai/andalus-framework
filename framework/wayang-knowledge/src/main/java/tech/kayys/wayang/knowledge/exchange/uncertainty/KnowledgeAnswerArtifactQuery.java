@@ -45,6 +45,31 @@ import java.time.Instant;
 import java.util.Map;
 import java.util.Set;
 
+/**
+ * Represents a knowledge answer artifact query.
+ *
+ * <p>Its components capture `query id`, `text`, `tenant id`, `workspace id`, `project id`, and other values.</p>
+ *
+ * @param queryId the query id
+ * @param text the text
+ * @param tenantId the tenant id
+ * @param workspaceId the workspace id
+ * @param projectId the project id
+ * @param requestingRuntimeId the requesting runtime id
+ * @param agentId the agent id
+ * @param limit the limit
+ * @param minScore the min score
+ * @param effectiveAt the effective at
+ * @param requiredTags the required tags
+ * @param requiredAgents the required agents
+ * @param requiredStatuses the required statuses
+ * @param requireVerified the require verified
+ * @param requireSealed the require sealed
+ * @param allowRemote the allow remote
+ * @param metadata the metadata
+ */
+
+
 public record KnowledgeAnswerArtifactQuery(
 
         String queryId,

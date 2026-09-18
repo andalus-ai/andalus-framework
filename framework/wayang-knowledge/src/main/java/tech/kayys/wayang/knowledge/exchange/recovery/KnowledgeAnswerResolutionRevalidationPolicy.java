@@ -44,6 +44,24 @@ import tech.kayys.wayang.knowledge.exchange.recovery.*;
 import java.time.Duration;
 import java.util.Objects;
 
+/**
+ * Represents a knowledge answer resolution revalidation policy.
+ *
+ * <p>Its components capture `revalidation window`, `renewal window`, `revalidate before use`, `allow grace period use`, `require dependency validation`, and other values.</p>
+ *
+ * @param revalidationWindow the revalidation window
+ * @param renewalWindow the renewal window
+ * @param revalidateBeforeUse the revalidate before use
+ * @param allowGracePeriodUse the allow grace period use
+ * @param requireDependencyValidation the require dependency validation
+ * @param requireSnapshotValidation the require snapshot validation
+ * @param requireParticipantLiveness the require participant liveness
+ * @param requireQuorum the require quorum
+ * @param requireAttestation the require attestation
+ * @param autoRenew the auto renew
+ */
+
+
 public record KnowledgeAnswerResolutionRevalidationPolicy(
         Duration revalidationWindow,
         Duration renewalWindow,

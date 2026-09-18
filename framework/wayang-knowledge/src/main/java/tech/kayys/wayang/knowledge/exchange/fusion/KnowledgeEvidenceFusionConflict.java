@@ -27,6 +27,21 @@ import tech.kayys.wayang.knowledge.exchange.fusion.*;
 
 import java.util.Map;
 
+/**
+ * Represents a knowledge evidence fusion conflict.
+ *
+ * <p>Its components capture `conflict id`, `left evidence id`, `right evidence id`, `type`, `confidence`, and other values.</p>
+ *
+ * @param conflictId the conflict id
+ * @param leftEvidenceId the left evidence id
+ * @param rightEvidenceId the right evidence id
+ * @param type the type
+ * @param confidence the confidence
+ * @param reason the reason
+ * @param metadata the metadata
+ */
+
+
 public record KnowledgeEvidenceFusionConflict(
 
         String conflictId,

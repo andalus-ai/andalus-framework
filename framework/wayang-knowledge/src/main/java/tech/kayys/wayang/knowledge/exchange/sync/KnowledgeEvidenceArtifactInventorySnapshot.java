@@ -29,6 +29,23 @@ import java.time.Instant;
 import java.util.List;
 import java.util.Map;
 
+/**
+ * Represents a knowledge evidence artifact inventory snapshot.
+ *
+ * <p>Its components capture `runtime id`, `tenant id`, `workspace id`, `project id`, `entries`, and other values.</p>
+ *
+ * @param runtimeId the runtime id
+ * @param tenantId the tenant id
+ * @param workspaceId the workspace id
+ * @param projectId the project id
+ * @param entries the entries
+ * @param inventoryFingerprint the inventory fingerprint
+ * @param createdAt the created at
+ * @param expiresAt the expires at
+ * @param metadata the metadata
+ */
+
+
 public record KnowledgeEvidenceArtifactInventorySnapshot(
 
         String runtimeId,

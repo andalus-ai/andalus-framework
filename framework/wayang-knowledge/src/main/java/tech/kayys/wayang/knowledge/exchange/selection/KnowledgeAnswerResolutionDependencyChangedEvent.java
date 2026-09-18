@@ -44,6 +44,23 @@ import tech.kayys.wayang.knowledge.exchange.recovery.*;
 import java.time.Instant;
 import java.util.Map;
 
+/**
+ * Represents a knowledge answer resolution dependency changed event.
+ *
+ * <p>Its components capture `event id`, `dependency type`, `target id`, `previous fingerprint`, `new fingerprint`, and other values.</p>
+ *
+ * @param eventId the event id
+ * @param dependencyType the dependency type
+ * @param targetId the target id
+ * @param previousFingerprint the previous fingerprint
+ * @param newFingerprint the new fingerprint
+ * @param runtimeId the runtime id
+ * @param tenantId the tenant id
+ * @param createdAt the created at
+ * @param metadata the metadata
+ */
+
+
 public record KnowledgeAnswerResolutionDependencyChangedEvent(
 
         String eventId,

@@ -2,6 +2,16 @@ package tech.kayys.wayang.harness.execution.state;
 
 import java.util.Map;
 
+/**
+ * Represents a execution data.
+ *
+ * <p>Its components capture `state`, `metadata`.</p>
+ *
+ * @param state the state
+ * @param metadata the metadata
+ */
+
+
 public record ExecutionData(
         Map<String, Object> state,
         Map<String, Object> metadata

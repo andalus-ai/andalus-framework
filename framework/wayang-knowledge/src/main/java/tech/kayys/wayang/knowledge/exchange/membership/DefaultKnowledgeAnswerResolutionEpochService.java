@@ -5,6 +5,11 @@ import tech.kayys.wayang.knowledge.exchange.attestation.KnowledgeAnswerResolutio
 import java.time.Instant;
 import java.util.UUID;
 
+/**
+ * Provides the default implementation of the knowledge answer resolution epoch service contract.
+ */
+
+
 public final class DefaultKnowledgeAnswerResolutionEpochService
         implements KnowledgeAnswerResolutionEpochService {
 

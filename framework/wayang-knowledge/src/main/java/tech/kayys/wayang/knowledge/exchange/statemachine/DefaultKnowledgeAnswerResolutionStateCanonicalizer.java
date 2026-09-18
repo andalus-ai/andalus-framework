@@ -3,6 +3,11 @@ package tech.kayys.wayang.knowledge.exchange.statemachine;
 import java.util.ArrayList;
 import java.util.Comparator;
 
+/**
+ * Provides the default implementation of the knowledge answer resolution state canonicalizer contract.
+ */
+
+
 public final class DefaultKnowledgeAnswerResolutionStateCanonicalizer
         implements KnowledgeAnswerResolutionStateCanonicalizer {
 

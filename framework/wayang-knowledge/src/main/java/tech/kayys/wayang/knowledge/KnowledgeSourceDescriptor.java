@@ -2,6 +2,19 @@ package tech.kayys.wayang.knowledge;
 
 import java.util.Map;
 
+/**
+ * Represents a knowledge source descriptor.
+ *
+ * <p>Its components capture `id`, `name`, `type`, `read only`, `metadata`.</p>
+ *
+ * @param id the id
+ * @param name the name
+ * @param type the type
+ * @param readOnly the read only
+ * @param metadata the metadata
+ */
+
+
 public record KnowledgeSourceDescriptor(
         String id,
         String name,

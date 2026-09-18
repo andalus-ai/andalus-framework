@@ -22,6 +22,21 @@ import tech.kayys.wayang.knowledge.exchange.framing.*;
 import java.time.Instant;
 import java.util.Map;
 
+/**
+ * Represents a knowledge evidence exchange protocol identity message.
+ *
+ * <p>Its components capture `message id`, `correlation id`, `identity`, `challenge nonce`, `issued at`, and other values.</p>
+ *
+ * @param messageId the message id
+ * @param correlationId the correlation id
+ * @param identity the identity
+ * @param challengeNonce the challenge nonce
+ * @param issuedAt the issued at
+ * @param expiresAt the expires at
+ * @param metadata the metadata
+ */
+
+
 public record KnowledgeEvidenceExchangeProtocolIdentityMessage(
 
         String messageId,

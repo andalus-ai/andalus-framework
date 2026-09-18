@@ -43,6 +43,11 @@ import tech.kayys.wayang.knowledge.exchange.recovery.*;
 
 import java.util.List;
 
+/**
+ * Defines the contract for knowledge answer artifact deduplication service operations in the Wayang framework.
+ */
+
+
 public interface KnowledgeAnswerArtifactDeduplicationService {
 
     List<KnowledgeAnswerArtifactCandidate> deduplicate(

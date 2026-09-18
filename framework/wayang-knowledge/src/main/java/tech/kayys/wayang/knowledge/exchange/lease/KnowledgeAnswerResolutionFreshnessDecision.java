@@ -44,6 +44,26 @@ import tech.kayys.wayang.knowledge.exchange.recovery.*;
 import java.time.Instant;
 import java.util.List;
 
+/**
+ * Represents a knowledge answer resolution freshness decision.
+ *
+ * <p>Its components capture `status`, `liveness`, `consensus id`, `key fingerprint`, `participant count`, and other values.</p>
+ *
+ * @param status the status
+ * @param liveness the liveness
+ * @param consensusId the consensus id
+ * @param keyFingerprint the key fingerprint
+ * @param participantCount the participant count
+ * @param liveParticipantCount the live participant count
+ * @param requiredLiveParticipants the required live participants
+ * @param evaluatedAt the evaluated at
+ * @param leaseExpiresAt the lease expires at
+ * @param graceExpiresAt the grace expires at
+ * @param liveRuntimeIds the live runtime ids
+ * @param diagnostics the diagnostics
+ */
+
+
 public record KnowledgeAnswerResolutionFreshnessDecision(
         KnowledgeAnswerResolutionFreshnessStatus status,
         KnowledgeAnswerResolutionLivenessStatus liveness,

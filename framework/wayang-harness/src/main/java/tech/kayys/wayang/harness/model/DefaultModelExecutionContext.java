@@ -6,6 +6,19 @@ import tech.kayys.wayang.harness.resource.ResourceScope;
 import tech.kayys.wayang.harness.tool.CancellationToken;
 import tech.kayys.wayang.harness.tool.ToolLogger;
 
+/**
+ * Represents a default model execution context.
+ *
+ * <p>Its components capture `execution id`, `identity`, `resources`, `cancellation`, `logger`.</p>
+ *
+ * @param executionId the execution id
+ * @param identity the identity
+ * @param resources the resources
+ * @param cancellation the cancellation
+ * @param logger the logger
+ */
+
+
 public record DefaultModelExecutionContext(
         ExecutionId executionId,
         HarnessIdentity identity,

@@ -40,6 +40,17 @@ import tech.kayys.wayang.knowledge.exchange.validity.*;
 import tech.kayys.wayang.knowledge.exchange.lease.*;
 import tech.kayys.wayang.knowledge.exchange.recovery.*;
 
+/**
+ * Represents a knowledge verified answer verification issue.
+ *
+ * <p>Its components capture `code`, `message`, `blocking`.</p>
+ *
+ * @param code the code
+ * @param message the message
+ * @param blocking the blocking
+ */
+
+
 
 public record KnowledgeVerifiedAnswerVerificationIssue(
 

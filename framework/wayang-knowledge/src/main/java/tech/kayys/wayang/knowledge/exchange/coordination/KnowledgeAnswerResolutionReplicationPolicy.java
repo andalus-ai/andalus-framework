@@ -40,6 +40,21 @@ import tech.kayys.wayang.knowledge.exchange.validity.*;
 import tech.kayys.wayang.knowledge.exchange.lease.*;
 import tech.kayys.wayang.knowledge.exchange.recovery.*;
 
+/**
+ * Represents a knowledge answer resolution replication policy.
+ *
+ * <p>Its components capture `minimum replicas`, `target replicas`, `require verification`, `allow remote replication`, `allow offline queue`, and other values.</p>
+ *
+ * @param minimumReplicas the minimum replicas
+ * @param targetReplicas the target replicas
+ * @param requireVerification the require verification
+ * @param allowRemoteReplication the allow remote replication
+ * @param allowOfflineQueue the allow offline queue
+ * @param localFirst the local first
+ * @param maxResolutionBytes the max resolution bytes
+ */
+
+
 
 public record KnowledgeAnswerResolutionReplicationPolicy(
 

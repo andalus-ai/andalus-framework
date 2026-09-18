@@ -40,6 +40,11 @@ import tech.kayys.wayang.knowledge.exchange.validity.*;
 import tech.kayys.wayang.knowledge.exchange.lease.*;
 import tech.kayys.wayang.knowledge.exchange.recovery.*;
 
+/**
+ * Defines the knowledge answer resolution consensus lifecycle state values used by the Wayang framework.
+ */
+
+
 
 public enum KnowledgeAnswerResolutionConsensusLifecycleState {
 

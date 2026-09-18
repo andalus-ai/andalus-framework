@@ -31,6 +31,10 @@ public class TaskAssignment {
     public static Builder builder() {
         return new Builder();
     }
+    /**
+     * Builder for constructing task assignment instances.
+     */
+
 
     public static class Builder {
         private AssigneeType assigneeType;

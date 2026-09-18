@@ -44,6 +44,24 @@ import tech.kayys.wayang.knowledge.exchange.recovery.*;
 import java.time.Instant;
 import java.util.Map;
 
+/**
+ * Represents a knowledge answer resolution consensus revocation event.
+ *
+ * <p>Its components capture `event id`, `revocation id`, `consensus id`, `key fingerprint`, `reason`, and other values.</p>
+ *
+ * @param eventId the event id
+ * @param revocationId the revocation id
+ * @param consensusId the consensus id
+ * @param keyFingerprint the key fingerprint
+ * @param reason the reason
+ * @param replacementConsensusId the replacement consensus id
+ * @param evidenceFingerprint the evidence fingerprint
+ * @param actorRuntimeId the actor runtime id
+ * @param createdAt the created at
+ * @param metadata the metadata
+ */
+
+
 public record KnowledgeAnswerResolutionConsensusRevocationEvent(
 
         String eventId,

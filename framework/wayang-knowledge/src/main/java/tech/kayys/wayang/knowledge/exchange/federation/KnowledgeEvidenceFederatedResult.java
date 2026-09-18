@@ -27,6 +27,17 @@ import tech.kayys.wayang.knowledge.exchange.fusion.*;
 
 import java.util.List;
 
+/**
+ * Represents a knowledge evidence federated result.
+ *
+ * <p>Its components capture `aggregate`, `context`, `selected evidence`.</p>
+ *
+ * @param aggregate the aggregate
+ * @param context the context
+ * @param selectedEvidence the selected evidence
+ */
+
+
 public record KnowledgeEvidenceFederatedResult(
 
         KnowledgeEvidenceFederationAggregateResult aggregate,

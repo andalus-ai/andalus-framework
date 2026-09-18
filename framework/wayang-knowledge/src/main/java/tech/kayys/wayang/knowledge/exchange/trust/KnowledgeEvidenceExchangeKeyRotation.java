@@ -22,6 +22,21 @@ import tech.kayys.wayang.knowledge.exchange.framing.*;
 import java.time.Instant;
 import java.util.Objects;
 
+/**
+ * Represents a knowledge evidence exchange key rotation.
+ *
+ * <p>Its components capture `key id`, `previous version`, `new version`, `activated at`, `previous valid until`, and other values.</p>
+ *
+ * @param keyId the key id
+ * @param previousVersion the previous version
+ * @param newVersion the new version
+ * @param activatedAt the activated at
+ * @param previousValidUntil the previous valid until
+ * @param runtimeId the runtime id
+ * @param reason the reason
+ */
+
+
 public record KnowledgeEvidenceExchangeKeyRotation(
 
         String keyId,

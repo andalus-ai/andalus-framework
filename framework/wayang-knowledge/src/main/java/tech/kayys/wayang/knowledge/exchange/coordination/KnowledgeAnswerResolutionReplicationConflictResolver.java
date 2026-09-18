@@ -42,6 +42,10 @@ import tech.kayys.wayang.knowledge.exchange.recovery.*;
 
 
 import java.util.List;
+/**
+ * Defines the contract for knowledge answer resolution replication conflict resolver operations in the Wayang framework. Implementations provide the resolve operation.
+ */
+
 
 public interface
 KnowledgeAnswerResolutionReplicationConflictResolver {

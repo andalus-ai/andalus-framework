@@ -4,6 +4,11 @@ import tech.kayys.wayang.knowledge.decision.KnowledgeDecisionTrace;
 
 import java.util.Optional;
 
+/**
+ * Defines the contract for knowledge decision snapshot service operations in the Wayang framework.
+ */
+
+
 public interface KnowledgeDecisionSnapshotService {
 
     KnowledgeDecisionSnapshot capture(

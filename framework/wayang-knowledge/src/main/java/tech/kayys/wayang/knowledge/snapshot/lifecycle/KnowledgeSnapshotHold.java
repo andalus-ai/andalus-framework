@@ -6,6 +6,22 @@ import java.time.Instant;
 import java.util.Map;
 import java.util.Objects;
 
+/**
+ * Represents a knowledge snapshot hold.
+ *
+ * <p>Its components capture `hold id`, `snapshot id`, `retention class`, `tenant id`, `reason`, and other values.</p>
+ *
+ * @param holdId the hold id
+ * @param snapshotId the snapshot id
+ * @param retentionClass the retention class
+ * @param tenantId the tenant id
+ * @param reason the reason
+ * @param createdAt the created at
+ * @param expiresAt the expires at
+ * @param metadata the metadata
+ */
+
+
 public record KnowledgeSnapshotHold(
         String holdId,
         KnowledgeSnapshotId snapshotId,

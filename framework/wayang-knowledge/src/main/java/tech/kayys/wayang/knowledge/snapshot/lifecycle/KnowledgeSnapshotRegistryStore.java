@@ -7,6 +7,11 @@ import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
 
+/**
+ * Defines the contract for knowledge snapshot registry store operations in the Wayang framework.
+ */
+
+
 public interface KnowledgeSnapshotRegistryStore {
 
     void saveSnapshot(KnowledgeDecisionSnapshot snapshot);

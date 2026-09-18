@@ -3,6 +3,16 @@ package tech.kayys.wayang.harness.protocol;
 import java.util.Map;
 import java.util.Objects;
 
+/**
+ * Represents a agent task.
+ *
+ * <p>Its components capture `description`, `input`.</p>
+ *
+ * @param description the description
+ * @param input the input
+ */
+
+
 public record AgentTask(
         String description,
         Map<String, Object> input

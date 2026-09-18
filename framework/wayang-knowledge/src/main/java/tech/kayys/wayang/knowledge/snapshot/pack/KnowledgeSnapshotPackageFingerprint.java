@@ -3,6 +3,11 @@ package tech.kayys.wayang.knowledge.snapshot.pack;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 
+/**
+ * Provides knowledge snapshot package fingerprint behavior for the Wayang framework.
+ */
+
+
 public final class KnowledgeSnapshotPackageFingerprint {
 
     private KnowledgeSnapshotPackageFingerprint() {

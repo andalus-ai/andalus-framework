@@ -39,6 +39,10 @@ import tech.kayys.wayang.knowledge.exchange.proof.*;
 import tech.kayys.wayang.knowledge.exchange.validity.*;
 import tech.kayys.wayang.knowledge.exchange.lease.*;
 import tech.kayys.wayang.knowledge.exchange.recovery.*;
+/**
+ * Defines the contract for knowledge answer resolution attestation verifier resolver operations in the Wayang framework. Implementations provide the resolve operation.
+ */
+
 
 
 public interface

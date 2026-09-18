@@ -40,6 +40,22 @@ import tech.kayys.wayang.knowledge.exchange.validity.*;
 import tech.kayys.wayang.knowledge.exchange.lease.*;
 import tech.kayys.wayang.knowledge.exchange.recovery.*;
 
+/**
+ * Represents a knowledge answer runtime configuration.
+ *
+ * <p>Its components capture `runtime version`, `knowledge engine version`, `ranking version`, `resolution engine version`, `compression version`, and other values.</p>
+ *
+ * @param runtimeVersion the runtime version
+ * @param knowledgeEngineVersion the knowledge engine version
+ * @param rankingVersion the ranking version
+ * @param resolutionEngineVersion the resolution engine version
+ * @param compressionVersion the compression version
+ * @param modelProviderId the model provider id
+ * @param modelId the model id
+ * @param modelVersion the model version
+ */
+
+
 
 public record KnowledgeAnswerRuntimeConfiguration(
 

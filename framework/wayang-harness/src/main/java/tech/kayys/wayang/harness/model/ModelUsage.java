@@ -4,6 +4,18 @@ import java.math.BigDecimal;
 import java.time.Duration;
 import java.util.Optional;
 
+/**
+ * Represents a model usage.
+ *
+ * <p>Its components capture `input tokens`, `output tokens`, `latency`, `cost`.</p>
+ *
+ * @param inputTokens the input tokens
+ * @param outputTokens the output tokens
+ * @param latency the latency
+ * @param cost the cost
+ */
+
+
 public record ModelUsage(
         long inputTokens,
         long outputTokens,

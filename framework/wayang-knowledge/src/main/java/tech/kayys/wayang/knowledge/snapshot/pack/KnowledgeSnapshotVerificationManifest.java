@@ -4,6 +4,31 @@ import java.time.Instant;
 import java.util.List;
 import java.util.Map;
 
+/**
+ * Represents a knowledge snapshot verification manifest.
+ *
+ * <p>Its components capture `manifest id`, `snapshot id`, `snapshot fingerprint`, `schema version`, `runtime version`, and other values.</p>
+ *
+ * @param manifestId the manifest id
+ * @param snapshotId the snapshot id
+ * @param snapshotFingerprint the snapshot fingerprint
+ * @param schemaVersion the schema version
+ * @param runtimeVersion the runtime version
+ * @param knowledgeEngineVersion the knowledge engine version
+ * @param evidence the evidence
+ * @param lineage the lineage
+ * @param policies the policies
+ * @param rules the rules
+ * @param governance the governance
+ * @param integrity the integrity
+ * @param seal the seal
+ * @param dependencies the dependencies
+ * @param merkle the merkle
+ * @param createdAt the created at
+ * @param metadata the metadata
+ */
+
+
 public record KnowledgeSnapshotVerificationManifest(
         String manifestId,
         String snapshotId,

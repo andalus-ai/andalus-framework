@@ -1,5 +1,15 @@
 package tech.kayys.wayang.harness.model;
 
+/**
+ * Represents a model stream event.
+ *
+ * <p>Its components capture `type`, `payload`.</p>
+ *
+ * @param type the type
+ * @param payload the payload
+ */
+
+
 public record ModelStreamEvent(
         String type,
         Object payload

@@ -43,6 +43,23 @@ import tech.kayys.wayang.knowledge.exchange.recovery.*;
 
 import java.util.List;
 
+/**
+ * Represents a knowledge answer resolution consensus attestation verification result.
+ *
+ * <p>Its components capture `status`, `total attestations`, `valid attestations`, `required attestations`, `quorum verified`, and other values.</p>
+ *
+ * @param status the status
+ * @param totalAttestations the total attestations
+ * @param validAttestations the valid attestations
+ * @param requiredAttestations the required attestations
+ * @param quorumVerified the quorum verified
+ * @param resolutionAgreement the resolution agreement
+ * @param dependencyAgreement the dependency agreement
+ * @param trustedRuntimeIds the trusted runtime ids
+ * @param diagnostics the diagnostics
+ */
+
+
 public record KnowledgeAnswerResolutionConsensusAttestationVerificationResult(
 
         KnowledgeAnswerResolutionAttestationStatus status,

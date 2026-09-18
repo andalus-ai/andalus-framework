@@ -4,6 +4,17 @@ import tech.kayys.wayang.harness.context.HarnessIdentity;
 import tech.kayys.wayang.harness.governance.policy.HarnessPolicy;
 import tech.kayys.wayang.harness.resource.ResourceScope;
 
+/**
+ * Represents a model routing context.
+ *
+ * <p>Its components capture `identity`, `resources`, `policy`.</p>
+ *
+ * @param identity the identity
+ * @param resources the resources
+ * @param policy the policy
+ */
+
+
 public record ModelRoutingContext(
         HarnessIdentity identity,
         ResourceScope resources,

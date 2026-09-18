@@ -4,6 +4,18 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 
+/**
+ * Represents a context request.
+ *
+ * <p>Its components capture `query`, `max tokens`, `kinds`, `parameters`.</p>
+ *
+ * @param query the query
+ * @param maxTokens the max tokens
+ * @param kinds the kinds
+ * @param parameters the parameters
+ */
+
+
 public record ContextRequest(
         String query,
         long maxTokens,

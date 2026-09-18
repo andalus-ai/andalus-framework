@@ -7,6 +7,19 @@ import java.time.Instant;
 import java.util.Map;
 import java.util.Objects;
 
+/**
+ * Represents a checkpoint.
+ *
+ * <p>Its components capture `id`, `execution id`, `state`, `created at`, `metadata`.</p>
+ *
+ * @param id the id
+ * @param executionId the execution id
+ * @param state the state
+ * @param createdAt the created at
+ * @param metadata the metadata
+ */
+
+
 public record Checkpoint(
         CheckpointId id,
         ExecutionId executionId,

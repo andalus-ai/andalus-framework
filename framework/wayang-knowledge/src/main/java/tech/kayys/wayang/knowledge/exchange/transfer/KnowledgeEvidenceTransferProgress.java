@@ -27,6 +27,20 @@ import tech.kayys.wayang.knowledge.exchange.fusion.*;
 
 import java.time.Instant;
 
+/**
+ * Represents a knowledge evidence transfer progress.
+ *
+ * <p>Its components capture `transfer id`, `transferred bytes`, `total bytes`, `next offset`, `next sequence`, and other values.</p>
+ *
+ * @param transferId the transfer id
+ * @param transferredBytes the transferred bytes
+ * @param totalBytes the total bytes
+ * @param nextOffset the next offset
+ * @param nextSequence the next sequence
+ * @param updatedAt the updated at
+ */
+
+
 public record KnowledgeEvidenceTransferProgress(
 
         String transferId,

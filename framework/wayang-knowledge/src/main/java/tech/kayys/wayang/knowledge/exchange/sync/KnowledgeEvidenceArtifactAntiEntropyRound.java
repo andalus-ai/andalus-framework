@@ -27,6 +27,24 @@ import tech.kayys.wayang.knowledge.exchange.fusion.*;
 
 import java.time.Instant;
 
+/**
+ * Represents a knowledge evidence artifact anti entropy round.
+ *
+ * <p>Its components capture `round id`, `local runtime id`, `remote runtime id`, `started at`, `completed at`, and other values.</p>
+ *
+ * @param roundId the round id
+ * @param localRuntimeId the local runtime id
+ * @param remoteRuntimeId the remote runtime id
+ * @param startedAt the started at
+ * @param completedAt the completed at
+ * @param state the state
+ * @param repaired the repaired
+ * @param failed the failed
+ * @param localInventoryFingerprint the local inventory fingerprint
+ * @param remoteInventoryFingerprint the remote inventory fingerprint
+ */
+
+
 public record KnowledgeEvidenceArtifactAntiEntropyRound(
 
         String roundId,

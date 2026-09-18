@@ -44,6 +44,21 @@ import tech.kayys.wayang.knowledge.exchange.recovery.*;
 import java.time.Instant;
 import java.util.Map;
 
+/**
+ * Represents a knowledge answer provenance edge.
+ *
+ * <p>Its components capture `edge id`, `source node id`, `target node id`, `relation`, `reason`, and other values.</p>
+ *
+ * @param edgeId the edge id
+ * @param sourceNodeId the source node id
+ * @param targetNodeId the target node id
+ * @param relation the relation
+ * @param reason the reason
+ * @param createdAt the created at
+ * @param metadata the metadata
+ */
+
+
 public record KnowledgeAnswerProvenanceEdge(
 
         String edgeId,

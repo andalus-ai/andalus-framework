@@ -44,6 +44,23 @@ import tech.kayys.wayang.knowledge.exchange.recovery.*;
 import java.util.List;
 import java.util.Map;
 
+/**
+ * Represents a knowledge verified claim.
+ *
+ * <p>Its components capture `claim id`, `text`, `type`, `status`, `confidence`, and other values.</p>
+ *
+ * @param claimId the claim id
+ * @param text the text
+ * @param type the type
+ * @param status the status
+ * @param confidence the confidence
+ * @param evidenceIds the evidence ids
+ * @param contradictionIds the contradiction ids
+ * @param verificationReason the verification reason
+ * @param metadata the metadata
+ */
+
+
 public record KnowledgeVerifiedClaim(
 
         String claimId,

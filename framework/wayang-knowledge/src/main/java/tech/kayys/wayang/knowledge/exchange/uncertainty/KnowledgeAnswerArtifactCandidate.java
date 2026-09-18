@@ -43,6 +43,31 @@ import tech.kayys.wayang.knowledge.exchange.recovery.*;
 
 import java.util.Map;
 
+/**
+ * Represents a knowledge answer artifact candidate.
+ *
+ * <p>Its components capture `artifact id`, `response id`, `runtime id`, `tenant id`, `workspace id`, and other values.</p>
+ *
+ * @param artifactId the artifact id
+ * @param responseId the response id
+ * @param runtimeId the runtime id
+ * @param tenantId the tenant id
+ * @param workspaceId the workspace id
+ * @param projectId the project id
+ * @param agentId the agent id
+ * @param semanticScore the semantic score
+ * @param authorityScore the authority score
+ * @param trustScore the trust score
+ * @param freshnessScore the freshness score
+ * @param verificationScore the verification score
+ * @param finalScore the final score
+ * @param verified the verified
+ * @param sealed the sealed
+ * @param local the local
+ * @param metadata the metadata
+ */
+
+
 public record KnowledgeAnswerArtifactCandidate(
 
         String artifactId,

@@ -5,6 +5,11 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
 
+/**
+ * Provides the default implementation of the budget manager contract.
+ */
+
+
 public class DefaultBudgetManager implements BudgetManager {
 
     private final DefaultBudgetLedger ledger;

@@ -7,6 +7,18 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 
+/**
+ * Represents a default agent decision.
+ *
+ * <p>Its components capture `type`, `action`, `reason`, `metadata`.</p>
+ *
+ * @param type the type
+ * @param action the action
+ * @param reason the reason
+ * @param metadata the metadata
+ */
+
+
 public record DefaultAgentDecision(
         AgentDecisionType type,
         AgentAction action,

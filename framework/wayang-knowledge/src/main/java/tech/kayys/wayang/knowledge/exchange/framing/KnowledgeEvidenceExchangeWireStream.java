@@ -18,6 +18,11 @@ import tech.kayys.wayang.knowledge.exchange.protocol.*;
 import tech.kayys.wayang.knowledge.exchange.transport.*;
 import tech.kayys.wayang.knowledge.exchange.framing.*;
 
+/**
+ * Provides knowledge evidence exchange wire stream behavior for the Wayang framework.
+ */
+
+
 
 public final class KnowledgeEvidenceExchangeWireStream {
 

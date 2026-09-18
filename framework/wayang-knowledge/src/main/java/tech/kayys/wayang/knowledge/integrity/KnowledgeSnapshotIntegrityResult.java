@@ -6,6 +6,24 @@ import java.time.Instant;
 import java.util.List;
 import java.util.Map;
 
+/**
+ * Represents a knowledge snapshot integrity result.
+ *
+ * <p>Its components capture `verification id`, `snapshot id`, `status`, `verified at`, `mismatches`, and other values.</p>
+ *
+ * @param verificationId the verification id
+ * @param snapshotId the snapshot id
+ * @param status the status
+ * @param verifiedAt the verified at
+ * @param mismatches the mismatches
+ * @param verifiedDependencies the verified dependencies
+ * @param missingDependencies the missing dependencies
+ * @param computedFingerprint the computed fingerprint
+ * @param expectedFingerprint the expected fingerprint
+ * @param metadata the metadata
+ */
+
+
 public record KnowledgeSnapshotIntegrityResult(
         String verificationId,
         KnowledgeSnapshotId snapshotId,

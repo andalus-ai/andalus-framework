@@ -44,6 +44,25 @@ import tech.kayys.wayang.knowledge.exchange.recovery.*;
 import java.time.Instant;
 import java.util.Map;
 
+/**
+ * Represents a knowledge answer resolution memory entry.
+ *
+ * <p>Its components capture `memory id`, `key fingerprint`, `key`, `resolution`, `snapshot fingerprint`, and other values.</p>
+ *
+ * @param memoryId the memory id
+ * @param keyFingerprint the key fingerprint
+ * @param key the key
+ * @param resolution the resolution
+ * @param snapshotFingerprint the snapshot fingerprint
+ * @param evidenceFingerprint the evidence fingerprint
+ * @param graphFingerprint the graph fingerprint
+ * @param createdAt the created at
+ * @param expiresAt the expires at
+ * @param invalidated the invalidated
+ * @param metadata the metadata
+ */
+
+
 public record KnowledgeAnswerResolutionMemoryEntry(
 
         String memoryId,

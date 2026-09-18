@@ -22,6 +22,19 @@ import tech.kayys.wayang.knowledge.exchange.framing.*;
 import java.time.Instant;
 import java.util.Map;
 
+/**
+ * Represents a knowledge evidence exchange runtime enrollment request.
+ *
+ * <p>Its components capture `identity`, `requested by`, `requested at`, `reason`, `metadata`.</p>
+ *
+ * @param identity the identity
+ * @param requestedBy the requested by
+ * @param requestedAt the requested at
+ * @param reason the reason
+ * @param metadata the metadata
+ */
+
+
 public record KnowledgeEvidenceExchangeRuntimeEnrollmentRequest(
 
         KnowledgeEvidenceExchangeRuntimeIdentity identity,

@@ -22,6 +22,30 @@ import tech.kayys.wayang.knowledge.exchange.framing.*;
 import java.time.Instant;
 import java.util.Map;
 
+/**
+ * Represents a knowledge evidence exchange protocol session.
+ *
+ * <p>Its components capture `session id`, `local runtime id`, `remote runtime id`, `state`, `negotiated protocol version`, and other values.</p>
+ *
+ * @param sessionId the session id
+ * @param localRuntimeId the local runtime id
+ * @param remoteRuntimeId the remote runtime id
+ * @param state the state
+ * @param negotiatedProtocolVersion the negotiated protocol version
+ * @param localNonce the local nonce
+ * @param remoteNonce the remote nonce
+ * @param handshakeId the handshake id
+ * @param localIdentityFingerprint the local identity fingerprint
+ * @param remoteIdentityFingerprint the remote identity fingerprint
+ * @param localCapabilityFingerprint the local capability fingerprint
+ * @param remoteCapabilityFingerprint the remote capability fingerprint
+ * @param sessionFingerprint the session fingerprint
+ * @param createdAt the created at
+ * @param expiresAt the expires at
+ * @param metadata the metadata
+ */
+
+
 public record KnowledgeEvidenceExchangeProtocolSession(
 
         String sessionId,

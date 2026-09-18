@@ -27,6 +27,11 @@ import tech.kayys.wayang.knowledge.exchange.fusion.*;
 
 import java.util.List;
 
+/**
+ * Defines the contract for knowledge evidence artifact inventory operations in the Wayang framework.
+ */
+
+
 public interface KnowledgeEvidenceArtifactInventory {
 
     List<String> listArtifactIds(

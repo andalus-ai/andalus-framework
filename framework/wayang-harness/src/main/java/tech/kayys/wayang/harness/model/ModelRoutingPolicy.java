@@ -3,6 +3,11 @@ package tech.kayys.wayang.harness.model;
 import java.util.Collection;
 import java.util.Optional;
 
+/**
+ * Defines the contract for model routing policy operations in the Wayang framework.
+ */
+
+
 @FunctionalInterface
 public interface ModelRoutingPolicy {
 

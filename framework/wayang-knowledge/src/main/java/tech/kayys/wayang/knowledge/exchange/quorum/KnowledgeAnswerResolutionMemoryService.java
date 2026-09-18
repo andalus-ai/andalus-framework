@@ -43,6 +43,11 @@ import tech.kayys.wayang.knowledge.exchange.recovery.*;
 
 import java.time.Instant;
 
+/**
+ * Defines the contract for knowledge answer resolution memory service operations in the Wayang framework.
+ */
+
+
 public interface KnowledgeAnswerResolutionMemoryService {
 
     KnowledgeAnswerResolutionCacheLookup lookup(

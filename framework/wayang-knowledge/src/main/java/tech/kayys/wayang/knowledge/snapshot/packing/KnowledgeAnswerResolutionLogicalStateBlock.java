@@ -3,6 +3,17 @@ package tech.kayys.wayang.knowledge.snapshot.packing;
 import java.util.Arrays;
 import java.util.Map;
 
+/**
+ * Represents a knowledge answer resolution logical state block.
+ *
+ * <p>Its components capture `logical id`, `data`, `metadata`.</p>
+ *
+ * @param logicalId the logical id
+ * @param data the data
+ * @param metadata the metadata
+ */
+
+
 public record KnowledgeAnswerResolutionLogicalStateBlock(
         String logicalId,
         byte[] data,

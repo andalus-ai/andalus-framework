@@ -3,6 +3,11 @@ package tech.kayys.wayang.knowledge.exchange.transfer;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 
+/**
+ * Provides in memory knowledge answer resolution snapshot transfer store behavior for the Wayang framework.
+ */
+
+
 public final class InMemoryKnowledgeAnswerResolutionSnapshotTransferStore
         implements KnowledgeAnswerResolutionSnapshotTransferStore {
 

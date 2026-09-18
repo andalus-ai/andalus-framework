@@ -2,6 +2,15 @@ package tech.kayys.wayang.harness.protocol;
 
 import java.util.Optional;
 
+/**
+ * Represents a checkpoint action.
+ *
+ * <p>Its components capture `label`.</p>
+ *
+ * @param label the label
+ */
+
+
 public record CheckpointAction(Optional<String> label) implements AgentAction {
     public CheckpointAction {
         if (label == null) {

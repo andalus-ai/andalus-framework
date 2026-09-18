@@ -24,6 +24,18 @@ import tech.kayys.wayang.knowledge.exchange.federation.*;
 import tech.kayys.wayang.knowledge.exchange.routing.*;
 import tech.kayys.wayang.knowledge.exchange.fusion.*;
 
+/**
+ * Represents a knowledge evidence transfer quota.
+ *
+ * <p>Its components capture `max bytes per transfer`, `max concurrent transfers`, `max bytes per runtime`, `max chunk bytes`.</p>
+ *
+ * @param maxBytesPerTransfer the max bytes per transfer
+ * @param maxConcurrentTransfers the max concurrent transfers
+ * @param maxBytesPerRuntime the max bytes per runtime
+ * @param maxChunkBytes the max chunk bytes
+ */
+
+
 
 public record KnowledgeEvidenceTransferQuota(
 

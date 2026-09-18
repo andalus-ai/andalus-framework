@@ -24,6 +24,16 @@ import tech.kayys.wayang.knowledge.exchange.federation.*;
 import tech.kayys.wayang.knowledge.exchange.routing.*;
 import tech.kayys.wayang.knowledge.exchange.fusion.*;
 
+/**
+ * Represents a knowledge evidence transfer range.
+ *
+ * <p>Its components capture `offset`, `length`.</p>
+ *
+ * @param offset the offset
+ * @param length the length
+ */
+
+
 
 public record KnowledgeEvidenceTransferRange(
 

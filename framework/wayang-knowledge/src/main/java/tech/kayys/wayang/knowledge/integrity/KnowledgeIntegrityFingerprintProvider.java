@@ -3,6 +3,11 @@ package tech.kayys.wayang.knowledge.integrity;
 import tech.kayys.wayang.knowledge.snapshot.KnowledgeGovernanceSnapshot;
 import tech.kayys.wayang.knowledge.snapshot.KnowledgeRuntimeSnapshot;
 
+/**
+ * Defines the contract for knowledge integrity fingerprint provider operations in the Wayang framework.
+ */
+
+
 public interface KnowledgeIntegrityFingerprintProvider {
 
     String fingerprintKnowledge(String knowledgeId, String versionId);

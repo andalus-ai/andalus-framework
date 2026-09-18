@@ -24,6 +24,11 @@ import tech.kayys.wayang.knowledge.exchange.federation.*;
 import tech.kayys.wayang.knowledge.exchange.routing.*;
 import tech.kayys.wayang.knowledge.exchange.fusion.*;
 
+/**
+ * Defines the contract for knowledge evidence fusion scorer operations in the Wayang framework.
+ */
+
+
 
 public interface KnowledgeEvidenceFusionScorer {
 

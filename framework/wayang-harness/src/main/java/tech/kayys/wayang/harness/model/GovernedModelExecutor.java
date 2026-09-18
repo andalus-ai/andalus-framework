@@ -29,6 +29,11 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 
+/**
+ * Provides governed model executor behavior for the Wayang framework.
+ */
+
+
 public class GovernedModelExecutor {
 
     private final ModelCatalog catalog;

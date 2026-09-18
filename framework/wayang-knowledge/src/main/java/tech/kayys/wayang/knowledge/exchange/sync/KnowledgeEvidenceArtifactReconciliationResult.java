@@ -28,6 +28,22 @@ import tech.kayys.wayang.knowledge.exchange.fusion.*;
 import java.util.List;
 import java.util.Map;
 
+/**
+ * Represents a knowledge evidence artifact reconciliation result.
+ *
+ * <p>Its components capture `state`, `local runtime id`, `remote runtime id`, `missing locally`, `missing remotely`, and other values.</p>
+ *
+ * @param state the state
+ * @param localRuntimeId the local runtime id
+ * @param remoteRuntimeId the remote runtime id
+ * @param missingLocally the missing locally
+ * @param missingRemotely the missing remotely
+ * @param divergent the divergent
+ * @param revoked the revoked
+ * @param diagnostics the diagnostics
+ */
+
+
 public record KnowledgeEvidenceArtifactReconciliationResult(
 
         KnowledgeEvidenceArtifactConsistencyState state,

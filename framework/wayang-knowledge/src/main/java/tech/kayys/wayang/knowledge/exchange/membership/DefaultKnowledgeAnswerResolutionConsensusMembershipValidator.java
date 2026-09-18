@@ -3,6 +3,11 @@ package tech.kayys.wayang.knowledge.exchange.membership;
 import tech.kayys.wayang.knowledge.exchange.attestation.KnowledgeAnswerResolutionConsensusEpoch;
 import tech.kayys.wayang.knowledge.exchange.attestation.KnowledgeAnswerResolutionConsensusProposal;
 
+/**
+ * Provides the default implementation of the knowledge answer resolution consensus membership validator contract.
+ */
+
+
 public final class DefaultKnowledgeAnswerResolutionConsensusMembershipValidator
         implements KnowledgeAnswerResolutionConsensusMembershipValidator {
 

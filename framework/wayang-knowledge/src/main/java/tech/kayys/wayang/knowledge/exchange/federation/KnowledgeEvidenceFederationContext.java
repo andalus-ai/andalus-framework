@@ -28,6 +28,21 @@ import tech.kayys.wayang.knowledge.exchange.fusion.*;
 import java.time.Instant;
 import java.util.Map;
 
+/**
+ * Represents a knowledge evidence federation context.
+ *
+ * <p>Its components capture `query id`, `local runtime id`, `queried at`, `remote accessed`, `runtime count`, and other values.</p>
+ *
+ * @param queryId the query id
+ * @param localRuntimeId the local runtime id
+ * @param queriedAt the queried at
+ * @param remoteAccessed the remote accessed
+ * @param runtimeCount the runtime count
+ * @param evidenceCount the evidence count
+ * @param metadata the metadata
+ */
+
+
 public record KnowledgeEvidenceFederationContext(
 
         String queryId,

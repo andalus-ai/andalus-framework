@@ -5,6 +5,21 @@ import tech.kayys.wayang.knowledge.exchange.statemachine.KnowledgeAnswerResoluti
 import java.time.Instant;
 import java.util.Objects;
 
+/**
+ * Represents a knowledge answer resolution state checkpoint.
+ *
+ * <p>Its components capture `last applied index`, `term`, `epoch id`, `state fingerprint`, `state`, and other values.</p>
+ *
+ * @param lastAppliedIndex the last applied index
+ * @param term the term
+ * @param epochId the epoch id
+ * @param stateFingerprint the state fingerprint
+ * @param state the state
+ * @param createdAt the created at
+ * @param status the status
+ */
+
+
 public record KnowledgeAnswerResolutionStateCheckpoint(
         long lastAppliedIndex,
         long term,

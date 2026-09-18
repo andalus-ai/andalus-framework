@@ -22,6 +22,21 @@ import tech.kayys.wayang.knowledge.exchange.framing.*;
 import java.util.Map;
 import java.util.Set;
 
+/**
+ * Represents a knowledge evidence exchange transport descriptor.
+ *
+ * <p>Its components capture `transport id`, `type`, `capabilities`, `protocol version`, `max concurrent streams`, and other values.</p>
+ *
+ * @param transportId the transport id
+ * @param type the type
+ * @param capabilities the capabilities
+ * @param protocolVersion the protocol version
+ * @param maxConcurrentStreams the max concurrent streams
+ * @param maxFrameBytes the max frame bytes
+ * @param metadata the metadata
+ */
+
+
 public record KnowledgeEvidenceExchangeTransportDescriptor(
 
         String transportId,

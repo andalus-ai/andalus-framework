@@ -4,6 +4,26 @@ import java.time.Instant;
 import java.util.Map;
 import java.util.Objects;
 
+/**
+ * Represents a knowledge evidence exchange handshake.
+ *
+ * <p>Its components capture `handshake id`, `local runtime id`, `remote runtime id`, `principal id`, `tenant id`, and other values.</p>
+ *
+ * @param handshakeId the handshake id
+ * @param localRuntimeId the local runtime id
+ * @param remoteRuntimeId the remote runtime id
+ * @param principalId the principal id
+ * @param tenantId the tenant id
+ * @param workspaceId the workspace id
+ * @param projectId the project id
+ * @param nonce the nonce
+ * @param createdAt the created at
+ * @param expiresAt the expires at
+ * @param capabilities the capabilities
+ * @param metadata the metadata
+ */
+
+
 public record KnowledgeEvidenceExchangeHandshake(
         String handshakeId,
         String localRuntimeId,

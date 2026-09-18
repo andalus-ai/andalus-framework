@@ -4,6 +4,18 @@ import java.time.Instant;
 import java.util.Map;
 import java.util.Objects;
 
+/**
+ * Represents a budget snapshot.
+ *
+ * <p>Its components capture `snapshot id`, `timestamp`, `usages`, `limits`.</p>
+ *
+ * @param snapshotId the snapshot id
+ * @param timestamp the timestamp
+ * @param usages the usages
+ * @param limits the limits
+ */
+
+
 public record BudgetSnapshot(
         String snapshotId,
         Instant timestamp,

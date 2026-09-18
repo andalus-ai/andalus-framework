@@ -44,6 +44,23 @@ import tech.kayys.wayang.knowledge.exchange.recovery.*;
 import java.time.Instant;
 import java.util.Map;
 
+/**
+ * Represents a knowledge answer resolution dependency.
+ *
+ * <p>Its components capture `dependency id`, `resolution key fingerprint`, `type`, `target id`, `target version id`, and other values.</p>
+ *
+ * @param dependencyId the dependency id
+ * @param resolutionKeyFingerprint the resolution key fingerprint
+ * @param type the type
+ * @param targetId the target id
+ * @param targetVersionId the target version id
+ * @param targetFingerprint the target fingerprint
+ * @param required the required
+ * @param createdAt the created at
+ * @param metadata the metadata
+ */
+
+
 public record KnowledgeAnswerResolutionDependency(
 
         String dependencyId,

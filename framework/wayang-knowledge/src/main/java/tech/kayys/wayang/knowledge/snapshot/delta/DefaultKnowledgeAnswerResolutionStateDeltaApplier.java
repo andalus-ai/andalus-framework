@@ -6,6 +6,11 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
 
+/**
+ * Provides the default implementation of the knowledge answer resolution state delta applier contract.
+ */
+
+
 public final class DefaultKnowledgeAnswerResolutionStateDeltaApplier
         implements KnowledgeAnswerResolutionStateDeltaApplier {
 

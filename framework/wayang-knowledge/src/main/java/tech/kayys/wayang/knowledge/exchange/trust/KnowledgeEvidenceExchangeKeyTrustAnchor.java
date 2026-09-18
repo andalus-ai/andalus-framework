@@ -23,6 +23,23 @@ import java.time.Instant;
 import java.util.Map;
 import java.util.Objects;
 
+/**
+ * Represents a knowledge evidence exchange key trust anchor.
+ *
+ * <p>Its components capture `anchor id`, `anchor type`, `runtime id`, `tenant id`, `authority`, and other values.</p>
+ *
+ * @param anchorId the anchor id
+ * @param anchorType the anchor type
+ * @param runtimeId the runtime id
+ * @param tenantId the tenant id
+ * @param authority the authority
+ * @param createdAt the created at
+ * @param expiresAt the expires at
+ * @param trusted the trusted
+ * @param metadata the metadata
+ */
+
+
 public record KnowledgeEvidenceExchangeKeyTrustAnchor(
 
         String anchorId,

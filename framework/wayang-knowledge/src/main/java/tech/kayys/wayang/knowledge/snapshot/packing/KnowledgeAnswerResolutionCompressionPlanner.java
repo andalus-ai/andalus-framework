@@ -1,5 +1,10 @@
 package tech.kayys.wayang.knowledge.snapshot.packing;
 
+/**
+ * Provides knowledge answer resolution compression planner behavior for the Wayang framework.
+ */
+
+
 public final class KnowledgeAnswerResolutionCompressionPlanner {
 
     private final KnowledgeAnswerResolutionBlockPackingPolicy policy;

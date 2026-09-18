@@ -23,6 +23,11 @@ import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
 
+/**
+ * Defines the contract for knowledge evidence exchange runtime identity registry operations in the Wayang framework.
+ */
+
+
 public interface KnowledgeEvidenceExchangeRuntimeIdentityRegistry {
 
     void register(

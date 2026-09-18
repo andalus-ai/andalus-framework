@@ -21,6 +21,11 @@ import tech.kayys.wayang.knowledge.exchange.framing.*;
 
 import java.time.Instant;
 
+/**
+ * Defines the contract for knowledge evidence exchange capability negotiation service operations in the Wayang framework.
+ */
+
+
 public interface KnowledgeEvidenceExchangeCapabilityNegotiationService {
 
     KnowledgeEvidenceExchangeCapabilityNegotiationResult negotiate(

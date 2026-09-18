@@ -3,6 +3,17 @@ package tech.kayys.wayang.harness.execution.recovery;
 import java.util.Map;
 import java.util.Objects;
 
+/**
+ * Represents a recovery decision.
+ *
+ * <p>Its components capture `action`, `reason`, `parameters`.</p>
+ *
+ * @param action the action
+ * @param reason the reason
+ * @param parameters the parameters
+ */
+
+
 public record RecoveryDecision(
         RecoveryAction action,
         String reason,

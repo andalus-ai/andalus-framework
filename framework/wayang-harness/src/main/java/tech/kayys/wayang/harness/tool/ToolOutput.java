@@ -3,6 +3,19 @@ package tech.kayys.wayang.harness.tool;
 import java.nio.charset.StandardCharsets;
 import java.util.Optional;
 
+/**
+ * Represents a tool output.
+ *
+ * <p>Its components capture `payload`, `size bytes`, `preview`, `artifact ref`, `truncated`.</p>
+ *
+ * @param payload the payload
+ * @param sizeBytes the size bytes
+ * @param preview the preview
+ * @param artifactRef the artifact ref
+ * @param truncated the truncated
+ */
+
+
 public record ToolOutput(
         Object payload,
         long sizeBytes,

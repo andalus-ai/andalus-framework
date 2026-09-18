@@ -21,6 +21,11 @@ import tech.kayys.wayang.knowledge.exchange.framing.*;
 
 import java.util.concurrent.CompletableFuture;
 
+/**
+ * Defines the contract for knowledge evidence exchange transport operations in the Wayang framework.
+ */
+
+
 public interface KnowledgeEvidenceExchangeTransport {
 
     KnowledgeEvidenceExchangeTransportType type();

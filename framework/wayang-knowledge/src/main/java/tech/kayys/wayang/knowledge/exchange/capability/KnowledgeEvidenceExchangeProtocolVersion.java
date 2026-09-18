@@ -21,6 +21,16 @@ import tech.kayys.wayang.knowledge.exchange.framing.*;
 
 import java.util.Objects;
 
+/**
+ * Represents a knowledge evidence exchange protocol version.
+ *
+ * <p>Its components capture `major`, `minor`.</p>
+ *
+ * @param major the major
+ * @param minor the minor
+ */
+
+
 public record KnowledgeEvidenceExchangeProtocolVersion(
 
         int major,

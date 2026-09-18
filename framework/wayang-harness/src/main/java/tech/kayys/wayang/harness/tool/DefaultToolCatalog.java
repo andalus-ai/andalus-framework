@@ -3,6 +3,11 @@ package tech.kayys.wayang.harness.tool;
 import java.util.*;
 import java.util.concurrent.CopyOnWriteArrayList;
 
+/**
+ * Provides the default implementation of the tool catalog contract.
+ */
+
+
 public class DefaultToolCatalog implements ToolCatalog {
 
     private final List<ToolProvider> providers = new CopyOnWriteArrayList<>();

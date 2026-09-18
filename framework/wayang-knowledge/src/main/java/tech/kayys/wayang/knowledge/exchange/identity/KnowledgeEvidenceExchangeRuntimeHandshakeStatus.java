@@ -18,6 +18,11 @@ import tech.kayys.wayang.knowledge.exchange.protocol.*;
 import tech.kayys.wayang.knowledge.exchange.transport.*;
 import tech.kayys.wayang.knowledge.exchange.framing.*;
 
+/**
+ * Defines the knowledge evidence exchange runtime handshake status values used by the Wayang framework.
+ */
+
+
 
 public enum KnowledgeEvidenceExchangeRuntimeHandshakeStatus {
 

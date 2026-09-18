@@ -3,6 +3,22 @@ package tech.kayys.wayang.knowledge.replay;
 import java.time.Instant;
 import java.util.Map;
 
+/**
+ * Represents a knowledge replay request.
+ *
+ * <p>Its components capture `trace id`, `mode`, `effective at`, `verify evidence`, `verify lineage`, and other values.</p>
+ *
+ * @param traceId the trace id
+ * @param mode the mode
+ * @param effectiveAt the effective at
+ * @param verifyEvidence the verify evidence
+ * @param verifyLineage the verify lineage
+ * @param verifyPolicies the verify policies
+ * @param verifyRules the verify rules
+ * @param metadata the metadata
+ */
+
+
 public record KnowledgeReplayRequest(
         String traceId,
         KnowledgeReplayMode mode,

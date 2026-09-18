@@ -102,6 +102,10 @@ public class DefaultResourceScope implements ResourceScope {
         }
         return false;
     }
+    /**
+     * Builder for constructing default resource scope instances.
+     */
+
 
     public static class Builder {
         private final Set<ResourceType> allowedTypes = new HashSet<>();

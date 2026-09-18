@@ -1,5 +1,15 @@
 package tech.kayys.wayang.harness.tool;
 
+/**
+ * Represents a tool selection reason.
+ *
+ * <p>Its components capture `strategy`, `message`.</p>
+ *
+ * @param strategy the strategy
+ * @param message the message
+ */
+
+
 public record ToolSelectionReason(
         String strategy,
         String message

@@ -3,6 +3,15 @@ package tech.kayys.wayang.harness.protocol;
 import java.util.Objects;
 import java.util.UUID;
 
+/**
+ * Represents a turn id.
+ *
+ * <p>Its components capture `value`.</p>
+ *
+ * @param value the value
+ */
+
+
 public record TurnId(String value) {
     public TurnId {
         Objects.requireNonNull(value, "TurnId value cannot be null");

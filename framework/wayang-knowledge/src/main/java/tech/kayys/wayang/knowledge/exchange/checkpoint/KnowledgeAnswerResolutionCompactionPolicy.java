@@ -1,5 +1,16 @@
 package tech.kayys.wayang.knowledge.exchange.checkpoint;
 
+/**
+ * Represents a knowledge answer resolution compaction policy.
+ *
+ * <p>Its components capture `safe compaction index`, `allow compaction`, `reason`.</p>
+ *
+ * @param safeCompactionIndex the safe compaction index
+ * @param allowCompaction the allow compaction
+ * @param reason the reason
+ */
+
+
 public record KnowledgeAnswerResolutionCompactionPolicy(
         long safeCompactionIndex,
         boolean allowCompaction,

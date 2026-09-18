@@ -25,6 +25,25 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 
+/**
+ * Represents a knowledge evidence exchange frame.
+ *
+ * <p>Its components capture `version`, `type`, `flags`, `session id`, `stream id`, and other values.</p>
+ *
+ * @param version the version
+ * @param type the type
+ * @param flags the flags
+ * @param sessionId the session id
+ * @param streamId the stream id
+ * @param requestId the request id
+ * @param sequence the sequence
+ * @param payloadLength the payload length
+ * @param payload the payload
+ * @param payloadFingerprint the payload fingerprint
+ * @param metadata the metadata
+ */
+
+
 public record KnowledgeEvidenceExchangeFrame(
 
         byte version,

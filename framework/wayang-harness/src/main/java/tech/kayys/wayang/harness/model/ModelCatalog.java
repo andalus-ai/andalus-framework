@@ -3,6 +3,11 @@ package tech.kayys.wayang.harness.model;
 import java.util.Collection;
 import java.util.Optional;
 
+/**
+ * Defines the contract for model catalog operations in the Wayang framework.
+ */
+
+
 public interface ModelCatalog {
 
     Collection<ModelDescriptor> discover(ModelTask task);

@@ -4,6 +4,11 @@ import java.util.Objects;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicBoolean;
 
+/**
+ * Provides the default implementation of the budget reservation contract.
+ */
+
+
 public class DefaultBudgetReservation implements BudgetReservation {
 
     private final String id;

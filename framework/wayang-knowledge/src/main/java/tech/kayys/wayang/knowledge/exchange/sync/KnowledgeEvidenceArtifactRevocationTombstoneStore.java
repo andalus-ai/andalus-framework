@@ -27,6 +27,11 @@ import tech.kayys.wayang.knowledge.exchange.fusion.*;
 
 import java.util.Optional;
 
+/**
+ * Defines the contract for knowledge evidence artifact revocation tombstone store operations in the Wayang framework.
+ */
+
+
 public interface KnowledgeEvidenceArtifactRevocationTombstoneStore {
 
     void put(

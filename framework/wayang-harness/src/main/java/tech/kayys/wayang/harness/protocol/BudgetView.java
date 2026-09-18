@@ -6,6 +6,11 @@ import tech.kayys.wayang.harness.governance.budget.BudgetDimension;
 import java.util.Map;
 import java.util.Optional;
 
+/**
+ * Defines the contract for budget view operations in the Wayang framework.
+ */
+
+
 public interface BudgetView {
 
     Optional<BudgetAmount> remaining(BudgetDimension dimension);

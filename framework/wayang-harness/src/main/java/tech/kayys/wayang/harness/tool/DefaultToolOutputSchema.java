@@ -3,6 +3,16 @@ package tech.kayys.wayang.harness.tool;
 import java.util.Map;
 import java.util.Objects;
 
+/**
+ * Represents a default tool output schema.
+ *
+ * <p>Its components capture `root type`, `properties`.</p>
+ *
+ * @param rootType the root type
+ * @param properties the properties
+ */
+
+
 public record DefaultToolOutputSchema(
         SchemaType rootType,
         Map<String, SchemaProperty> properties

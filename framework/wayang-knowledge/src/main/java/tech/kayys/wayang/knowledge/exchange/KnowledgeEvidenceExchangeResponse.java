@@ -6,6 +6,24 @@ import tech.kayys.wayang.knowledge.snapshot.pack.KnowledgeSnapshotVerificationMa
 
 import java.util.Map;
 
+/**
+ * Represents a knowledge evidence exchange response.
+ *
+ * <p>Its components capture `success`, `operation`, `artifact id`, `content`, `media type`, and other values.</p>
+ *
+ * @param success the success
+ * @param operation the operation
+ * @param artifactId the artifact id
+ * @param content the content
+ * @param mediaType the media type
+ * @param manifest the manifest
+ * @param merkleProof the merkle proof
+ * @param errorCode the error code
+ * @param errorMessage the error message
+ * @param metadata the metadata
+ */
+
+
 public record KnowledgeEvidenceExchangeResponse(
         boolean success,
         KnowledgeEvidenceExchangeOperation operation,

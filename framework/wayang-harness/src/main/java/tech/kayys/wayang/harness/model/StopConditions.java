@@ -3,6 +3,16 @@ package tech.kayys.wayang.harness.model;
 import java.util.List;
 import java.util.Optional;
 
+/**
+ * Represents a stop conditions.
+ *
+ * <p>Its components capture `stop sequences`, `max tokens`.</p>
+ *
+ * @param stopSequences the stop sequences
+ * @param maxTokens the max tokens
+ */
+
+
 public record StopConditions(
         List<String> stopSequences,
         Optional<Integer> maxTokens

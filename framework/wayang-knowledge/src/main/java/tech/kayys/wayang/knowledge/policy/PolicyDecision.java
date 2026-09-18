@@ -17,6 +17,10 @@ public record PolicyDecision(
         reason = reason == null ? "" : reason;
         metadata = metadata == null ? Map.of() : Map.copyOf(metadata);
     }
+    /**
+     * Enumerates the decision type values used by the Wayang framework.
+     */
+
 
     public enum DecisionType {
         ALLOW,

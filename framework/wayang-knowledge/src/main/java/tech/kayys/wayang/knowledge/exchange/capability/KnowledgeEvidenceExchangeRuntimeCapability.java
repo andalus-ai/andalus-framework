@@ -23,6 +23,21 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 
+/**
+ * Represents a knowledge evidence exchange runtime capability.
+ *
+ * <p>Its components capture `type`, `supported`, `algorithms`, `formats`, `max artifact bytes`, and other values.</p>
+ *
+ * @param type the type
+ * @param supported the supported
+ * @param algorithms the algorithms
+ * @param formats the formats
+ * @param maxArtifactBytes the max artifact bytes
+ * @param required the required
+ * @param metadata the metadata
+ */
+
+
 public record KnowledgeEvidenceExchangeRuntimeCapability(
 
         KnowledgeEvidenceExchangeCapabilityType type,

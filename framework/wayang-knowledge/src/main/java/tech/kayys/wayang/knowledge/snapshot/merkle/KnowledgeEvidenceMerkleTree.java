@@ -3,6 +3,19 @@ package tech.kayys.wayang.knowledge.snapshot.merkle;
 import java.util.List;
 import java.util.Map;
 
+/**
+ * Represents a knowledge evidence merkle tree.
+ *
+ * <p>Its components capture `algorithm`, `root hash`, `leaves`, `nodes`, `metadata`.</p>
+ *
+ * @param algorithm the algorithm
+ * @param rootHash the root hash
+ * @param leaves the leaves
+ * @param nodes the nodes
+ * @param metadata the metadata
+ */
+
+
 public record KnowledgeEvidenceMerkleTree(
         String algorithm,
         String rootHash,

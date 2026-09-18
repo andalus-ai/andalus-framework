@@ -43,6 +43,24 @@ import tech.kayys.wayang.knowledge.exchange.recovery.*;
 
 import java.time.Instant;
 
+/**
+ * Represents a knowledge answer resolution key.
+ *
+ * <p>Its components capture `query fingerprint`, `tenant id`, `workspace id`, `project id`, `agent id`, and other values.</p>
+ *
+ * @param queryFingerprint the query fingerprint
+ * @param tenantId the tenant id
+ * @param workspaceId the workspace id
+ * @param projectId the project id
+ * @param agentId the agent id
+ * @param effectiveAt the effective at
+ * @param knowledgeSnapshotId the knowledge snapshot id
+ * @param policySnapshotFingerprint the policy snapshot fingerprint
+ * @param runtimeConfigurationFingerprint the runtime configuration fingerprint
+ * @param resolutionPolicyId the resolution policy id
+ */
+
+
 public record KnowledgeAnswerResolutionKey(
 
         String queryFingerprint,

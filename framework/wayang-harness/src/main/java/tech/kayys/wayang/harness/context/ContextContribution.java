@@ -3,6 +3,17 @@ package tech.kayys.wayang.harness.context;
 import java.util.List;
 import java.util.Objects;
 
+/**
+ * Represents a context contribution.
+ *
+ * <p>Its components capture `source id`, `priority`, `items`.</p>
+ *
+ * @param sourceId the source id
+ * @param priority the priority
+ * @param items the items
+ */
+
+
 public record ContextContribution(
         String sourceId,
         ContextPriority priority,

@@ -28,6 +28,11 @@ import tech.kayys.wayang.knowledge.exchange.fusion.*;
 import java.io.IOException;
 import java.io.InputStream;
 
+/**
+ * Defines the contract for knowledge evidence transfer source operations in the Wayang framework.
+ */
+
+
 public interface KnowledgeEvidenceTransferSource {
 
     String artifactId();

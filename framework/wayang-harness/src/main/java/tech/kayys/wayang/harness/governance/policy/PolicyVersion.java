@@ -2,6 +2,16 @@ package tech.kayys.wayang.harness.governance.policy;
 
 import java.util.Objects;
 
+/**
+ * Represents a policy version.
+ *
+ * <p>Its components capture `policy id`, `version`.</p>
+ *
+ * @param policyId the policy id
+ * @param version the version
+ */
+
+
 public record PolicyVersion(
         String policyId,
         String version

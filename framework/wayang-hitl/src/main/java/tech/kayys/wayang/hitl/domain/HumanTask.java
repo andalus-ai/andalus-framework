@@ -302,23 +302,45 @@ public class HumanTask {
 
     // ==================== QUERIES ====================
 
+    /**
+     * Determines whether the task has passed its due date and is not terminal.
+     *
+     * @return {@code true} when the task is overdue
+     */
     public boolean isOverdue() {
         return !status.isTerminal() &&
                dueDate != null &&
                Instant.now().isAfter(dueDate);
     }
 
+    /**
+     * Checks whether the current assignment belongs to a user.
+     *
+     * @param userId user identifier to check
+     * @return {@code true} when the user is currently assigned
+     */
     public boolean isAssignedTo(String userId) {
         return currentAssignment != null &&
                currentAssignment.getAssigneeIdentifier().equals(userId);
     }
 
+    /**
+     * Checks whether a user may claim the current assignment.
+     *
+     * @param userId user identifier to check
+     * @return {@code true} when the task is claimable by the user
+     */
     public boolean canBeClaimedBy(String userId) {
         return status == HumanTaskStatus.ASSIGNED &&
                currentAssignment != null &&
                currentAssignment.canClaim(userId);
     }
 
+    /**
+     * Returns the elapsed time between claiming and completion.
+     *
+     * @return completion duration, or {@code null} when either timestamp is absent
+     */
     public Duration getTimeToComplete() {
         if (completedAt == null || claimedAt == null) {
             return null;
@@ -326,6 +348,11 @@ public class HumanTask {
         return Duration.between(claimedAt, completedAt);
     }
 
+    /**
+     * Returns how long the task has remained open.
+     *
+     * @return duration from creation until completion or now
+     */
     public Duration getTimeOpen() {
         Instant endTime = completedAt != null ? completedAt : Instant.now();
         return Duration.between(createdAt, endTime);
@@ -371,19 +398,36 @@ public class HumanTask {
         uncommittedEvents.add(event);
     }
 
+    /**
+     * Returns domain events raised since the last commit marker.
+     *
+     * @return an unmodifiable view of pending events
+     */
     public List<HumanTaskEvent> getUncommittedEvents() {
         return Collections.unmodifiableList(uncommittedEvents);
     }
 
+    /**
+     * Clears events that have been successfully published.
+     */
     public void markEventsAsCommitted() {
         uncommittedEvents.clear();
     }
 
     // ==================== BUILDER ====================
 
+    /**
+     * Creates a builder for a new human task.
+     *
+     * @return a new task builder
+     */
     public static Builder builder() {
         return new Builder();
     }
+    /**
+     * Builder for constructing human task instances.
+     */
+
 
     public static class Builder {
         private String workflowRunId;

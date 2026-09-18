@@ -44,6 +44,21 @@ import tech.kayys.wayang.knowledge.exchange.recovery.*;
 import java.time.Instant;
 import java.util.Objects;
 
+/**
+ * Represents a knowledge answer resolution consensus epoch.
+ *
+ * <p>Its components capture `epoch id`, `sequence`, `participant set fingerprint`, `previous epoch id`, `created at`, and other values.</p>
+ *
+ * @param epochId the epoch id
+ * @param sequence the sequence
+ * @param participantSetFingerprint the participant set fingerprint
+ * @param previousEpochId the previous epoch id
+ * @param createdAt the created at
+ * @param effectiveAt the effective at
+ * @param expiresAt the expires at
+ */
+
+
 public record KnowledgeAnswerResolutionConsensusEpoch(
         String epochId,
         long sequence,

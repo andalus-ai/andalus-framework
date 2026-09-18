@@ -5,6 +5,11 @@ import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 
+/**
+ * Provides in memory artifact store behavior for the Wayang framework.
+ */
+
+
 public class InMemoryArtifactStore implements ArtifactStore {
 
     private final Map<String, byte[]> store = new ConcurrentHashMap<>();

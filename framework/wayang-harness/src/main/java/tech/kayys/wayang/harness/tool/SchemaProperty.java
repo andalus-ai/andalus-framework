@@ -2,6 +2,18 @@ package tech.kayys.wayang.harness.tool;
 
 import java.util.Objects;
 
+/**
+ * Represents a schema property.
+ *
+ * <p>Its components capture `name`, `type`, `description`, `required`.</p>
+ *
+ * @param name the name
+ * @param type the type
+ * @param description the description
+ * @param required the required
+ */
+
+
 public record SchemaProperty(
         String name,
         SchemaType type,

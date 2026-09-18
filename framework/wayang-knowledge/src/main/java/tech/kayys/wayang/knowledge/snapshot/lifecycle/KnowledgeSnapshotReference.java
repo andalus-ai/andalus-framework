@@ -6,6 +6,22 @@ import java.time.Instant;
 import java.util.Map;
 import java.util.Objects;
 
+/**
+ * Represents a knowledge snapshot reference.
+ *
+ * <p>Its components capture `reference id`, `snapshot id`, `type`, `owner id`, `tenant id`, and other values.</p>
+ *
+ * @param referenceId the reference id
+ * @param snapshotId the snapshot id
+ * @param type the type
+ * @param ownerId the owner id
+ * @param tenantId the tenant id
+ * @param createdAt the created at
+ * @param expiresAt the expires at
+ * @param metadata the metadata
+ */
+
+
 public record KnowledgeSnapshotReference(
         String referenceId,
         KnowledgeSnapshotId snapshotId,

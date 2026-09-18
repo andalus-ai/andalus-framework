@@ -5,6 +5,11 @@ import tech.kayys.wayang.harness.memory.*;
 import java.util.Map;
 import java.util.function.Consumer;
 
+/**
+ * Provides the default implementation of the tool result router contract.
+ */
+
+
 public class DefaultToolResultRouter implements ToolResultRouter {
 
     @Override

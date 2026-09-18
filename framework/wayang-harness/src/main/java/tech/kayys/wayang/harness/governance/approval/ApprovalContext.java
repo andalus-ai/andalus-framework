@@ -2,6 +2,16 @@ package tech.kayys.wayang.harness.governance.approval;
 
 import java.util.Map;
 
+/**
+ * Represents a approval context.
+ *
+ * <p>Its components capture `requested by`, `metadata`.</p>
+ *
+ * @param requestedBy the requested by
+ * @param metadata the metadata
+ */
+
+
 public record ApprovalContext(
         String requestedBy,
         Map<String, Object> metadata

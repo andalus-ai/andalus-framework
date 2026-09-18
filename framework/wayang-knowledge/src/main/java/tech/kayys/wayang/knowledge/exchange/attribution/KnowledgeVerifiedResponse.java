@@ -44,6 +44,24 @@ import tech.kayys.wayang.knowledge.exchange.recovery.*;
 import java.util.List;
 import java.util.Map;
 
+/**
+ * Represents a knowledge verified response.
+ *
+ * <p>Its components capture `metadata`, `answer`, `status`, `disposition`, `confidence`, and other values.</p>
+ *
+ * @param metadata the metadata
+ * @param answer the answer
+ * @param status the status
+ * @param disposition the disposition
+ * @param confidence the confidence
+ * @param claims the claims
+ * @param evidence the evidence
+ * @param blockedClaimIds the blocked claim ids
+ * @param warnings the warnings
+ * @param metadataMap the metadata map
+ */
+
+
 public record KnowledgeVerifiedResponse(
 
         KnowledgeVerifiedResponseMetadata metadata,

@@ -44,6 +44,23 @@ import tech.kayys.wayang.knowledge.exchange.recovery.*;
 import java.time.Instant;
 import java.util.Objects;
 
+/**
+ * Represents a knowledge answer resolution lease.
+ *
+ * <p>Its components capture `lease id`, `consensus id`, `key fingerprint`, `runtime id`, `issued at`, and other values.</p>
+ *
+ * @param leaseId the lease id
+ * @param consensusId the consensus id
+ * @param keyFingerprint the key fingerprint
+ * @param runtimeId the runtime id
+ * @param issuedAt the issued at
+ * @param expiresAt the expires at
+ * @param lastRenewedAt the last renewed at
+ * @param renewalSequence the renewal sequence
+ * @param metadata the metadata
+ */
+
+
 public record KnowledgeAnswerResolutionLease(
         String leaseId,
         String consensusId,

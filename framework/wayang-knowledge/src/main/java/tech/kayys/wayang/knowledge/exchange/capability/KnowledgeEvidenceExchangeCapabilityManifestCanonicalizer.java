@@ -18,6 +18,11 @@ import tech.kayys.wayang.knowledge.exchange.protocol.*;
 import tech.kayys.wayang.knowledge.exchange.transport.*;
 import tech.kayys.wayang.knowledge.exchange.framing.*;
 
+/**
+ * Defines the contract for knowledge evidence exchange capability manifest canonicalizer operations in the Wayang framework.
+ */
+
+
 
 public interface KnowledgeEvidenceExchangeCapabilityManifestCanonicalizer {
 

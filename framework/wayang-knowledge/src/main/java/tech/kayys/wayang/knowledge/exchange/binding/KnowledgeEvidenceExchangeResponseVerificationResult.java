@@ -2,6 +2,21 @@ package tech.kayys.wayang.knowledge.exchange.binding;
 
 import java.util.Map;
 
+/**
+ * Represents a knowledge evidence exchange response verification result.
+ *
+ * <p>Its components capture `status`, `request id`, `response id`, `expected fingerprint`, `actual fingerprint`, and other values.</p>
+ *
+ * @param status the status
+ * @param requestId the request id
+ * @param responseId the response id
+ * @param expectedFingerprint the expected fingerprint
+ * @param actualFingerprint the actual fingerprint
+ * @param reason the reason
+ * @param metadata the metadata
+ */
+
+
 public record KnowledgeEvidenceExchangeResponseVerificationResult(
         KnowledgeEvidenceExchangeResponseVerificationStatus status,
         String requestId,

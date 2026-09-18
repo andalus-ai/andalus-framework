@@ -2,6 +2,18 @@ package tech.kayys.wayang.harness.tool;
 
 import java.util.Objects;
 
+/**
+ * Represents a tool intent.
+ *
+ * <p>Its components capture `id`, `capability`, `arguments`, `context`.</p>
+ *
+ * @param id the id
+ * @param capability the capability
+ * @param arguments the arguments
+ * @param context the context
+ */
+
+
 public record ToolIntent(
         ToolIntentId id,
         String capability,

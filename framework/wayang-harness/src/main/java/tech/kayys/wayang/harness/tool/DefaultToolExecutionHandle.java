@@ -4,6 +4,11 @@ import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicReference;
 
+/**
+ * Provides the default implementation of the tool execution handle contract.
+ */
+
+
 public class DefaultToolExecutionHandle implements ToolExecutionHandle {
 
     private final ToolInvocationId id;

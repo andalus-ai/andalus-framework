@@ -43,6 +43,18 @@ import tech.kayys.wayang.knowledge.exchange.recovery.*;
 
 import java.util.Set;
 
+/**
+ * Represents a knowledge answer resolution inventory.
+ *
+ * <p>Its components capture `runtime id`, `tenant id`, `key fingerprints`, `inventory fingerprint`.</p>
+ *
+ * @param runtimeId the runtime id
+ * @param tenantId the tenant id
+ * @param keyFingerprints the key fingerprints
+ * @param inventoryFingerprint the inventory fingerprint
+ */
+
+
 public record KnowledgeAnswerResolutionInventory(
 
         String runtimeId,

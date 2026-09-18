@@ -43,6 +43,18 @@ import tech.kayys.wayang.knowledge.exchange.recovery.*;
 
 import java.util.List;
 
+/**
+ * Represents a knowledge answer resolution invalidation impact.
+ *
+ * <p>Its components capture `changed target id`, `dependency type`, `affected resolution keys`, `affected count`.</p>
+ *
+ * @param changedTargetId the changed target id
+ * @param dependencyType the dependency type
+ * @param affectedResolutionKeys the affected resolution keys
+ * @param affectedCount the affected count
+ */
+
+
 public record KnowledgeAnswerResolutionInvalidationImpact(
 
         String changedTargetId,

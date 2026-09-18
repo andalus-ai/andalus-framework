@@ -4,6 +4,22 @@ import java.time.Instant;
 import java.util.List;
 import java.util.Map;
 
+/**
+ * Represents a knowledge evidence artifact manifest.
+ *
+ * <p>Its components capture `artifact id`, `artifact type`, `schema version`, `size`, `references`, and other values.</p>
+ *
+ * @param artifactId the artifact id
+ * @param artifactType the artifact type
+ * @param schemaVersion the schema version
+ * @param size the size
+ * @param references the references
+ * @param dependencies the dependencies
+ * @param createdAt the created at
+ * @param metadata the metadata
+ */
+
+
 public record KnowledgeEvidenceArtifactManifest(
         KnowledgeEvidenceArtifactId artifactId,
         String artifactType,

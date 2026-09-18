@@ -22,6 +22,25 @@ import tech.kayys.wayang.knowledge.exchange.framing.*;
 import java.time.Instant;
 import java.util.Map;
 
+/**
+ * Represents a knowledge evidence exchange resume token.
+ *
+ * <p>Its components capture `token id`, `session id`, `stream id`, `artifact id`, `resource id`, and other values.</p>
+ *
+ * @param tokenId the token id
+ * @param sessionId the session id
+ * @param streamId the stream id
+ * @param artifactId the artifact id
+ * @param resourceId the resource id
+ * @param offset the offset
+ * @param nextSequence the next sequence
+ * @param resourceFingerprint the resource fingerprint
+ * @param createdAt the created at
+ * @param expiresAt the expires at
+ * @param metadata the metadata
+ */
+
+
 public record KnowledgeEvidenceExchangeResumeToken(
 
         String tokenId,

@@ -2,6 +2,11 @@ package tech.kayys.wayang.harness.model;
 
 import java.util.*;
 
+/**
+ * Provides the default implementation of the model router contract.
+ */
+
+
 public class DefaultModelRouter implements ModelRouter {
 
     private final ModelCatalog catalog;

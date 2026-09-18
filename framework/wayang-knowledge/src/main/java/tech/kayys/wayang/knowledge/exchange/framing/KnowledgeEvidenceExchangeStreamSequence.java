@@ -21,6 +21,11 @@ import tech.kayys.wayang.knowledge.exchange.framing.*;
 
 import java.util.concurrent.atomic.AtomicLong;
 
+/**
+ * Provides knowledge evidence exchange stream sequence behavior for the Wayang framework.
+ */
+
+
 public final class KnowledgeEvidenceExchangeStreamSequence {
 
     private final AtomicLong next =

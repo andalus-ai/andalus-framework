@@ -1,5 +1,10 @@
 package tech.kayys.wayang.harness.governance.budget;
 
+/**
+ * Defines the contract for budget manager operations in the Wayang framework.
+ */
+
+
 public interface BudgetManager {
 
     BudgetReservation reserve(BudgetRequest request);

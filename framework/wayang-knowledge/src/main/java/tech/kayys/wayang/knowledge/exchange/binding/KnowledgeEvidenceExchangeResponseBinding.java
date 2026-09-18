@@ -7,6 +7,34 @@ import java.time.Instant;
 import java.util.Map;
 import java.util.Objects;
 
+/**
+ * Represents a knowledge evidence exchange response binding.
+ *
+ * <p>Its components capture `request id`, `session id`, `request nonce`, `response id`, `runtime id`, and other values.</p>
+ *
+ * @param requestId the request id
+ * @param sessionId the session id
+ * @param requestNonce the request nonce
+ * @param responseId the response id
+ * @param runtimeId the runtime id
+ * @param remoteRuntimeId the remote runtime id
+ * @param tenantId the tenant id
+ * @param workspaceId the workspace id
+ * @param projectId the project id
+ * @param operation the operation
+ * @param artifactId the artifact id
+ * @param resourceId the resource id
+ * @param success the success
+ * @param contentFingerprint the content fingerprint
+ * @param manifestFingerprint the manifest fingerprint
+ * @param merkleProofFingerprint the merkle proof fingerprint
+ * @param issuedAt the issued at
+ * @param expiresAt the expires at
+ * @param responseFingerprint the response fingerprint
+ * @param metadata the metadata
+ */
+
+
 public record KnowledgeEvidenceExchangeResponseBinding(
         String requestId,
         String sessionId,

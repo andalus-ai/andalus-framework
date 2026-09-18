@@ -3,6 +3,15 @@ package tech.kayys.wayang.harness.memory;
 import java.util.Objects;
 import java.util.UUID;
 
+/**
+ * Represents a memory id.
+ *
+ * <p>Its components capture `value`.</p>
+ *
+ * @param value the value
+ */
+
+
 public record MemoryId(String value) {
     public MemoryId {
         Objects.requireNonNull(value, "value");

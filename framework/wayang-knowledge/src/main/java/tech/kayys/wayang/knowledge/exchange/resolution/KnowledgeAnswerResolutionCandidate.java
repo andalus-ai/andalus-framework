@@ -43,6 +43,27 @@ import tech.kayys.wayang.knowledge.exchange.recovery.*;
 
 import java.util.Map;
 
+/**
+ * Represents a knowledge answer resolution candidate.
+ *
+ * <p>Its components capture `artifact id`, `runtime id`, `authority score`, `trust score`, `freshness score`, and other values.</p>
+ *
+ * @param artifactId the artifact id
+ * @param runtimeId the runtime id
+ * @param authorityScore the authority score
+ * @param trustScore the trust score
+ * @param freshnessScore the freshness score
+ * @param provenanceScore the provenance score
+ * @param scopeScore the scope score
+ * @param supportScore the support score
+ * @param conflictPenalty the conflict penalty
+ * @param finalScore the final score
+ * @param verified the verified
+ * @param eligible the eligible
+ * @param metadata the metadata
+ */
+
+
 public record KnowledgeAnswerResolutionCandidate(
 
         String artifactId,

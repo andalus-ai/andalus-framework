@@ -2,6 +2,11 @@ package tech.kayys.wayang.knowledge.exchange.journal;
 
 import java.time.Instant;
 
+/**
+ * Defines the contract for knowledge answer resolution journal appender operations in the Wayang framework.
+ */
+
+
 public interface KnowledgeAnswerResolutionJournalAppender {
 
     KnowledgeAnswerResolutionLogEntry append(

@@ -43,6 +43,11 @@ import tech.kayys.wayang.knowledge.exchange.recovery.*;
 
 import java.util.List;
 
+/**
+ * Defines the contract for knowledge answer artifact graph store operations in the Wayang framework.
+ */
+
+
 public interface KnowledgeAnswerArtifactGraphStore {
 
     void addRelation(

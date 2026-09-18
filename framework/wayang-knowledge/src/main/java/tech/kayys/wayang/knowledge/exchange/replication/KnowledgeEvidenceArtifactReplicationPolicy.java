@@ -27,6 +27,21 @@ import tech.kayys.wayang.knowledge.exchange.fusion.*;
 
 import java.util.Map;
 
+/**
+ * Represents a knowledge evidence artifact replication policy.
+ *
+ * <p>Its components capture `minimum replicas`, `target replicas`, `require verification`, `allow remote replication`, `allow offline queue`, and other values.</p>
+ *
+ * @param minimumReplicas the minimum replicas
+ * @param targetReplicas the target replicas
+ * @param requireVerification the require verification
+ * @param allowRemoteReplication the allow remote replication
+ * @param allowOfflineQueue the allow offline queue
+ * @param maxArtifactBytes the max artifact bytes
+ * @param metadata the metadata
+ */
+
+
 public record KnowledgeEvidenceArtifactReplicationPolicy(
 
         int minimumReplicas,

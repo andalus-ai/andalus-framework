@@ -2,6 +2,11 @@ package tech.kayys.wayang.knowledge.snapshot.artifact;
 
 import java.util.Optional;
 
+/**
+ * Defines the contract for knowledge evidence artifact service operations in the Wayang framework.
+ */
+
+
 public interface KnowledgeEvidenceArtifactService {
 
     KnowledgeEvidenceArtifactPutResult put(

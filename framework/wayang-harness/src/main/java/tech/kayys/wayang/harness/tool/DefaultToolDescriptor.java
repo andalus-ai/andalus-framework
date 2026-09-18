@@ -3,6 +3,21 @@ package tech.kayys.wayang.harness.tool;
 import java.util.Objects;
 import java.util.Set;
 
+/**
+ * Represents a default tool descriptor.
+ *
+ * <p>Its components capture `id`, `name`, `version`, `capabilities`, `input schema`, and other values.</p>
+ *
+ * @param id the id
+ * @param name the name
+ * @param version the version
+ * @param capabilities the capabilities
+ * @param inputSchema the input schema
+ * @param outputSchema the output schema
+ * @param executionProfile the execution profile
+ */
+
+
 public record DefaultToolDescriptor(
         ToolId id,
         String name,
@@ -34,6 +49,10 @@ public record DefaultToolDescriptor(
     public static Builder builder(ToolId id, String name) {
         return new Builder(id, name);
     }
+    /**
+     * Builder for constructing default tool descriptor instances.
+     */
+
 
     public static class Builder {
         private final ToolId id;

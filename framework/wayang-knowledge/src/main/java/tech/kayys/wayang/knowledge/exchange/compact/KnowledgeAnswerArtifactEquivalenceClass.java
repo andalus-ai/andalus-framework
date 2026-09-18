@@ -43,6 +43,18 @@ import tech.kayys.wayang.knowledge.exchange.recovery.*;
 
 import java.util.List;
 
+/**
+ * Represents a knowledge answer artifact equivalence class.
+ *
+ * <p>Its components capture `class id`, `artifact ids`, `representative artifact id`, `confidence`.</p>
+ *
+ * @param classId the class id
+ * @param artifactIds the artifact ids
+ * @param representativeArtifactId the representative artifact id
+ * @param confidence the confidence
+ */
+
+
 public record KnowledgeAnswerArtifactEquivalenceClass(
 
         String classId,

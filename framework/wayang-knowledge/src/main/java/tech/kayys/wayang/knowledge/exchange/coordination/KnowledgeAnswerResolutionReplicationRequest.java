@@ -45,6 +45,25 @@ import java.time.Instant;
 import java.util.List;
 import java.util.Map;
 
+/**
+ * Represents a knowledge answer resolution replication request.
+ *
+ * <p>Its components capture `replication id`, `key fingerprint`, `source runtime id`, `target runtime ids`, `tenant id`, and other values.</p>
+ *
+ * @param replicationId the replication id
+ * @param keyFingerprint the key fingerprint
+ * @param sourceRuntimeId the source runtime id
+ * @param targetRuntimeIds the target runtime ids
+ * @param tenantId the tenant id
+ * @param workspaceId the workspace id
+ * @param projectId the project id
+ * @param requireVerification the require verification
+ * @param issuedAt the issued at
+ * @param expiresAt the expires at
+ * @param metadata the metadata
+ */
+
+
 public record KnowledgeAnswerResolutionReplicationRequest(
 
         String replicationId,

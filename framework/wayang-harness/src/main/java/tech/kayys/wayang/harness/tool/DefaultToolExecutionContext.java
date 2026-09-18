@@ -6,6 +6,20 @@ import tech.kayys.wayang.harness.resource.ResourceScope;
 
 import java.util.Objects;
 
+/**
+ * Represents a default tool execution context.
+ *
+ * <p>Its components capture `execution id`, `identity`, `resources`, `cancellation`, `logger`, and other values.</p>
+ *
+ * @param executionId the execution id
+ * @param identity the identity
+ * @param resources the resources
+ * @param cancellation the cancellation
+ * @param logger the logger
+ * @param artifacts the artifacts
+ */
+
+
 public record DefaultToolExecutionContext(
         ExecutionId executionId,
         HarnessIdentity identity,

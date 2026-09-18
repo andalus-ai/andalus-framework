@@ -3,6 +3,11 @@ package tech.kayys.wayang.knowledge.replay;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 
+/**
+ * Provides knowledge fingerprint behavior for the Wayang framework.
+ */
+
+
 public final class KnowledgeFingerprint {
 
     private KnowledgeFingerprint() {}

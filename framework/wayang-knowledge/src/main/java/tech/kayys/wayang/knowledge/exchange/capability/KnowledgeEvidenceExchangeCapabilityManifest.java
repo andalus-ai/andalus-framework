@@ -24,6 +24,23 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 
+/**
+ * Represents a knowledge evidence exchange capability manifest.
+ *
+ * <p>Its components capture `runtime id`, `identity version`, `identity fingerprint`, `protocol version`, `capabilities`, and other values.</p>
+ *
+ * @param runtimeId the runtime id
+ * @param identityVersion the identity version
+ * @param identityFingerprint the identity fingerprint
+ * @param protocolVersion the protocol version
+ * @param capabilities the capabilities
+ * @param issuedAt the issued at
+ * @param expiresAt the expires at
+ * @param manifestFingerprint the manifest fingerprint
+ * @param metadata the metadata
+ */
+
+
 public record KnowledgeEvidenceExchangeCapabilityManifest(
 
         String runtimeId,

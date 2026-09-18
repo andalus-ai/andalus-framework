@@ -28,6 +28,26 @@ import tech.kayys.wayang.knowledge.exchange.fusion.*;
 import java.time.Instant;
 import java.util.Map;
 
+/**
+ * Represents a knowledge evidence transfer checkpoint.
+ *
+ * <p>Its components capture `transfer id`, `session id`, `stream id`, `artifact id`, `resource id`, and other values.</p>
+ *
+ * @param transferId the transfer id
+ * @param sessionId the session id
+ * @param streamId the stream id
+ * @param artifactId the artifact id
+ * @param resourceId the resource id
+ * @param offset the offset
+ * @param nextSequence the next sequence
+ * @param artifactFingerprint the artifact fingerprint
+ * @param resourceFingerprint the resource fingerprint
+ * @param merkleRoot the merkle root
+ * @param createdAt the created at
+ * @param metadata the metadata
+ */
+
+
 public record KnowledgeEvidenceTransferCheckpoint(
 
         String transferId,

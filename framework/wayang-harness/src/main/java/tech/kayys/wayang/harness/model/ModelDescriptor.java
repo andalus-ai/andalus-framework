@@ -2,6 +2,11 @@ package tech.kayys.wayang.harness.model;
 
 import java.util.Set;
 
+/**
+ * Defines the contract for model descriptor operations in the Wayang framework.
+ */
+
+
 public interface ModelDescriptor {
 
     ModelId id();

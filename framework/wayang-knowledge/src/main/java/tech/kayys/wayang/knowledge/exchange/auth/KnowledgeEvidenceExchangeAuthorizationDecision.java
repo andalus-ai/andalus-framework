@@ -2,6 +2,11 @@ package tech.kayys.wayang.knowledge.exchange.auth;
 
 import java.util.Map;
 
+/**
+ * Defines the contract for knowledge evidence exchange authorization decision operations in the Wayang framework.
+ */
+
+
 public sealed interface KnowledgeEvidenceExchangeAuthorizationDecision
         permits KnowledgeEvidenceExchangeAuthorizationDecision.Allow,
                 KnowledgeEvidenceExchangeAuthorizationDecision.Deny {

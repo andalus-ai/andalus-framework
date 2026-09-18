@@ -7,6 +7,11 @@ import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
+/**
+ * Provides in memory memory store behavior for the Wayang framework.
+ */
+
+
 public class InMemoryMemoryStore implements MemoryStore {
 
     private final Map<MemoryId, MemoryEntry> entries = new ConcurrentHashMap<>();

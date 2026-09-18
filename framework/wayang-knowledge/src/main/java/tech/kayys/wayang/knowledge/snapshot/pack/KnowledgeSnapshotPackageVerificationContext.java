@@ -2,6 +2,21 @@ package tech.kayys.wayang.knowledge.snapshot.pack;
 
 import java.util.Map;
 
+/**
+ * Represents a knowledge snapshot package verification context.
+ *
+ * <p>Its components capture `require integrity`, `require seal`, `require dependencies`, `require governance match`, `require policy match`, and other values.</p>
+ *
+ * @param requireIntegrity the require integrity
+ * @param requireSeal the require seal
+ * @param requireDependencies the require dependencies
+ * @param requireGovernanceMatch the require governance match
+ * @param requirePolicyMatch the require policy match
+ * @param requireRuleMatch the require rule match
+ * @param metadata the metadata
+ */
+
+
 public record KnowledgeSnapshotPackageVerificationContext(
         boolean requireIntegrity,
         boolean requireSeal,

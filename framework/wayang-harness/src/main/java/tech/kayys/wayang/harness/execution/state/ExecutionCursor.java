@@ -2,6 +2,17 @@ package tech.kayys.wayang.harness.execution.state;
 
 import java.util.Objects;
 
+/**
+ * Represents a execution cursor.
+ *
+ * <p>Its components capture `phase id`, `action id`, `sequence`.</p>
+ *
+ * @param phaseId the phase id
+ * @param actionId the action id
+ * @param sequence the sequence
+ */
+
+
 public record ExecutionCursor(
         String phaseId,
         String actionId,

@@ -2,6 +2,11 @@ package tech.kayys.wayang.knowledge.exchange.envelope;
 
 import java.time.Instant;
 
+/**
+ * Defines the contract for knowledge evidence exchange message signer operations in the Wayang framework.
+ */
+
+
 public interface KnowledgeEvidenceExchangeMessageSigner {
 
     KnowledgeEvidenceExchangeSignedEnvelope sign(

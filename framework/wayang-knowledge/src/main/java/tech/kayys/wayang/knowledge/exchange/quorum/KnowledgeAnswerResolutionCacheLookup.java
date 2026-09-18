@@ -40,6 +40,17 @@ import tech.kayys.wayang.knowledge.exchange.validity.*;
 import tech.kayys.wayang.knowledge.exchange.lease.*;
 import tech.kayys.wayang.knowledge.exchange.recovery.*;
 
+/**
+ * Represents a knowledge answer resolution cache lookup.
+ *
+ * <p>Its components capture `status`, `entry`, `reason`.</p>
+ *
+ * @param status the status
+ * @param entry the entry
+ * @param reason the reason
+ */
+
+
 
 public record KnowledgeAnswerResolutionCacheLookup(
 

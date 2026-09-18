@@ -3,6 +3,11 @@ package tech.kayys.wayang.harness.tool;
 import java.time.Duration;
 import java.util.concurrent.*;
 
+/**
+ * Provides the default implementation of the tool scheduler contract.
+ */
+
+
 public class DefaultToolScheduler implements ToolScheduler, AutoCloseable {
 
     private final ExecutorService executorService;

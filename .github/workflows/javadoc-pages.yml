@@ -41,6 +41,9 @@ jobs:
             -DexcludePackageNames=tech.kayys.wayang.agent.backend.gamelan \
             -Dmaven.javadoc.failOnError=false \
             -Dmaven.javadoc.failOnWarnings=false
+          reports="$(find framework -path '*/target/reports/apidocs/index.html' -print)"
+          test -n "$reports"
+          printf '%s\n' "$reports"
 
       - name: Assemble module documentation site
         run: |
@@ -73,6 +76,9 @@ jobs:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
     steps:
+      - name: Configure GitHub Pages
+        uses: actions/configure-pages@v5
+
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v4

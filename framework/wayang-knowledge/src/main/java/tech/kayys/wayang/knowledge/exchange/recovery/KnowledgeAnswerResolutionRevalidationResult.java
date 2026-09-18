@@ -44,6 +44,27 @@ import tech.kayys.wayang.knowledge.exchange.recovery.*;
 import java.time.Instant;
 import java.util.List;
 
+/**
+ * Represents a knowledge answer resolution revalidation result.
+ *
+ * <p>Its components capture `status`, `consensus id`, `key fingerprint`, `previous freshness`, `current freshness`, and other values.</p>
+ *
+ * @param status the status
+ * @param consensusId the consensus id
+ * @param keyFingerprint the key fingerprint
+ * @param previousFreshness the previous freshness
+ * @param currentFreshness the current freshness
+ * @param dependenciesValid the dependencies valid
+ * @param snapshotValid the snapshot valid
+ * @param participantsLive the participants live
+ * @param quorumValid the quorum valid
+ * @param attestationValid the attestation valid
+ * @param usable the usable
+ * @param evaluatedAt the evaluated at
+ * @param diagnostics the diagnostics
+ */
+
+
 public record KnowledgeAnswerResolutionRevalidationResult(
         KnowledgeAnswerResolutionRevalidationStatus status,
         String consensusId,

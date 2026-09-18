@@ -44,6 +44,19 @@ import tech.kayys.wayang.knowledge.exchange.recovery.*;
 import java.util.List;
 import java.util.Map;
 
+/**
+ * Represents a knowledge answer provenance validation result.
+ *
+ * <p>Its components capture `valid`, `missing nodes`, `invalid edges`, `orphan nodes`, `diagnostics`.</p>
+ *
+ * @param valid the valid
+ * @param missingNodes the missing nodes
+ * @param invalidEdges the invalid edges
+ * @param orphanNodes the orphan nodes
+ * @param diagnostics the diagnostics
+ */
+
+
 public record KnowledgeAnswerProvenanceValidationResult(
 
         boolean valid,

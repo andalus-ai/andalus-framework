@@ -45,6 +45,30 @@ import java.time.Instant;
 import java.util.List;
 import java.util.Map;
 
+/**
+ * Represents a knowledge answer resolution consensus proposal.
+ *
+ * <p>Its components capture `consensus id`, `key fingerprint`, `tenant id`, `workspace id`, `project id`, and other values.</p>
+ *
+ * @param consensusId the consensus id
+ * @param keyFingerprint the key fingerprint
+ * @param tenantId the tenant id
+ * @param workspaceId the workspace id
+ * @param projectId the project id
+ * @param proposerRuntimeId the proposer runtime id
+ * @param epochId the epoch id
+ * @param epochSequence the epoch sequence
+ * @param participantSetFingerprint the participant set fingerprint
+ * @param participantRuntimeIds the participant runtime ids
+ * @param proposedResolutionFingerprint the proposed resolution fingerprint
+ * @param proposedDependencyFingerprint the proposed dependency fingerprint
+ * @param versionVector the version vector
+ * @param issuedAt the issued at
+ * @param expiresAt the expires at
+ * @param metadata the metadata
+ */
+
+
 public record KnowledgeAnswerResolutionConsensusProposal(
         String consensusId,
         String keyFingerprint,

@@ -43,6 +43,10 @@ import tech.kayys.wayang.knowledge.exchange.recovery.*;
 
 import java.time.Instant;
 import java.util.Optional;
+/**
+ * Defines the contract for knowledge answer resolution consensus lifecycle service operations in the Wayang framework. Implementations provide the activate operation.
+ */
+
 
 public interface
 KnowledgeAnswerResolutionConsensusLifecycleService {

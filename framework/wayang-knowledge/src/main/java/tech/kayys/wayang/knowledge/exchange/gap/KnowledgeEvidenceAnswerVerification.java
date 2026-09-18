@@ -44,6 +44,22 @@ import tech.kayys.wayang.knowledge.exchange.recovery.*;
 import java.util.List;
 import java.util.Map;
 
+/**
+ * Represents a knowledge evidence answer verification.
+ *
+ * <p>Its components capture `verification id`, `claim graph`, `claims`, `overall status`, `confidence`, and other values.</p>
+ *
+ * @param verificationId the verification id
+ * @param claimGraph the claim graph
+ * @param claims the claims
+ * @param overallStatus the overall status
+ * @param confidence the confidence
+ * @param releasable the releasable
+ * @param blockedClaimIds the blocked claim ids
+ * @param diagnostics the diagnostics
+ */
+
+
 public record KnowledgeEvidenceAnswerVerification(
 
         String verificationId,

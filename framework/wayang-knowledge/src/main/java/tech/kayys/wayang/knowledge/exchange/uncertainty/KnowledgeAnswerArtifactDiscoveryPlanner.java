@@ -43,6 +43,11 @@ import tech.kayys.wayang.knowledge.exchange.recovery.*;
 
 import java.util.List;
 
+/**
+ * Defines the contract for knowledge answer artifact discovery planner operations in the Wayang framework.
+ */
+
+
 public interface KnowledgeAnswerArtifactDiscoveryPlanner {
 
     List<KnowledgeAnswerArtifactIndexDescriptor> select(

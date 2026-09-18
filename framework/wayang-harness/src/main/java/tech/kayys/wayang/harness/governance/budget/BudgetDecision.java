@@ -3,6 +3,17 @@ package tech.kayys.wayang.harness.governance.budget;
 import java.util.Objects;
 import java.util.Optional;
 
+/**
+ * Represents a budget decision.
+ *
+ * <p>Its components capture `type`, `reason`, `remaining`.</p>
+ *
+ * @param type the type
+ * @param reason the reason
+ * @param remaining the remaining
+ */
+
+
 public record BudgetDecision(
         BudgetDecisionType type,
         String reason,

@@ -22,6 +22,22 @@ import tech.kayys.wayang.knowledge.exchange.framing.*;
 import java.time.Instant;
 import java.util.Map;
 
+/**
+ * Represents a knowledge evidence exchange transport response.
+ *
+ * <p>Its components capture `request id`, `success`, `message`, `error code`, `error message`, and other values.</p>
+ *
+ * @param requestId the request id
+ * @param success the success
+ * @param message the message
+ * @param errorCode the error code
+ * @param errorMessage the error message
+ * @param receivedAt the received at
+ * @param completedAt the completed at
+ * @param metadata the metadata
+ */
+
+
 public record KnowledgeEvidenceExchangeTransportResponse(
 
         String requestId,

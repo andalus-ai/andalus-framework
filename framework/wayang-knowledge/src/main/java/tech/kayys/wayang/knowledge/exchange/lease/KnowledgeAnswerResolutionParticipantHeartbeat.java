@@ -44,6 +44,23 @@ import tech.kayys.wayang.knowledge.exchange.recovery.*;
 import java.time.Instant;
 import java.util.Objects;
 
+/**
+ * Represents a knowledge answer resolution participant heartbeat.
+ *
+ * <p>Its components capture `runtime id`, `tenant id`, `workspace id`, `project id`, `observed at`, and other values.</p>
+ *
+ * @param runtimeId the runtime id
+ * @param tenantId the tenant id
+ * @param workspaceId the workspace id
+ * @param projectId the project id
+ * @param observedAt the observed at
+ * @param expiresAt the expires at
+ * @param sequence the sequence
+ * @param healthy the healthy
+ * @param metadata the metadata
+ */
+
+
 public record KnowledgeAnswerResolutionParticipantHeartbeat(
         String runtimeId,
         String tenantId,

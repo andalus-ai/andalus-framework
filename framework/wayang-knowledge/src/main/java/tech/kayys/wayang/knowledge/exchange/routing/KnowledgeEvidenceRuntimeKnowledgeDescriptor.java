@@ -28,6 +28,21 @@ import tech.kayys.wayang.knowledge.exchange.fusion.*;
 import java.util.List;
 import java.util.Map;
 
+/**
+ * Represents a knowledge evidence runtime knowledge descriptor.
+ *
+ * <p>Its components capture `runtime id`, `domains`, `knowledge types`, `tags`, `languages`, and other values.</p>
+ *
+ * @param runtimeId the runtime id
+ * @param domains the domains
+ * @param knowledgeTypes the knowledge types
+ * @param tags the tags
+ * @param languages the languages
+ * @param estimatedCoverage the estimated coverage
+ * @param metadata the metadata
+ */
+
+
 public record KnowledgeEvidenceRuntimeKnowledgeDescriptor(
 
         String runtimeId,

@@ -29,6 +29,21 @@ import java.time.Instant;
 import java.util.List;
 import java.util.Map;
 
+/**
+ * Represents a knowledge evidence artifact replica advertisement.
+ *
+ * <p>Its components capture `runtime id`, `tenant id`, `artifact ids`, `issued at`, `expires at`, and other values.</p>
+ *
+ * @param runtimeId the runtime id
+ * @param tenantId the tenant id
+ * @param artifactIds the artifact ids
+ * @param issuedAt the issued at
+ * @param expiresAt the expires at
+ * @param advertisementFingerprint the advertisement fingerprint
+ * @param metadata the metadata
+ */
+
+
 public record KnowledgeEvidenceArtifactReplicaAdvertisement(
 
         String runtimeId,

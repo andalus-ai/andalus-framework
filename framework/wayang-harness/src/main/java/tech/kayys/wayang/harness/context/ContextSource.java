@@ -3,6 +3,17 @@ package tech.kayys.wayang.harness.context;
 import java.time.Instant;
 import java.util.Objects;
 
+/**
+ * Represents a context source.
+ *
+ * <p>Its components capture `source id`, `provider type`, `timestamp`.</p>
+ *
+ * @param sourceId the source id
+ * @param providerType the provider type
+ * @param timestamp the timestamp
+ */
+
+
 public record ContextSource(
         String sourceId,
         String providerType,
