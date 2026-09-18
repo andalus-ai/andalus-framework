@@ -2,7 +2,7 @@ package tech.kayys.wayang.harness.observability.event;
 
 import tech.kayys.wayang.harness.artifact.ArtifactId;
 import tech.kayys.wayang.harness.environment.v3.resource.LeaseId;
-import tech.kayys.wayang.harness.execution.ActionId;
+import tech.kayys.wayang.harness.execution.action.ActionId;
 import tech.kayys.wayang.harness.execution.state.ExecutionId;
 import tech.kayys.wayang.harness.protocol.AgentRef;
 import tech.kayys.wayang.harness.protocol.TurnId;
