@@ -1,7 +1,7 @@
 package tech.kayys.wayang.harness.journal;
 
 import tech.kayys.wayang.harness.consistency.state.ExecutionId;
-import tech.kayys.wayang.harness.workflow.NodeId;
+import tech.kayys.wayang.workflow.graph.NodeId;
 
 import java.time.Instant;
 import java.util.Map;

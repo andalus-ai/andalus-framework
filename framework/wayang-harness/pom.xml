@@ -39,6 +39,11 @@
             <artifactId>wayang-tool</artifactId>
             <version>${project.version}</version>
         </dependency>
+        <dependency>
+            <groupId>tech.kayys.wayang</groupId>
+            <artifactId>wayang-workflow</artifactId>
+            <version>${project.version}</version>
+        </dependency>
 
         <!-- Testing -->
         <dependency>

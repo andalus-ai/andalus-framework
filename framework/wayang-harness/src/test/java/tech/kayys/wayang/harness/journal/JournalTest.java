@@ -2,9 +2,9 @@ package tech.kayys.wayang.harness.journal;
 
 import org.junit.jupiter.api.Test;
 import tech.kayys.wayang.harness.consistency.state.ExecutionId;
-import tech.kayys.wayang.harness.workflow.GraphState;
-import tech.kayys.wayang.harness.workflow.NodeId;
-import tech.kayys.wayang.harness.workflow.NodeState;
+import tech.kayys.wayang.workflow.graph.GraphState;
+import tech.kayys.wayang.workflow.graph.NodeId;
+import tech.kayys.wayang.workflow.graph.NodeState;
 
 import java.util.List;
 import java.util.Map;

@@ -1,6 +1,7 @@
 package tech.kayys.wayang.harness.workflow;
 
 import org.junit.jupiter.api.Test;
+import tech.kayys.wayang.workflow.graph.*;
 
 import java.util.Map;
 import java.util.Optional;
