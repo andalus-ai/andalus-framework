@@ -7,7 +7,7 @@
         <groupId>tech.kayys.wayang</groupId>
         <artifactId>wayang-framework-parent</artifactId>
         <version>0.0.1</version>
-        <relativePath>../../pom.xml</relativePath>
+        <relativePath>../pom.xml</relativePath>
     </parent>
 
     <artifactId>wayang-graph</artifactId>
