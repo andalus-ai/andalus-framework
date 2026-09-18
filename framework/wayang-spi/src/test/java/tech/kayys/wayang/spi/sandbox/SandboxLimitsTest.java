@@ -22,8 +22,9 @@ class SandboxLimitsTest {
         assertEquals(512_000_000L, limits.memoryBytes());
         assertEquals(Duration.ofMinutes(5), limits.executionTimeout());
 
+        // -1L means unlimited in Phase 4.6, values < -1 are invalid
         assertThrows(IllegalArgumentException.class, () ->
-                new SandboxLimits(-1L, 100L, 100L, 10L, Duration.ofSeconds(10))
+                new SandboxLimits(-2L, 100L, 100L, 10L, Duration.ofSeconds(10))
         );
 
         assertThrows(IllegalArgumentException.class, () ->

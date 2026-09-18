@@ -13,8 +13,31 @@ public record SandboxProviderDescriptor(
         Version version,
         Set<SandboxType> supportedTypes,
         Set<IsolationFeature> features,
+        Set<NetworkIsolationFeature> networkFeatures,
+        Set<ResourceLimitFeature> resourceLimitFeatures,
         Map<String, Object> attributes
 ) {
+
+    public SandboxProviderDescriptor(
+            String id,
+            String name,
+            String description,
+            Version version,
+            Set<SandboxType> supportedTypes,
+            Set<IsolationFeature> features,
+            Map<String, Object> attributes) {
+        this(
+                id,
+                name,
+                description,
+                version,
+                supportedTypes,
+                features,
+                Set.of(),
+                Set.of(),
+                attributes
+        );
+    }
 
     public SandboxProviderDescriptor {
         if (id == null || id.isBlank()) {
@@ -49,6 +72,14 @@ public record SandboxProviderDescriptor(
                 ? Set.of()
                 : Set.copyOf(features);
 
+        networkFeatures = networkFeatures == null
+                ? Set.of()
+                : Set.copyOf(networkFeatures);
+
+        resourceLimitFeatures = resourceLimitFeatures == null
+                ? Set.of()
+                : Set.copyOf(resourceLimitFeatures);
+
         attributes = attributes == null
                 ? Map.of()
                 : Map.copyOf(attributes);
@@ -64,5 +95,17 @@ public record SandboxProviderDescriptor(
 
     public boolean supportsAll(Set<IsolationFeature> required) {
         return features.containsAll(required);
+    }
+
+    public boolean supports(NetworkIsolationFeature feature) {
+        return networkFeatures.contains(feature);
+    }
+
+    public boolean supports(ResourceLimitFeature feature) {
+        return resourceLimitFeatures.contains(feature);
+    }
+
+    public boolean supportsAllResourceLimits(Set<ResourceLimitFeature> required) {
+        return resourceLimitFeatures.containsAll(required);
     }
 }
