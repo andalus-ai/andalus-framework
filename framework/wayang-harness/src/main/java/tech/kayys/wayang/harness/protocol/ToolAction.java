@@ -1,6 +1,6 @@
 package tech.kayys.wayang.harness.protocol;
 
-import tech.kayys.wayang.harness.tool.ToolIntent;
+import tech.kayys.wayang.tool.resolution.ToolIntent;
 
 import java.util.Objects;
 

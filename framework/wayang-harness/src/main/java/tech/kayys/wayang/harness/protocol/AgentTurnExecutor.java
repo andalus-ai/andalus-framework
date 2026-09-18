@@ -8,8 +8,8 @@ import tech.kayys.wayang.harness.model.GovernedModelExecutor;
 import tech.kayys.wayang.harness.model.ModelExecutionContext;
 import tech.kayys.wayang.harness.model.ModelResult;
 import tech.kayys.wayang.harness.tool.GovernedToolExecutor;
-import tech.kayys.wayang.harness.tool.ToolExecutionContext;
-import tech.kayys.wayang.harness.tool.ToolResult;
+import tech.kayys.wayang.tool.ToolExecutionContext;
+import tech.kayys.wayang.tool.ToolResult;
 
 import java.time.Instant;
 import java.util.Objects;

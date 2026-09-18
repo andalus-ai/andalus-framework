@@ -1,6 +1,11 @@
 package tech.kayys.wayang.harness.tool;
 
 import tech.kayys.wayang.harness.memory.*;
+import tech.kayys.wayang.tool.ToolExecutionContext;
+import tech.kayys.wayang.tool.ToolResult;
+import tech.kayys.wayang.tool.event.ToolEvent;
+import tech.kayys.wayang.tool.event.ToolEventType;
+import tech.kayys.wayang.tool.resolution.ToolIntent;
 
 import java.util.Map;
 import java.util.function.Consumer;
@@ -8,8 +13,6 @@ import java.util.function.Consumer;
 /**
  * Provides the default implementation of the tool result router contract.
  */
-
-
 public class DefaultToolResultRouter implements ToolResultRouter {
 
     @Override
@@ -36,7 +39,7 @@ public class DefaultToolResultRouter implements ToolResultRouter {
                     eventType,
                     Map.of(
                             "status", result.status().name(),
-                            "durationMs", result.metadata().duration().toMillis(),
+                            "durationMs", result.toolMetadata().duration().toMillis(),
                             "preview", result.output() != null ? result.output().preview() : ""
                     )
             ));

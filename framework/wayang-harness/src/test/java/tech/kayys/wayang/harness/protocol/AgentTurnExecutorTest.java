@@ -15,12 +15,15 @@ import tech.kayys.wayang.harness.governance.budget.DefaultBudgetPolicy;
 import tech.kayys.wayang.harness.governance.policy.AllowDecision;
 import tech.kayys.wayang.harness.memory.InMemoryMemoryStore;
 import tech.kayys.wayang.harness.model.*;
-import tech.kayys.wayang.harness.tool.*;
+import tech.kayys.wayang.harness.tool.GovernedToolExecutor;
+import tech.kayys.wayang.tool.*;
+import tech.kayys.wayang.tool.catalog.ToolCatalog;
+import tech.kayys.wayang.tool.resolution.DefaultToolResolver;
+import tech.kayys.wayang.tool.resolution.ToolIntent;
 
 import java.time.Duration;
 import java.util.Collection;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 
@@ -63,7 +66,7 @@ class AgentTurnExecutorTest {
             @Override public Optional<ToolDescriptor> describe(ToolId id) { return Optional.of(tDesc); }
             @Override public Collection<ToolDescriptor> tools() { return List.of(tDesc); }
             @Override public ToolExecutor executor(ToolId id) {
-                return (inv, ctx) -> ToolResult.success(inv.id(), "echo done", Duration.ZERO, "bash");
+                return ToolExecutor.synchronous((inv, ctx) -> ToolResult.success(inv.invocationIdentifier(), "echo done", Duration.ZERO, "bash"));
             }
         });
         GovernedToolExecutor toolExec = new GovernedToolExecutor(

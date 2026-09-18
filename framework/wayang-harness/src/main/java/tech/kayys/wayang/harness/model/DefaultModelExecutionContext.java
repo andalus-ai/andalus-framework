@@ -3,8 +3,8 @@ package tech.kayys.wayang.harness.model;
 import tech.kayys.wayang.harness.context.HarnessIdentity;
 import tech.kayys.wayang.harness.execution.state.ExecutionId;
 import tech.kayys.wayang.harness.resource.ResourceScope;
-import tech.kayys.wayang.harness.tool.CancellationToken;
-import tech.kayys.wayang.harness.tool.ToolLogger;
+import tech.kayys.wayang.tool.CancellationToken;
+import tech.kayys.wayang.tool.ToolLogger;
 
 /**
  * Represents a default model execution context.

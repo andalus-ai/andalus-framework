@@ -2,12 +2,12 @@ package tech.kayys.wayang.harness.tool;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import tech.kayys.wayang.harness.capability.CapabilityDecision;
 import tech.kayys.wayang.harness.capability.CapabilityScope;
 import tech.kayys.wayang.harness.capability.DefaultCapabilityScope;
 import tech.kayys.wayang.harness.context.DefaultHarnessIdentity;
 import tech.kayys.wayang.harness.execution.action.ActionJournal;
 import tech.kayys.wayang.harness.execution.action.InMemoryActionJournal;
+import tech.kayys.wayang.harness.execution.state.ExecutionId;
 import tech.kayys.wayang.harness.governance.budget.BudgetManager;
 import tech.kayys.wayang.harness.governance.budget.DefaultBudgetLedger;
 import tech.kayys.wayang.harness.governance.budget.DefaultBudgetManager;
@@ -17,6 +17,16 @@ import tech.kayys.wayang.harness.governance.policy.DenyDecision;
 import tech.kayys.wayang.harness.governance.policy.PolicyChain;
 import tech.kayys.wayang.harness.memory.InMemoryMemoryStore;
 import tech.kayys.wayang.harness.memory.MemoryStore;
+import tech.kayys.wayang.tool.*;
+import tech.kayys.wayang.tool.catalog.ToolCatalog;
+import tech.kayys.wayang.tool.event.ToolEvent;
+import tech.kayys.wayang.tool.event.ToolEventType;
+import tech.kayys.wayang.tool.resolution.DefaultToolResolver;
+import tech.kayys.wayang.tool.resolution.ToolIntent;
+import tech.kayys.wayang.tool.resolution.ToolResolver;
+import tech.kayys.wayang.tool.schema.DefaultToolInputSchema;
+import tech.kayys.wayang.tool.schema.SchemaProperty;
+import tech.kayys.wayang.tool.schema.SchemaType;
 
 import java.time.Duration;
 import java.util.*;
@@ -54,7 +64,7 @@ class GovernedToolExecutorTest {
         ToolProvider provider = new ToolProvider() {
             @Override
             public Optional<ToolDescriptor> describe(ToolId id) {
-                return id.equals(desc.id()) ? Optional.of(desc) : Optional.empty();
+                return id.equals(desc.idAsToolId()) ? Optional.of(desc) : Optional.empty();
             }
 
             @Override
@@ -64,7 +74,7 @@ class GovernedToolExecutorTest {
 
             @Override
             public ToolExecutor executor(ToolId id) {
-                return (inv, ctx) -> ToolResult.success(inv.id(), "result=42", Duration.ofMillis(5), "Calculator");
+                return ToolExecutor.synchronous((inv, ctx) -> ToolResult.success(inv.invocationIdentifier(), "result=42", Duration.ofMillis(5), "Calculator"));
             }
         };
         catalog.register(provider);
@@ -88,7 +98,7 @@ class GovernedToolExecutorTest {
         );
 
         ToolIntent intent = ToolIntent.of("math.calculate", ToolArguments.of(Map.of("expr", "6*7")), null);
-        ToolExecutionContext ctx = DefaultToolExecutionContext.of(null, DefaultHarnessIdentity.of("agent-1"), null);
+        ToolExecutionContext ctx = DefaultToolExecutionContext.of("exec-1", DefaultHarnessIdentity.of("agent-1"), null);
 
         ToolResult result = executor.execute(intent, ctx, emittedEvents::add);
 
@@ -100,7 +110,7 @@ class GovernedToolExecutorTest {
                 .contains(ToolEventType.TOOL_REQUESTED, ToolEventType.TOOL_AUTHORIZED, ToolEventType.TOOL_RESERVED, ToolEventType.TOOL_STARTED, ToolEventType.TOOL_COMPLETED);
 
         // Check action journal recorded
-        assertThat(journal.history(ctx.executionId())).isNotEmpty();
+        assertThat(journal.history(ExecutionId.of(ctx.executionId()))).isNotEmpty();
     }
 
     @Test

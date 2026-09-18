@@ -19,7 +19,19 @@ import tech.kayys.wayang.harness.governance.approval.HarnessApproval;
 import tech.kayys.wayang.harness.governance.budget.*;
 import tech.kayys.wayang.harness.governance.policy.*;
 import tech.kayys.wayang.harness.memory.MemoryStore;
+import tech.kayys.wayang.harness.resource.ResourceScope;
 import tech.kayys.wayang.harness.workspace.WorkspaceId;
+import tech.kayys.wayang.tool.*;
+import tech.kayys.wayang.tool.catalog.ToolCatalog;
+import tech.kayys.wayang.tool.event.ToolEvent;
+import tech.kayys.wayang.tool.event.ToolEventType;
+import tech.kayys.wayang.tool.resolution.ToolIntent;
+import tech.kayys.wayang.tool.resolution.ToolResolution;
+import tech.kayys.wayang.tool.resolution.ToolResolutionContext;
+import tech.kayys.wayang.tool.resolution.ToolResolver;
+import tech.kayys.wayang.tool.scheduling.ToolScheduler;
+import tech.kayys.wayang.tool.validator.ToolInputValidator;
+import tech.kayys.wayang.tool.validator.ToolOutputValidator;
 
 import java.time.Duration;
 import java.time.Instant;
@@ -29,8 +41,6 @@ import java.util.function.Consumer;
 /**
  * Provides governed tool executor behavior for the Wayang framework.
  */
-
-
 public class GovernedToolExecutor {
 
     private final ToolCatalog catalog;
@@ -102,7 +112,9 @@ public class GovernedToolExecutor {
             PolicyContext policyContext = (context instanceof PolicyContext pc) ? pc : new PolicyContext() {
                 @Override
                 public HarnessIdentity identity() {
-                    return context != null && context.identity() != null ? context.identity() : DefaultHarnessIdentity.of("anonymous");
+                    return (context != null && context.identity() instanceof HarnessIdentity hi)
+                            ? hi
+                            : DefaultHarnessIdentity.of("anonymous");
                 }
 
                 @Override
@@ -176,20 +188,22 @@ public class GovernedToolExecutor {
         }
 
         ToolDescriptor descriptor = resolution.get().tool();
-        ToolProvider provider = catalog.providerFor(descriptor.id()).orElse(null);
+        ToolProvider provider = catalog.providerFor(descriptor.idAsToolId()).orElse(null);
         if (provider == null) {
-            return ToolResult.failure(invocationId, "No provider registered for tool: " + descriptor.id().value(), Duration.ZERO, "catalog");
+            return ToolResult.failure(invocationId, "No provider registered for tool: " + descriptor.idAsToolId().value(), Duration.ZERO, "catalog");
         }
 
         // 6. Input validation
-        if (!inputValidator.validate(intent.arguments(), descriptor.inputSchema())) {
+        if (!inputValidator.validate(intent.arguments(), descriptor.toolInputSchema())) {
             return ToolResult.failure(invocationId, "Input validation failed against schema for tool: " + descriptor.name(), Duration.ZERO, "validator");
         }
 
         // 7. Execution & Action Journal
-        ToolInvocation invocation = new ToolInvocation(invocationId, descriptor.id(), intent.arguments());
+        ToolInvocation invocation = ToolInvocation.of(invocationId, descriptor.idAsToolId(), intent.arguments());
         ActionId actionId = ActionId.generate();
-        ExecutionId execId = context != null ? context.executionId() : ExecutionId.generate();
+        ExecutionId execId = (context != null && context.executionId() != null)
+                ? ExecutionId.of(context.executionId())
+                : ExecutionId.generate();
 
         ActionRecord actionRecord = ActionRecord.started(actionId, execId, "tool:" + descriptor.name(), ActionExecutionMode.PURE);
         if (journal != null) {
@@ -200,18 +214,18 @@ public class GovernedToolExecutor {
             eventConsumer.accept(ToolEvent.of(invocationId, ToolEventType.TOOL_STARTED));
         }
 
-        ToolExecutor executor = provider.executor(descriptor.id());
+        ToolExecutor executor = provider.executor(descriptor.idAsToolId());
         Instant start = Instant.now();
         ToolResult rawResult;
         try {
-            rawResult = executor.execute(invocation, context);
+            rawResult = executor.executeBlocking(invocation, context);
         } catch (Throwable t) {
             rawResult = ToolResult.failure(invocationId, t.getMessage() != null ? t.getMessage() : t.getClass().getSimpleName(), Duration.between(start, Instant.now()), descriptor.name());
         }
 
         Duration duration = Duration.between(start, Instant.now());
-        if (rawResult.metadata().duration() == Duration.ZERO) {
-            rawResult = new ToolResult(rawResult.invocationId(), rawResult.status(), rawResult.output(), new ToolMetadata(duration, descriptor.name(), rawResult.metadata().attributes()));
+        if (rawResult.toolMetadata().duration() == Duration.ZERO) {
+            rawResult = new DefaultToolResult(rawResult.invocationId(), rawResult.status(), rawResult.output(), new ToolMetadata(duration, descriptor.name(), rawResult.toolMetadata().attributes()));
         }
 
         // Settle budget

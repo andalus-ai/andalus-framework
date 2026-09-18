@@ -1,6 +1,6 @@
 package tech.kayys.wayang.harness.model;
 
-import tech.kayys.wayang.harness.tool.ToolIntent;
+import tech.kayys.wayang.tool.resolution.ToolIntent;
 
 import java.util.List;
 import java.util.Optional;

@@ -3,7 +3,7 @@ package tech.kayys.wayang.harness.artifact;
 import tech.kayys.wayang.harness.execution.state.ExecutionId;
 import tech.kayys.wayang.harness.model.ModelInvocationId;
 import tech.kayys.wayang.harness.protocol.TurnId;
-import tech.kayys.wayang.harness.tool.ToolInvocationId;
+import tech.kayys.wayang.tool.ToolInvocationId;
 
 import java.util.Collection;
 import java.util.List;

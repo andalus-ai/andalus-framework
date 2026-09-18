@@ -1,7 +1,7 @@
 package tech.kayys.wayang.harness.protocol;
 
-import tech.kayys.wayang.harness.tool.ToolDescriptor;
-import tech.kayys.wayang.harness.tool.ToolId;
+import tech.kayys.wayang.tool.ToolDescriptor;
+import tech.kayys.wayang.tool.ToolId;
 
 import java.util.Collection;
 import java.util.Optional;
