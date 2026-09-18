@@ -141,4 +141,78 @@ class SandboxSpiPhase4ExtendedTest {
         assertFalse(user.isRoot());
         assertEquals(1000, user.uid());
     }
+
+    @Test
+    void testPolicyAndStateMachine() {
+        SandboxPolicyDecision allow = SandboxPolicyDecision.allow(ExecutionIsolationProfile.none());
+        assertTrue(allow instanceof SandboxPolicyDecision.Allow);
+
+        SandboxPolicyDecision deny = SandboxPolicyDecision.deny("Not allowed");
+        assertTrue(deny instanceof SandboxPolicyDecision.Deny);
+
+        SandboxPolicyContext pCtx = new SandboxPolicyContext(
+                "exec-1", "tenant-1", "user-1", "agent-1", "corr-1",
+                ExecutionIsolationProfile.none(), java.util.Optional.empty(),
+                java.util.Optional.empty(), java.time.Instant.now(), Map.of()
+        );
+        assertEquals("exec-1", pCtx.executionId());
+        assertEquals("tenant-1", pCtx.tenantId());
+
+        assertEquals(NetworkMode.RESTRICTED, NetworkPolicyIntersection.mode(NetworkMode.FULL, NetworkMode.RESTRICTED));
+        assertEquals(NetworkMode.DISABLED, NetworkPolicyIntersection.mode(NetworkMode.RESTRICTED, NetworkMode.DISABLED));
+
+        assertTrue(SandboxStateMachine.canTransition(SandboxState.CREATED, SandboxState.STARTING));
+        assertTrue(SandboxStateMachine.canTransition(SandboxState.RUNNING, SandboxState.STOPPING));
+        assertTrue(SandboxStateMachine.canTransition(SandboxState.STOPPED, SandboxState.DESTROYED));
+        assertFalse(SandboxStateMachine.canTransition(SandboxState.DESTROYED, SandboxState.RUNNING));
+    }
+
+    @Test
+    void testSandboxContextAndArtifactTransfer() {
+        SandboxContextRequest ctxReq = new SandboxContextRequest(
+                "exec-1", "tenant-1", "user-1", "agent-1", "sess-1", "corr-1",
+                java.time.Instant.now(), Map.of()
+        );
+        assertEquals("exec-1", ctxReq.executionId());
+        assertEquals("tenant-1", ctxReq.tenant().orElse(""));
+        assertEquals("user-1", ctxReq.user().orElse(""));
+
+        tech.kayys.wayang.spi.sandbox.artifact.ArtifactDescriptor artDesc =
+                new tech.kayys.wayang.spi.sandbox.artifact.ArtifactDescriptor(
+                        "art-1", "exec-1", "tenant-1", "sb-1", "file.txt", "text/plain", 100L, "sha256",
+                        java.time.Instant.now(), Map.of()
+                );
+        assertEquals("art-1", artDesc.artifactId());
+        assertEquals(100L, artDesc.size());
+
+        tech.kayys.wayang.spi.sandbox.artifact.ArtifactTransferLimits limits =
+                tech.kayys.wayang.spi.sandbox.artifact.ArtifactTransferLimits.unlimited();
+        assertEquals(-1, limits.maxArtifactBytes());
+    }
+
+    @Test
+    void testObservabilityAndOperator() {
+        tech.kayys.wayang.spi.sandbox.observability.SandboxObservation obs =
+                new tech.kayys.wayang.spi.sandbox.observability.SandboxObservation(
+                        "obs-1", tech.kayys.wayang.spi.sandbox.observability.SandboxObservationType.CREATED,
+                        java.time.Instant.now(), "sb-1", "exec-1", "tenant-1", "agent-1", "corr-1", "process", Map.of()
+                );
+        assertEquals("obs-1", obs.observationId());
+        assertEquals("tenant-1", obs.tenant().orElse(""));
+
+        tech.kayys.wayang.spi.sandbox.observability.SandboxHealth health =
+                new tech.kayys.wayang.spi.sandbox.observability.SandboxHealth(
+                        "sb-1", tech.kayys.wayang.spi.sandbox.observability.SandboxHealthStatus.HEALTHY,
+                        java.time.Instant.now(), "All good", Map.of()
+                );
+        assertEquals(tech.kayys.wayang.spi.sandbox.observability.SandboxHealthStatus.HEALTHY, health.status());
+
+        tech.kayys.wayang.spi.operator.OperatorPermission perm =
+                new tech.kayys.wayang.spi.operator.OperatorPermission("operator.sandboxes.read", "Read sandboxes");
+        assertEquals("operator.sandboxes.read", perm.id());
+
+        tech.kayys.wayang.spi.operator.OperatorResult<String> res =
+                tech.kayys.wayang.spi.operator.OperatorResult.success("ok");
+        assertTrue(res instanceof tech.kayys.wayang.spi.operator.OperatorResult.Success);
+    }
 }

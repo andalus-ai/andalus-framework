@@ -11,5 +11,15 @@ public interface SandboxManager {
 
     List<Sandbox> list();
 
+    default void start(String sandboxId) throws Exception {
+        Sandbox s = find(sandboxId).orElseThrow(() -> new IllegalArgumentException("Unknown sandbox: " + sandboxId));
+        s.start();
+    }
+
+    default void stop(String sandboxId) throws Exception {
+        Sandbox s = find(sandboxId).orElseThrow(() -> new IllegalArgumentException("Unknown sandbox: " + sandboxId));
+        s.stop();
+    }
+
     void destroy(String sandboxId) throws Exception;
 }

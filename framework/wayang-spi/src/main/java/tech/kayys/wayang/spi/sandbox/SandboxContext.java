@@ -13,7 +13,19 @@ public interface SandboxContext {
 
     Optional<String> tenantId();
 
+    default Optional<String> userId() {
+        return Optional.empty();
+    }
+
     Optional<String> agentId();
+
+    default Optional<String> sessionId() {
+        return Optional.empty();
+    }
+
+    default Optional<String> correlationId() {
+        return Optional.empty();
+    }
 
     SandboxDescriptor descriptor();
 
@@ -25,5 +37,16 @@ public interface SandboxContext {
 
     Instant createdAt();
 
+    default Optional<Instant> deadline() {
+        return Optional.empty();
+    }
+
     Map<String, Object> attributes();
+
+    default Optional<Object> attribute(String name) {
+        if (name == null || name.isBlank()) {
+            return Optional.empty();
+        }
+        return Optional.ofNullable(attributes().get(name));
+    }
 }
