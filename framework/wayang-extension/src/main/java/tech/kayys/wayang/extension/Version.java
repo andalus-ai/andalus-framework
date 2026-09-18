@@ -15,6 +15,12 @@ import java.util.Objects;
 
 /**
  * Semantic version implementation following SemVer 2.0.0.
+ *
+ * @param major major version component
+ * @param minor minor version component
+ * @param patch patch version component
+ * @param prerelease optional pre-release identifier
+ * @param build optional build metadata identifier
  */
 public record Version(
     int major,

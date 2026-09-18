@@ -32,6 +32,44 @@ jobs:
           java-version: "25"
           cache: maven
 
+      - name: Check out Gamelan snapshot dependencies
+        uses: actions/checkout@v4
+        with:
+          repository: bhangun/gamelan
+          path: _gamelan
+          ref: main
+
+      - name: Install Gamelan snapshot dependencies
+        working-directory: _gamelan
+        run: |
+          mvn -B -ntp -DskipTests -Dcheckstyle.skip=true \
+            -pl framework/gamelan-plugin-spi,framework/gamelan-sdk-executor-core \
+            -am install
+
+      - name: Check out Gollek snapshot dependencies
+        uses: actions/checkout@v4
+        with:
+          repository: bhangun/gollek
+          path: _gollek
+          ref: main
+
+      - name: Check out Alkhawarizm (Gollek dependency)
+        uses: actions/checkout@v4
+        with:
+          repository: bhangun/alkhawarizm
+          path: alkhawarizm
+          ref: main
+
+      - name: Install Gollek snapshot dependencies
+        working-directory: _gollek
+        env:
+          GRADLE_OPTS: "-Xmx2G -Dorg.gradle.daemon=false"
+        run: |
+          ./gradlew --no-daemon --parallel -x test \
+            :spi:gollek-spi-inference:publishToMavenLocal \
+            :sdk:gollek-sdk-core:publishToMavenLocal \
+            :sdk:gollek-sdk:publishToMavenLocal
+
       - name: Generate aggregate Javadoc
         run: |
           ./mvnw -B -ntp \

@@ -248,11 +248,15 @@ public interface ResourceType {
     
     /**
      * Get the name of the resource type.
+     *
+     * @return canonical resource type name
      */
     String name();
     
     /**
      * Get the string representation of the resource type.
+     *
+     * @return resource type name
      */
     default String asString() {
         return name();
