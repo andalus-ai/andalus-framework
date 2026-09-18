@@ -184,4 +184,53 @@ class ToolGovernanceIntegrationTest {
         assertTrue(eventTypes.contains(ToolAuditEventType.APPROVAL_GRANTED));
         assertTrue(eventTypes.contains(ToolAuditEventType.EXECUTION_COMPLETED));
     }
+
+    @Test
+    void testGovernanceWithLimitManagerAndSecurityEvents() throws Exception {
+        InMemoryAuditSink securityAuditSink = new InMemoryAuditSink();
+        SecurityEventPublisher secPublisher = securityAuditSink::append;
+
+        // Rate limit: 1 call capacity
+        tech.kayys.wayang.execution.governance.limits.LimitDefinition rateDef =
+                new tech.kayys.wayang.execution.governance.limits.LimitDefinition("rate-fs", tech.kayys.wayang.execution.governance.limits.LimitType.RATE,
+                1, Duration.ofMinutes(1), "tenant", Map.of(), Map.of());
+        tech.kayys.wayang.execution.governance.limits.RateLimiter rLimiter =
+                new tech.kayys.wayang.execution.governance.limits.FixedWindowRateLimiter(java.time.Clock.systemUTC());
+        tech.kayys.wayang.execution.governance.limits.RateLimitController rateCtrl =
+                new tech.kayys.wayang.execution.governance.limits.RateLimitController(rateDef, rLimiter);
+
+        tech.kayys.wayang.execution.governance.limits.DefaultLimitManager limitMgr =
+                new tech.kayys.wayang.execution.governance.limits.DefaultLimitManager(List.of(rateCtrl));
+
+        ToolPolicyRule allowAll = ToolPolicyRule.builder("allow-all")
+                .effect(PolicyEffect.ALLOW)
+                .priority(1)
+                .build();
+        ToolPolicy policy = new DefaultToolPolicy("policy-all", 1, PolicyDefaultEffect.DENY, List.of(allowAll));
+        ToolPolicyEvaluator evaluator = new DefaultToolPolicyEvaluator(List.of(policy));
+
+        DefaultToolExecutionGuard guard = new DefaultToolExecutionGuard(
+                contextFactory, evaluator, approvalService, bindingValidator,
+                auditPublisher, quotaManager, limitMgr, secPublisher
+        );
+
+        DefaultToolRouter router = new DefaultToolRouter(createResolver(), guard);
+        ToolContext ctx = createContext("tenant-acme", "alice", "agent-x", Set.of("developer"));
+
+        // 1st call -> allowed
+        ToolResult res1 = router.execute(SimpleToolInvocation.of("fs.read", Map.of()), ctx).get();
+        assertEquals("file content", res1.getOutputs().get("data"));
+
+        // 2nd call -> rate limit exceeded
+        ExecutionException exLimit = assertThrows(ExecutionException.class, () ->
+                router.execute(SimpleToolInvocation.of("fs.read", Map.of()), ctx).get()
+        );
+        assertInstanceOf(tech.kayys.wayang.execution.governance.limits.LimitExceededException.class, exLimit.getCause());
+
+        // Verify SecurityEvent was captured
+        assertFalse(securityAuditSink.events().isEmpty());
+        boolean hasLimitDenial = securityAuditSink.events().stream()
+                .anyMatch(e -> e.type() == SecurityEventType.TOOL_INVOCATION_DENIED && "limit".equals(e.policyId()));
+        assertTrue(hasLimitDenial);
+    }
 }

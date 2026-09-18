@@ -1,41 +1,53 @@
 package tech.kayys.wayang.spi.sandbox;
 
+/**
+ * Primary abstraction representing an execution isolation instance.
+ */
 public interface Sandbox extends AutoCloseable {
-    
-    /**
-     * Initializes the sandbox environment.
-     */
+
+    default SandboxDescriptor descriptor() {
+        return null;
+    }
+
+    default SandboxState state() {
+        return SandboxState.CREATED;
+    }
+
+    default SandboxContext context() {
+        return null;
+    }
+
     void start() throws Exception;
-    
-    /**
-     * Stops and cleans up the sandbox environment.
-     */
+
     void stop() throws Exception;
-    
-    @Override
-    default void close() throws Exception {
+
+    default void destroy() throws Exception {
         stop();
     }
-    
+
+    @Override
+    default void close() throws Exception {
+        destroy();
+    }
+
     /**
-     * Executes a command inside the sandbox.
-     * @param command the command to execute (e.g., "mvn test")
-     * @param timeoutMillis maximum time to wait for completion
-     * @return result containing exit code and output
+     * Backward-compatible helper to execute a command inside the sandbox.
      */
-    SandboxExecutionResult executeCommand(String command, long timeoutMillis) throws Exception;
-    
+    default SandboxExecutionResult executeCommand(String command, long timeoutMillis) throws Exception {
+        throw new UnsupportedOperationException("executeCommand not supported by this sandbox instance");
+    }
+
     /**
-     * Writes content to a file inside the sandbox.
-     * @param path absolute or relative path within the sandbox
-     * @param content file content
+     * Backward-compatible helper to write file content inside the sandbox.
      */
-    void writeFile(String path, String content) throws Exception;
-    
+    default void writeFile(String path, String content) throws Exception {
+        throw new UnsupportedOperationException("writeFile not supported by this sandbox instance");
+    }
+
     /**
-     * Reads content from a file inside the sandbox.
-     * @param path absolute or relative path within the sandbox
-     * @return file content
+     * Backward-compatible helper to read file content inside the sandbox.
      */
-    String readFile(String path) throws Exception;
+    default String readFile(String path) throws Exception {
+        throw new UnsupportedOperationException("readFile not supported by this sandbox instance");
+    }
 }

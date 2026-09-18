@@ -5,9 +5,15 @@ import tech.kayys.wayang.execution.governance.approval.ApprovalRequest;
 import tech.kayys.wayang.execution.governance.approval.ApprovalRequestTemplate;
 import tech.kayys.wayang.execution.governance.approval.ApprovalService;
 import tech.kayys.wayang.execution.governance.approval.ToolApprovalRequiredException;
+import tech.kayys.wayang.execution.governance.audit.SecurityEvent;
+import tech.kayys.wayang.execution.governance.audit.SecurityEventPublisher;
+import tech.kayys.wayang.execution.governance.audit.SecurityEvents;
 import tech.kayys.wayang.execution.governance.audit.ToolAuditEvent;
 import tech.kayys.wayang.execution.governance.audit.ToolAuditEventType;
 import tech.kayys.wayang.execution.governance.audit.ToolAuditPublisher;
+import tech.kayys.wayang.execution.governance.limits.LimitContext;
+import tech.kayys.wayang.execution.governance.limits.LimitManager;
+import tech.kayys.wayang.execution.governance.limits.LimitReservation;
 import tech.kayys.wayang.execution.governance.quota.QuotaExceededException;
 import tech.kayys.wayang.execution.governance.quota.QuotaManager;
 import tech.kayys.wayang.tool.ToolContext;
@@ -16,6 +22,7 @@ import tech.kayys.wayang.tool.ToolInvocation;
 import tech.kayys.wayang.tool.ToolResult;
 
 import java.time.Instant;
+import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 
@@ -31,13 +38,16 @@ public final class DefaultToolExecutionGuard implements ToolExecutionGuard {
     private final ApprovalBindingValidator approvalBindingValidator;
     private final ToolAuditPublisher auditPublisher;
     private final QuotaManager quotaManager;
+    private final LimitManager limitManager;
+    private final SecurityEventPublisher securityEventPublisher;
 
     public DefaultToolExecutionGuard(
             PolicyEvaluationContextFactory contextFactory,
             ToolPolicyEvaluator policyEvaluator,
             ApprovalService approvalService,
             ApprovalBindingValidator approvalBindingValidator) {
-        this(contextFactory, policyEvaluator, approvalService, approvalBindingValidator, ToolAuditPublisher.noop(), QuotaManager.noop());
+        this(contextFactory, policyEvaluator, approvalService, approvalBindingValidator,
+                ToolAuditPublisher.noop(), QuotaManager.noop(), LimitManager.noop(), SecurityEventPublisher.noop());
     }
 
     public DefaultToolExecutionGuard(
@@ -46,7 +56,8 @@ public final class DefaultToolExecutionGuard implements ToolExecutionGuard {
             ApprovalService approvalService,
             ApprovalBindingValidator approvalBindingValidator,
             ToolAuditPublisher auditPublisher) {
-        this(contextFactory, policyEvaluator, approvalService, approvalBindingValidator, auditPublisher, QuotaManager.noop());
+        this(contextFactory, policyEvaluator, approvalService, approvalBindingValidator,
+                auditPublisher, QuotaManager.noop(), LimitManager.noop(), SecurityEventPublisher.noop());
     }
 
     public DefaultToolExecutionGuard(
@@ -56,6 +67,19 @@ public final class DefaultToolExecutionGuard implements ToolExecutionGuard {
             ApprovalBindingValidator approvalBindingValidator,
             ToolAuditPublisher auditPublisher,
             QuotaManager quotaManager) {
+        this(contextFactory, policyEvaluator, approvalService, approvalBindingValidator,
+                auditPublisher, quotaManager, LimitManager.noop(), SecurityEventPublisher.noop());
+    }
+
+    public DefaultToolExecutionGuard(
+            PolicyEvaluationContextFactory contextFactory,
+            ToolPolicyEvaluator policyEvaluator,
+            ApprovalService approvalService,
+            ApprovalBindingValidator approvalBindingValidator,
+            ToolAuditPublisher auditPublisher,
+            QuotaManager quotaManager,
+            LimitManager limitManager,
+            SecurityEventPublisher securityEventPublisher) {
 
         this.contextFactory = Objects.requireNonNull(contextFactory, "contextFactory cannot be null");
         this.policyEvaluator = Objects.requireNonNull(policyEvaluator, "policyEvaluator cannot be null");
@@ -63,6 +87,8 @@ public final class DefaultToolExecutionGuard implements ToolExecutionGuard {
         this.approvalBindingValidator = Objects.requireNonNull(approvalBindingValidator, "approvalBindingValidator cannot be null");
         this.auditPublisher = Objects.requireNonNull(auditPublisher, "auditPublisher cannot be null");
         this.quotaManager = Objects.requireNonNull(quotaManager, "quotaManager cannot be null");
+        this.limitManager = Objects.requireNonNull(limitManager, "limitManager cannot be null");
+        this.securityEventPublisher = Objects.requireNonNull(securityEventPublisher, "securityEventPublisher cannot be null");
     }
 
     @Override
@@ -77,7 +103,7 @@ public final class DefaultToolExecutionGuard implements ToolExecutionGuard {
 
         PolicyEvaluationContext context = contextFactory.create(invocation, toolContext);
 
-        // 1. Quota & Rate Limit Check
+        // 1. Quota & Rate Limit Check (Legacy QuotaManager)
         try {
             quotaManager.acquirePermit(invocation, context);
         } catch (QuotaExceededException qe) {
@@ -94,6 +120,8 @@ public final class DefaultToolExecutionGuard implements ToolExecutionGuard {
                     .decision("DENY")
                     .reason(qe.getMessage())
                     .build());
+
+            securityEventPublisher.publish(SecurityEvents.invocationDenied(context, "quota", qe.getMessage()));
 
             return CompletableFuture.failedFuture(qe);
         }
@@ -116,6 +144,11 @@ public final class DefaultToolExecutionGuard implements ToolExecutionGuard {
 
         if (decision instanceof PolicyDecision.Deny || decision.isDenied()) {
             String msg = decision.message() != null ? decision.message() : "Tool execution denied";
+            String deniedPolicyId = evalResult.evaluations().stream()
+                    .filter(e -> e.decision().isDenied())
+                    .map(PolicyEvaluation::policyId)
+                    .findFirst()
+                    .orElse("policy");
             auditPublisher.publish(ToolAuditEvent.builder(ToolAuditEventType.EXECUTION_DENIED, invocation.name())
                     .tenantId(context.tenantId())
                     .userId(context.userId())
@@ -125,6 +158,7 @@ public final class DefaultToolExecutionGuard implements ToolExecutionGuard {
                     .decision("DENY")
                     .reason(msg)
                     .build());
+            securityEventPublisher.publish(SecurityEvents.invocationDenied(context, deniedPolicyId, msg));
             return CompletableFuture.failedFuture(new ToolExecutionDeniedException(msg));
         }
 
@@ -153,6 +187,8 @@ public final class DefaultToolExecutionGuard implements ToolExecutionGuard {
                     .reason(decision.message())
                     .build());
 
+            securityEventPublisher.publish(SecurityEvents.approvalRequired(context, request.id(), decision.message()));
+
             return CompletableFuture.failedFuture(new ToolApprovalRequiredException(request.id()));
         }
 
@@ -164,6 +200,8 @@ public final class DefaultToolExecutionGuard implements ToolExecutionGuard {
                 .correlationId(context.correlationId())
                 .decision("ALLOW")
                 .build());
+
+        securityEventPublisher.publish(SecurityEvents.invocationAllowed(context, "governed"));
 
         return executeWithAuditAndQuota(invocation, toolContext, delegate, context);
     }
@@ -198,6 +236,7 @@ public final class DefaultToolExecutionGuard implements ToolExecutionGuard {
                     .decision("DENY")
                     .reason(msg)
                     .build());
+            securityEventPublisher.publish(SecurityEvents.invocationDenied(context, "policy-recheck", msg));
             return CompletableFuture.failedFuture(new ToolExecutionDeniedException(msg));
         }
 
@@ -212,6 +251,8 @@ public final class DefaultToolExecutionGuard implements ToolExecutionGuard {
                 .reason(approval.decisionReason())
                 .build());
 
+        securityEventPublisher.publish(SecurityEvents.invocationAllowed(context, "approved"));
+
         return executeWithAuditAndQuota(invocation, toolContext, delegate, context);
     }
 
@@ -221,6 +262,16 @@ public final class DefaultToolExecutionGuard implements ToolExecutionGuard {
             ToolExecutor delegate,
             PolicyEvaluationContext context) {
 
+        // Acquire transactional limit reservation
+        LimitContext limitContext = new LimitContext(context, invocation.name(), null, null, Map.of());
+        LimitReservation reservation;
+        try {
+            reservation = limitManager.acquire(limitContext);
+        } catch (RuntimeException re) {
+            securityEventPublisher.publish(SecurityEvents.invocationDenied(context, "limit", re.getMessage()));
+            return CompletableFuture.failedFuture(re);
+        }
+
         long startNs = System.nanoTime();
         auditPublisher.publish(ToolAuditEvent.builder(ToolAuditEventType.EXECUTION_STARTED, invocation.name())
                 .tenantId(context.tenantId())
@@ -229,6 +280,8 @@ public final class DefaultToolExecutionGuard implements ToolExecutionGuard {
                 .executionId(context.executionId())
                 .correlationId(context.correlationId())
                 .build());
+
+        securityEventPublisher.publish(SecurityEvents.invocationStarted(context, "governed"));
 
         return delegate.execute(invocation, toolContext).whenComplete((result, ex) -> {
             long durationMs = (System.nanoTime() - startNs) / 1_000_000;
@@ -240,6 +293,8 @@ public final class DefaultToolExecutionGuard implements ToolExecutionGuard {
             quotaManager.recordConsumption(invocation, context, durationMs, cost);
 
             if (ex != null || (result != null && !result.isSuccess())) {
+                reservation.rollback();
+
                 String errorMsg = ex != null ? ex.getMessage() : (result != null ? result.getErrorMessage() : "Execution failed");
                 auditPublisher.publish(ToolAuditEvent.builder(ToolAuditEventType.EXECUTION_FAILED, invocation.name())
                         .tenantId(context.tenantId())
@@ -250,7 +305,11 @@ public final class DefaultToolExecutionGuard implements ToolExecutionGuard {
                         .durationMs(durationMs)
                         .reason(errorMsg)
                         .build());
+
+                securityEventPublisher.publish(SecurityEvents.invocationFailed(context, "governed", errorMsg));
             } else {
+                reservation.commit();
+
                 auditPublisher.publish(ToolAuditEvent.builder(ToolAuditEventType.EXECUTION_COMPLETED, invocation.name())
                         .tenantId(context.tenantId())
                         .userId(context.userId())
