@@ -1,0 +1,14 @@
+package tech.kayys.wayang.harness.tool;
+
+import java.util.Optional;
+
+public interface ArtifactStore {
+
+    String store(String name, byte[] data, String mimeType);
+
+    Optional<byte[]> retrieve(String artifactId);
+
+    static ArtifactStore inMemory() {
+        return new InMemoryArtifactStore();
+    }
+}
