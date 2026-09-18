@@ -2,17 +2,17 @@ package tech.kayys.wayang.harness.governance.execution;
 
 import tech.kayys.wayang.harness.environment.CapabilityId;
 import tech.kayys.wayang.harness.environment.ResourceId;
-import tech.kayys.wayang.harness.governance.action.ActionExecutionResult;
-import tech.kayys.wayang.harness.governance.action.HarnessAction;
-import tech.kayys.wayang.harness.governance.approval.ApprovalGrant;
-import tech.kayys.wayang.harness.governance.approval.ApprovalRequest;
-import tech.kayys.wayang.harness.governance.approval.HarnessApproval;
-import tech.kayys.wayang.harness.governance.policy.ApprovalDecision;
-import tech.kayys.wayang.harness.governance.policy.DefaultPolicyContext;
-import tech.kayys.wayang.harness.governance.policy.DenyDecision;
-import tech.kayys.wayang.harness.governance.policy.HarnessPolicy;
-import tech.kayys.wayang.harness.governance.policy.PolicyContext;
-import tech.kayys.wayang.harness.governance.policy.PolicyDecision;
+import tech.kayys.wayang.governance.action.ActionExecutionResult;
+import tech.kayys.wayang.governance.action.HarnessAction;
+import tech.kayys.wayang.governance.approval.ApprovalGrant;
+import tech.kayys.wayang.governance.approval.ApprovalRequest;
+import tech.kayys.wayang.governance.approval.HarnessApproval;
+import tech.kayys.wayang.governance.policy.ApprovalDecision;
+import tech.kayys.wayang.governance.policy.DefaultPolicyContext;
+import tech.kayys.wayang.governance.policy.DenyDecision;
+import tech.kayys.wayang.governance.policy.HarnessPolicy;
+import tech.kayys.wayang.governance.policy.PolicyContext;
+import tech.kayys.wayang.governance.policy.PolicyDecision;
 import tech.kayys.wayang.harness.runtime.HarnessRuntime;
 
 import java.util.Objects;
@@ -45,9 +45,11 @@ public class DefaultHarnessActionExecutor implements HarnessActionExecutor {
 
         // 2. Resource check (if target resource specified)
         if (action.resource().isPresent()) {
-            ResourceId resId = action.resource().get();
-            if (runtime.environment().resources() != null && runtime.environment().resources().find(resId).isEmpty()) {
-                // If resource required not registered/available
+            Object rawResource = action.resource().get();
+            if (rawResource instanceof ResourceId resId) {
+                if (runtime.environment().resources() != null && runtime.environment().resources().find(resId).isEmpty()) {
+                    // If resource required not registered/available
+                }
             }
         }
 

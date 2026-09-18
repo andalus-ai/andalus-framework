@@ -32,4 +32,28 @@ public record Principal(
     public static Principal agent(String id, String name) {
         return new Principal(id, name, IdentityType.AGENT, Map.of());
     }
+
+    public static Principal agent(String id, java.util.Set<String> roles) {
+        return new Principal(id, id, IdentityType.AGENT, Map.of("roles", roles != null ? java.util.Set.copyOf(roles) : java.util.Set.of()));
+    }
+
+    public static Principal user(String id, String name) {
+        return new Principal(id, name, IdentityType.USER, Map.of());
+    }
+
+    public static Principal user(String id, java.util.Set<String> roles) {
+        return new Principal(id, id, IdentityType.USER, Map.of("roles", roles != null ? java.util.Set.copyOf(roles) : java.util.Set.of()));
+    }
+
+    public java.util.Set<String> roles() {
+        Object r = attributes.get("roles");
+        if (r instanceof java.util.Set<?> s) {
+            @SuppressWarnings("unchecked")
+            java.util.Set<String> cast = (java.util.Set<String>) s;
+            return cast;
+        } else if (r instanceof java.util.Collection<?> c) {
+            return c.stream().map(Object::toString).collect(java.util.stream.Collectors.toUnmodifiableSet());
+        }
+        return java.util.Set.of();
+    }
 }

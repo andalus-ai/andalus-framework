@@ -1,6 +1,6 @@
 package tech.kayys.wayang.harness.security.authorization;
 
-import tech.kayys.wayang.harness.security.capability.CapabilityConstraints;
+import tech.kayys.wayang.security.capability.CapabilityConstraints;
 
 import java.util.Objects;
 import java.util.Optional;

@@ -1,7 +1,7 @@
 package tech.kayys.wayang.harness.protocol;
 
-import tech.kayys.wayang.harness.governance.budget.BudgetAmount;
-import tech.kayys.wayang.harness.governance.budget.BudgetDimension;
+import tech.kayys.wayang.governance.budget.BudgetAmount;
+import tech.kayys.wayang.governance.budget.BudgetDimension;
 
 import java.util.Map;
 import java.util.Optional;

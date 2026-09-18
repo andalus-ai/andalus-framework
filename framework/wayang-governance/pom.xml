@@ -7,19 +7,26 @@
     <parent>
         <groupId>tech.kayys.wayang</groupId>
         <artifactId>wayang-framework-parent</artifactId>
-        <version>1.0.0-SNAPSHOT</version>
+        <version>0.0.1</version>
         <relativePath>../pom.xml</relativePath>
     </parent>
 
     <artifactId>wayang-governance</artifactId>
-    <name>Wayang </name>
+    <name>Wayang Framework - Governance</name>
     <description>
-        Abstract base classes, Envelope classes (DomainEnvelope, GenericEnvelopes, EnvelopeBuilder, EnvelopeRegistry),
-        and core infrastructure with no external dependencies.
+        Policy evaluation chains, budget ledgers, and human-in-the-loop approval gates.
     </description>
 
     <dependencies>
-        <!-- Parent provides common dependencies -->
-   
+        <dependency>
+            <groupId>org.junit.jupiter</groupId>
+            <artifactId>junit-jupiter</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.assertj</groupId>
+            <artifactId>assertj-core</artifactId>
+            <scope>test</scope>
+        </dependency>
     </dependencies>
 </project>

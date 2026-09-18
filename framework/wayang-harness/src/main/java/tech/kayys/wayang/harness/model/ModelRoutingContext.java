@@ -1,7 +1,7 @@
 package tech.kayys.wayang.harness.model;
 
 import tech.kayys.wayang.harness.context.HarnessIdentity;
-import tech.kayys.wayang.harness.governance.policy.HarnessPolicy;
+import tech.kayys.wayang.governance.policy.HarnessPolicy;
 import tech.kayys.wayang.harness.resource.ResourceScope;
 
 /**

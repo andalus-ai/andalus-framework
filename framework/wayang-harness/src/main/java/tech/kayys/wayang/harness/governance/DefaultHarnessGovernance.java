@@ -1,14 +1,14 @@
 package tech.kayys.wayang.harness.governance;
 
 import tech.kayys.wayang.harness.environment.HarnessCapabilities;
-import tech.kayys.wayang.harness.governance.approval.HarnessApproval;
-import tech.kayys.wayang.harness.governance.approval.InMemoryHarnessApproval;
-import tech.kayys.wayang.harness.governance.budget.DefaultHarnessBudget;
-import tech.kayys.wayang.harness.governance.budget.HarnessBudget;
+import tech.kayys.wayang.governance.approval.HarnessApproval;
+import tech.kayys.wayang.governance.approval.InMemoryHarnessApproval;
+import tech.kayys.wayang.governance.budget.DefaultHarnessBudget;
+import tech.kayys.wayang.governance.budget.HarnessBudget;
 import tech.kayys.wayang.harness.governance.execution.DefaultHarnessActionExecutor;
 import tech.kayys.wayang.harness.governance.execution.HarnessActionExecutor;
-import tech.kayys.wayang.harness.governance.policy.DefaultPolicyChain;
-import tech.kayys.wayang.harness.governance.policy.HarnessPolicy;
+import tech.kayys.wayang.governance.policy.DefaultPolicyChain;
+import tech.kayys.wayang.governance.policy.HarnessPolicy;
 
 import java.util.Objects;
 

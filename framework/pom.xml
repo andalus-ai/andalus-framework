@@ -63,6 +63,7 @@
         <module>wayang-event</module>
         <module>wayang-extension</module>
         <module>wayang-hitl</module>
+        <module>wayang-governance</module>
 
         <module>wayang-graph</module>
         <module>wayang-knowledge</module>

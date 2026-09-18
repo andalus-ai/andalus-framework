@@ -5,11 +5,11 @@ import tech.kayys.wayang.harness.execution.state.ExecutionId;
 import tech.kayys.wayang.harness.security.authorization.AuthorizationDecision;
 import tech.kayys.wayang.harness.security.authorization.AuthorizationRequest;
 import tech.kayys.wayang.harness.security.authorization.DefaultAuthorizationEngine;
-import tech.kayys.wayang.harness.security.capability.CapabilityConstraints;
-import tech.kayys.wayang.harness.security.capability.CapabilityLease;
-import tech.kayys.wayang.harness.security.capability.CapabilityLeaseId;
-import tech.kayys.wayang.harness.security.capability.DefaultCapabilityLease;
-import tech.kayys.wayang.harness.security.identity.Principal;
+import tech.kayys.wayang.security.capability.CapabilityConstraints;
+import tech.kayys.wayang.security.capability.CapabilityLease;
+import tech.kayys.wayang.security.capability.CapabilityLeaseId;
+import tech.kayys.wayang.security.capability.DefaultCapabilityLease;
+import tech.kayys.wayang.security.identity.Principal;
 
 import java.time.Instant;
 import java.util.Set;
@@ -25,7 +25,7 @@ class SecurityTest {
                 Set.of("filesystem.write", "secret.raw")
         );
 
-        Principal agent = new Principal.AgentPrincipal("agent-101", Set.of("developer"));
+        Principal agent = Principal.agent("agent-101", Set.of("developer"));
         ExecutionId execId = ExecutionId.of("exec-sec-1");
 
         AuthorizationDecision d1 = engine.authorize(new AuthorizationRequest(agent, execId, "filesystem.read", CapabilityConstraints.unconstrained()));
@@ -40,14 +40,14 @@ class SecurityTest {
 
     @Test
     void testCapabilityLeaseRevocation() {
-        Principal agent = new Principal.AgentPrincipal("agent-102", Set.of("developer"));
+        Principal agent = Principal.agent("agent-102", Set.of("developer"));
         ExecutionId execId = ExecutionId.of("exec-sec-2");
 
         CapabilityLease lease = new DefaultCapabilityLease(
                 CapabilityLeaseId.generate(),
                 "filesystem.read",
                 agent,
-                execId,
+                execId.value(),
                 CapabilityConstraints.of("path", "/workspace/**"),
                 Instant.now().plusSeconds(300)
         );

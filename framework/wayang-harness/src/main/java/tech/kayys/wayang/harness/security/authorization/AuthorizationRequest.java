@@ -1,8 +1,8 @@
 package tech.kayys.wayang.harness.security.authorization;
 
 import tech.kayys.wayang.harness.execution.state.ExecutionId;
-import tech.kayys.wayang.harness.security.capability.CapabilityConstraints;
-import tech.kayys.wayang.harness.security.identity.Principal;
+import tech.kayys.wayang.security.capability.CapabilityConstraints;
+import tech.kayys.wayang.security.identity.Principal;
 
 import java.util.Objects;
 
