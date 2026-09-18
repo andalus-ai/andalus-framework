@@ -17,6 +17,10 @@ public interface Sandbox extends AutoCloseable {
         return null;
     }
 
+    default SandboxFilesystem filesystem() {
+        return SandboxFilesystem.empty();
+    }
+
     void start() throws Exception;
 
     void stop() throws Exception;

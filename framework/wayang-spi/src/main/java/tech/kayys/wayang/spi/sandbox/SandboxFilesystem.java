@@ -33,6 +33,10 @@ public interface SandboxFilesystem {
         return List.of();
     }
 
+    default List<FilesystemRoot> roots() {
+        return List.of();
+    }
+
     static SandboxFilesystem empty() {
         return new SandboxFilesystem() {
             @Override
