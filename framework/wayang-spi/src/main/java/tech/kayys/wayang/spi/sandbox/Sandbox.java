@@ -9,6 +9,10 @@ public interface Sandbox extends AutoCloseable {
         return null;
     }
 
+    default String id() {
+        return descriptor() != null ? descriptor().id() : null;
+    }
+
     default SandboxState state() {
         return SandboxState.CREATED;
     }

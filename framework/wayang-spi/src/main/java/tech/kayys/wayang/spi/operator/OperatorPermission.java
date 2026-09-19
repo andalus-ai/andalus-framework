@@ -9,4 +9,8 @@ public record OperatorPermission(
             throw new IllegalArgumentException("id must not be blank");
         }
     }
+
+    public String name() {
+        return id();
+    }
 }
