@@ -83,6 +83,8 @@
         <module>wayang-security-core</module>
         <module>wayang-execution-api</module>
         <module>wayang-execution-core</module>
+        <module>wayang-state-api</module>
+        <module>wayang-state-core</module>
         <module>wayang-anp</module>
         <module>wayang-shaker</module>
         <module>wayang-skill</module>

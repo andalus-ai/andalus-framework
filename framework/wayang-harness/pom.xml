@@ -64,6 +64,16 @@
             <artifactId>wayang-execution-core</artifactId>
             <version>${project.version}</version>
         </dependency>
+        <dependency>
+            <groupId>tech.kayys.wayang</groupId>
+            <artifactId>wayang-state-api</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>tech.kayys.wayang</groupId>
+            <artifactId>wayang-state-core</artifactId>
+            <version>${project.version}</version>
+        </dependency>
 
         <!-- Testing -->
         <dependency>
