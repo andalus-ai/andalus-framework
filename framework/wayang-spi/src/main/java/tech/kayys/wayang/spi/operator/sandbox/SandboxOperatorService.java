@@ -2,16 +2,31 @@ package tech.kayys.wayang.spi.operator.sandbox;
 
 import tech.kayys.wayang.spi.operator.OperatorContext;
 import tech.kayys.wayang.spi.operator.OperatorResult;
-import tech.kayys.wayang.spi.sandbox.Sandbox;
 
 import java.util.List;
 
 public interface SandboxOperatorService {
 
-    OperatorResult<List<Sandbox>> list(
+    OperatorResult<List<SandboxSummary>> list(
             OperatorContext context);
 
-    OperatorResult<Sandbox> inspect(
+    OperatorResult<SandboxSummary> inspect(
+            OperatorContext context,
+            String sandboxId);
+
+    OperatorResult<SandboxHealthSummary> health(
+            OperatorContext context,
+            String sandboxId);
+
+    OperatorResult<SandboxMetricsSummary> metrics(
+            OperatorContext context,
+            String sandboxId);
+
+    OperatorResult<SandboxDiagnosticsSummary> diagnostics(
+            OperatorContext context,
+            String sandboxId);
+
+    OperatorResult<Void> stop(
             OperatorContext context,
             String sandboxId);
 
