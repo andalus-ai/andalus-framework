@@ -2,6 +2,7 @@ package tech.kayys.wayang.harness.execution.checkpoint;
 
 import tech.kayys.wayang.harness.execution.state.ExecutionId;
 import tech.kayys.wayang.harness.execution.state.ExecutionState;
+import tech.kayys.wayang.harness.journal.JournalPosition;
 
 import java.util.List;
 import java.util.Map;
@@ -22,8 +23,14 @@ public class InMemoryCheckpointManager implements CheckpointManager {
 
     @Override
     public CheckpointId create(ExecutionState state) {
+        return create(state, JournalPosition.beginning());
+    }
+
+    @Override
+    public CheckpointId create(ExecutionState state, JournalPosition position) {
         Objects.requireNonNull(state, "state");
-        Checkpoint cp = Checkpoint.of(state);
+        Objects.requireNonNull(position, "position");
+        Checkpoint cp = Checkpoint.of(state, position);
         checkpoints.put(cp.id(), cp);
         executionCheckpoints.computeIfAbsent(state.executionId(), k -> new CopyOnWriteArrayList<>()).add(cp.id());
         return cp.id();
