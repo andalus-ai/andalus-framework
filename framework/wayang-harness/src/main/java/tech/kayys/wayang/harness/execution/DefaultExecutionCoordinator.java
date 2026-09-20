@@ -53,11 +53,17 @@ public class DefaultExecutionCoordinator implements ExecutionCoordinator {
 
     @Override
     public CheckpointId checkpoint(ExecutionState state) {
+        return checkpoint(state, tech.kayys.wayang.harness.journal.JournalPosition.beginning());
+    }
+
+    @Override
+    public CheckpointId checkpoint(ExecutionState state, tech.kayys.wayang.harness.journal.JournalPosition position) {
         Objects.requireNonNull(state, "state");
+        Objects.requireNonNull(position, "position");
         Optional<ExecutionState> current = stateStore.load(state.executionId());
         long expected = current.map(ExecutionState::version).orElse(state.version());
         stateStore.save(state, expected);
-        return checkpoints.create(state);
+        return checkpoints.create(state, position);
     }
 
     @Override

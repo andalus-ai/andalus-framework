@@ -26,6 +26,10 @@ public interface ExecutionCoordinator {
 
     CheckpointId checkpoint(ExecutionState state);
 
+    default CheckpointId checkpoint(ExecutionState state, tech.kayys.wayang.harness.journal.JournalPosition position) {
+        return checkpoint(state);
+    }
+
     Optional<ExecutionState> restore(ExecutionId id);
 
     RecoveryDecision recover(ExecutionId id, Throwable failure);

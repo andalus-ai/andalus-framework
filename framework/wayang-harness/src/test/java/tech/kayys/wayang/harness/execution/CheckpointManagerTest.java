@@ -60,4 +60,34 @@ class CheckpointManagerTest {
         assertTrue(manager.load(cpId).isEmpty());
         assertTrue(manager.latest(state.executionId()).isEmpty());
     }
+
+    @Test
+    void testCreateWithJournalPosition() {
+        tech.kayys.wayang.harness.journal.JournalPosition pos = tech.kayys.wayang.harness.journal.JournalPosition.of(42L);
+        CheckpointId cpId = manager.create(state, pos);
+        assertNotNull(cpId);
+
+        Optional<Checkpoint> loaded = manager.load(cpId);
+        assertTrue(loaded.isPresent());
+        assertEquals(pos, loaded.get().position());
+        assertEquals(42L, loaded.get().position().sequence());
+        assertEquals(state.executionId(), loaded.get().executionId());
+    }
+
+    @Test
+    void testCheckpointInvariants() {
+        ExecutionId otherId = ExecutionId.of("exec-999");
+        DefaultExecutionState mismatchState = new DefaultExecutionState(
+                otherId, ExecutionStatus.RUNNING, 1L, state.context(), ExecutionCursor.initial(), ExecutionData.empty());
+
+        assertThrows(IllegalArgumentException.class, () ->
+                new Checkpoint(
+                        CheckpointId.generate(),
+                        state.executionId(), // mismatch with mismatchState.executionId()
+                        mismatchState,
+                        tech.kayys.wayang.harness.journal.JournalPosition.beginning(),
+                        java.time.Instant.now(),
+                        Map.of()
+                ));
+    }
 }
