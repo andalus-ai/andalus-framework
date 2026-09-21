@@ -1,0 +1,45 @@
+package tech.kayys.andalus.knowledge.exchange;
+
+import java.util.Map;
+import java.util.Set;
+
+/**
+ * Represents a knowledge evidence exchange capabilities.
+ *
+ * <p>Its components capture `operations`, `hash algorithms`, `seal algorithms`, `streaming`, `partial verification`, and other values.</p>
+ *
+ * @param operations the operations
+ * @param hashAlgorithms the hash algorithms
+ * @param sealAlgorithms the seal algorithms
+ * @param streaming the streaming
+ * @param partialVerification the partial verification
+ * @param metadata the metadata
+ */
+
+
+public record KnowledgeEvidenceExchangeCapabilities(
+        Set<KnowledgeEvidenceExchangeOperation> operations,
+        Set<String> hashAlgorithms,
+        Set<String> sealAlgorithms,
+        boolean streaming,
+        boolean partialVerification,
+        Map<String, String> metadata
+) {
+    public KnowledgeEvidenceExchangeCapabilities {
+        operations = operations == null ? Set.of() : Set.copyOf(operations);
+        hashAlgorithms = hashAlgorithms == null ? Set.of() : Set.copyOf(hashAlgorithms);
+        sealAlgorithms = sealAlgorithms == null ? Set.of() : Set.copyOf(sealAlgorithms);
+        metadata = metadata == null ? Map.of() : Map.copyOf(metadata);
+    }
+
+    public static KnowledgeEvidenceExchangeCapabilities defaults() {
+        return new KnowledgeEvidenceExchangeCapabilities(
+                Set.of(KnowledgeEvidenceExchangeOperation.values()),
+                Set.of("SHA-256"),
+                Set.of("ED25519"),
+                true,
+                true,
+                Map.of()
+        );
+    }
+}

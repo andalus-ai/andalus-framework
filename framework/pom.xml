@@ -4,17 +4,17 @@
     xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
     <parent>
-        <groupId>tech.kayys.wayang</groupId>
-        <artifactId>wayang-framework-build</artifactId>
+        <groupId>tech.kayys.andalus</groupId>
+        <artifactId>andalus-framework-build</artifactId>
         <version>0.0.1</version>
         <relativePath>../pom.xml</relativePath>
     </parent>
 
-    <artifactId>wayang-framework-parent</artifactId>
+    <artifactId>andalus-framework-parent</artifactId>
     <packaging>pom</packaging>
 
-    <name>Wayang Framework Parent</name>
-    <description>Wayang Framework Parent</description>
+    <name>Andalus Framework Parent</name>
+    <description>Andalus Framework Parent</description>
 
 
     <properties>
@@ -40,58 +40,58 @@
     </dependencies>
 
     <modules>
-        <module>wayang-common</module>
-        <module>wayang-communication-api</module>
-        <module>wayang-communication-core</module>
-        <module>wayang-protocol-local</module>
-        <module>wayang-agent-network-api</module>
-        <module>wayang-agent-network-core</module>
-        <module>wayang-context</module>
-        <module>wayang-cache</module>
-        <module>wayang-research</module>
-        <module>wayang-agent</module>
-        <module>wayang-a2a</module>
-        <module>wayang-rag</module>
-        <module>wayang-configuration</module>
-        <module>wayang-harness</module>
-        <module>wayang-core</module>
-        <module>wayang-database</module>
-        <module>wayang-plugin</module>
-        <module>wayang-embedding</module>
-        <module>wayang-engine</module>
-        <module>wayang-error-spi</module>
-        <module>wayang-event</module>
-        <module>wayang-extension</module>
-        <module>wayang-hitl</module>
-        <module>wayang-governance</module>
+        <module>andalus-common</module>
+        <module>andalus-communication-api</module>
+        <module>andalus-communication-core</module>
+        <module>andalus-protocol-local</module>
+        <module>andalus-agent-network-api</module>
+        <module>andalus-agent-network-core</module>
+        <module>andalus-context</module>
+        <module>andalus-cache</module>
+        <module>andalus-research</module>
+        <module>andalus-agent</module>
+        <module>andalus-a2a</module>
+        <module>andalus-rag</module>
+        <module>andalus-configuration</module>
+        <module>andalus-harness</module>
+        <module>andalus-core</module>
+        <module>andalus-database</module>
+        <module>andalus-plugin</module>
+        <module>andalus-embedding</module>
+        <module>andalus-engine</module>
+        <module>andalus-error-spi</module>
+        <module>andalus-event</module>
+        <module>andalus-extension</module>
+        <module>andalus-hitl</module>
+        <module>andalus-governance</module>
 
-        <module>wayang-graph</module>
-        <module>wayang-knowledge</module>
-        <module>wayang-mcp</module>
-        <module>wayang-memory</module>
-        <module>wayang-messaging</module>
-        <module>wayang-observability</module>
-        <module>wayang-observability-otel</module>
-        <module>wayang-orchestration</module>
-        <module>wayang-project</module>
-        <module>wayang-provider</module>
-        <module>wayang-registry</module>
-        <module>wayang-resilience</module>
-        <module>wayang-runtime-spi</module>
-        <module>wayang-schemas</module>
-        <module>wayang-security-api</module>
-        <module>wayang-security-core</module>
-        <module>wayang-execution-api</module>
-        <module>wayang-execution-core</module>
-        <module>wayang-state-api</module>
-        <module>wayang-state-core</module>
-        <module>wayang-anp</module>
-        <module>wayang-shaker</module>
-        <module>wayang-skill</module>
-        <module>wayang-spi</module>
-        <module>wayang-tool</module>
-        <module>wayang-util</module>
-        <module>wayang-vector</module>
-        <module>wayang-workflow</module>
+        <module>andalus-graph</module>
+        <module>andalus-knowledge</module>
+        <module>andalus-mcp</module>
+        <module>andalus-memory</module>
+        <module>andalus-messaging</module>
+        <module>andalus-observability</module>
+        <module>andalus-observability-otel</module>
+        <module>andalus-orchestration</module>
+        <module>andalus-project</module>
+        <module>andalus-provider</module>
+        <module>andalus-registry</module>
+        <module>andalus-resilience</module>
+        <module>andalus-runtime-spi</module>
+        <module>andalus-schemas</module>
+        <module>andalus-security-api</module>
+        <module>andalus-security-core</module>
+        <module>andalus-execution-api</module>
+        <module>andalus-execution-core</module>
+        <module>andalus-state-api</module>
+        <module>andalus-state-core</module>
+        <module>andalus-anp</module>
+        <module>andalus-shaker</module>
+        <module>andalus-skill</module>
+        <module>andalus-spi</module>
+        <module>andalus-tool</module>
+        <module>andalus-util</module>
+        <module>andalus-vector</module>
+        <module>andalus-workflow</module>
     </modules>
 </project>

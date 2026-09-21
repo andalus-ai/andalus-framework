@@ -1,0 +1,94 @@
+package tech.kayys.andalus.knowledge.exchange.capability;
+
+import tech.kayys.andalus.knowledge.*;
+import tech.kayys.andalus.knowledge.seal.*;
+import tech.kayys.andalus.knowledge.snapshot.*;
+import tech.kayys.andalus.knowledge.snapshot.pack.*;
+import tech.kayys.andalus.knowledge.snapshot.artifact.*;
+import tech.kayys.andalus.knowledge.snapshot.merkle.*;
+import tech.kayys.andalus.knowledge.exchange.*;
+import tech.kayys.andalus.knowledge.exchange.auth.*;
+import tech.kayys.andalus.knowledge.exchange.session.*;
+import tech.kayys.andalus.knowledge.exchange.binding.*;
+import tech.kayys.andalus.knowledge.exchange.envelope.*;
+import tech.kayys.andalus.knowledge.exchange.trust.*;
+import tech.kayys.andalus.knowledge.exchange.identity.*;
+import tech.kayys.andalus.knowledge.exchange.capability.*;
+import tech.kayys.andalus.knowledge.exchange.protocol.*;
+import tech.kayys.andalus.knowledge.exchange.transport.*;
+import tech.kayys.andalus.knowledge.exchange.framing.*;
+
+
+import java.time.Instant;
+import java.util.List;
+import java.util.Map;
+
+/**
+ * Represents a knowledge evidence exchange negotiated session.
+ *
+ * <p>Its components capture `session id`, `local runtime id`, `remote runtime id`, `protocol version`, `capabilities`, and other values.</p>
+ *
+ * @param sessionId the session id
+ * @param localRuntimeId the local runtime id
+ * @param remoteRuntimeId the remote runtime id
+ * @param protocolVersion the protocol version
+ * @param capabilities the capabilities
+ * @param localManifestFingerprint the local manifest fingerprint
+ * @param remoteManifestFingerprint the remote manifest fingerprint
+ * @param establishedAt the established at
+ * @param expiresAt the expires at
+ * @param metadata the metadata
+ */
+
+
+public record KnowledgeEvidenceExchangeNegotiatedSession(
+
+        String sessionId,
+
+        String localRuntimeId,
+
+        String remoteRuntimeId,
+
+        KnowledgeEvidenceExchangeProtocolVersion protocolVersion,
+
+        List<KnowledgeEvidenceExchangeNegotiatedCapability>
+                capabilities,
+
+        String localManifestFingerprint,
+
+        String remoteManifestFingerprint,
+
+        Instant establishedAt,
+
+        Instant expiresAt,
+
+        Map<String, String> metadata
+
+) {
+
+    public KnowledgeEvidenceExchangeNegotiatedSession {
+        capabilities = capabilities == null
+                ? List.of()
+                : List.copyOf(capabilities);
+
+        metadata = metadata == null
+                ? Map.of()
+                : Map.copyOf(metadata);
+    }
+
+    public boolean activeAt(Instant at) {
+
+        return expiresAt == null ||
+                at.isBefore(expiresAt);
+    }
+
+    public boolean supports(
+            KnowledgeEvidenceExchangeCapabilityType type
+    ) {
+
+        return capabilities.stream()
+                .anyMatch(
+                        capability -> capability.type() == type
+                );
+    }
+}

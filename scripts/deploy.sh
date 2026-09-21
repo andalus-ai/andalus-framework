@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# Wayang Deployment Utility
+# Andalus Deployment Utility
 # Facilitates multi-module Maven project versioning, git tagging, and artifact deployment.
 
 set -e
@@ -87,7 +87,7 @@ fi
 
 usage() {
     echo -e "${BLUE}--------------------------------------------------${NC}"
-    echo -e "${GREEN} Wayang Deployment Utility ${NC}"
+    echo -e "${GREEN} Andalus Deployment Utility ${NC}"
     echo -e "${BLUE}--------------------------------------------------${NC}"
     echo ""
     echo "Usage: $0 [options]"
@@ -144,7 +144,7 @@ done
 cd "$PROJECT_ROOT"
 
 echo -e "${BLUE}--------------------------------------------------${NC}"
-echo -e "${GREEN} Wayang Deployment Utility ${NC}"
+echo -e "${GREEN} Andalus Deployment Utility ${NC}"
 echo -e "${BLUE}--------------------------------------------------${NC}"
 echo ""
 
@@ -185,9 +185,9 @@ if [ -n "$NEW_VERSION" ]; then
     if [ -f "build.gradle.kts" ]; then
         echo -e "${BLUE}>>> Updating Gradle configurations...${NC}"
         if [ "$DRY_RUN" = true ]; then
-            echo -e "${YELLOW}[DRY-RUN]${NC} sed -i.bak -e \"s/extra\\[\\\"wayangVersion\\\"\\] = \\\".*\\\"/extra\\[\\\"wayangVersion\\\"\\] = \\\"$NEW_VERSION\\\"/\" build.gradle.kts"
+            echo -e "${YELLOW}[DRY-RUN]${NC} sed -i.bak -e \"s/extra\\[\\\"andalusVersion\\\"\\] = \\\".*\\\"/extra\\[\\\"andalusVersion\\\"\\] = \\\"$NEW_VERSION\\\"/\" build.gradle.kts"
         else
-            sed -i.bak -e "s/extra\[\"wayangVersion\"\] = \".*\"/extra\[\"wayangVersion\"\] = \"$NEW_VERSION\"/" build.gradle.kts
+            sed -i.bak -e "s/extra\[\"andalusVersion\"\] = \".*\"/extra\[\"andalusVersion\"\] = \"$NEW_VERSION\"/" build.gradle.kts
             rm -f build.gradle.kts.bak
         fi
     fi

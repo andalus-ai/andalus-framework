@@ -1,0 +1,34 @@
+package tech.kayys.andalus.harness.model;
+
+import java.util.List;
+import java.util.Optional;
+
+/**
+ * Represents a stop conditions.
+ *
+ * <p>Its components capture `stop sequences`, `max tokens`.</p>
+ *
+ * @param stopSequences the stop sequences
+ * @param maxTokens the max tokens
+ */
+
+
+public record StopConditions(
+        List<String> stopSequences,
+        Optional<Integer> maxTokens
+) {
+    public StopConditions {
+        stopSequences = stopSequences != null ? List.copyOf(stopSequences) : List.of();
+        if (maxTokens == null) {
+            maxTokens = Optional.empty();
+        }
+    }
+
+    public static StopConditions none() {
+        return new StopConditions(List.of(), Optional.empty());
+    }
+
+    public static StopConditions of(List<String> stopSequences) {
+        return new StopConditions(stopSequences, Optional.empty());
+    }
+}

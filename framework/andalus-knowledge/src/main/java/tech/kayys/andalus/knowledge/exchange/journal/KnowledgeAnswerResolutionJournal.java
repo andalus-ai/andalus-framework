@@ -1,0 +1,22 @@
+package tech.kayys.andalus.knowledge.exchange.journal;
+
+import java.util.List;
+import java.util.Optional;
+
+/**
+ * Defines the contract for knowledge answer resolution journal operations in the Wayang framework.
+ */
+
+
+public interface KnowledgeAnswerResolutionJournal {
+
+    KnowledgeAnswerResolutionLogEntry append(KnowledgeAnswerResolutionLogEntry entry);
+
+    Optional<KnowledgeAnswerResolutionLogEntry> get(long index);
+
+    List<KnowledgeAnswerResolutionLogEntry> range(long fromInclusive, long toInclusive);
+
+    long lastIndex();
+
+    void truncateFrom(long index);
+}

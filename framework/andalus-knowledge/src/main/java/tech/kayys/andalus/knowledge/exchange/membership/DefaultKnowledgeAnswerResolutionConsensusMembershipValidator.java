@@ -1,0 +1,32 @@
+package tech.kayys.andalus.knowledge.exchange.membership;
+
+import tech.kayys.andalus.knowledge.exchange.attestation.KnowledgeAnswerResolutionConsensusEpoch;
+import tech.kayys.andalus.knowledge.exchange.attestation.KnowledgeAnswerResolutionConsensusProposal;
+
+/**
+ * Provides the default implementation of the knowledge answer resolution consensus membership validator contract.
+ */
+
+
+public final class DefaultKnowledgeAnswerResolutionConsensusMembershipValidator
+        implements KnowledgeAnswerResolutionConsensusMembershipValidator {
+
+    @Override
+    public boolean validate(
+            KnowledgeAnswerResolutionConsensusEpoch epoch,
+            KnowledgeAnswerResolutionConsensusProposal proposal,
+            KnowledgeAnswerResolutionMembershipSet membershipSet) {
+
+        if (epoch == null || proposal == null || membershipSet == null) {
+            return false;
+        }
+
+        // Validate proposal's epochId or consensusId matches epoch
+        String proposalEpoch = proposal.epochId() != null ? proposal.epochId() : proposal.consensusId();
+        if (!epoch.epochId().equals(proposalEpoch)) {
+            return false;
+        }
+
+        return epoch.participantSetFingerprint().equals(membershipSet.participantSetFingerprint());
+    }
+}
