@@ -1,0 +1,30 @@
+package tech.kayys.andalus.knowledge.exchange.journal;
+
+/**
+ * Defines the knowledge answer resolution log entry type values used by the Wayang framework.
+ */
+
+
+public enum KnowledgeAnswerResolutionLogEntryType {
+    PROPOSAL_CREATED,
+    VOTE_RECORDED,
+    CONSENSUS_REACHED,
+    CONSENSUS_REJECTED,
+
+    ATTESTATION_CREATED,
+    CONSENSUS_ACTIVATED,
+    CONSENSUS_SUPERSEDED,
+    CONSENSUS_REVOKED,
+
+    LEASE_ISSUED,
+    LEASE_RENEWED,
+    LEASE_EXPIRED,
+
+    MEMBERSHIP_CHANGE_PROPOSED,
+    JOINT_CONFIGURATION_ACTIVATED,
+    MEMBERSHIP_TRANSITION_FINALIZED,
+    MEMBERSHIP_TRANSITION_ABORTED,
+
+    SNAPSHOT_INVALIDATED,
+    DEPENDENCY_INVALIDATED
+}

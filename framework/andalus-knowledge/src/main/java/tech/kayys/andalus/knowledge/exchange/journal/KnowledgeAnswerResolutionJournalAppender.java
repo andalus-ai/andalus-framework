@@ -1,0 +1,23 @@
+package tech.kayys.andalus.knowledge.exchange.journal;
+
+import java.time.Instant;
+
+/**
+ * Defines the contract for knowledge answer resolution journal appender operations in the Wayang framework.
+ */
+
+
+public interface KnowledgeAnswerResolutionJournalAppender {
+
+    KnowledgeAnswerResolutionLogEntry append(
+            long term,
+            String epochId,
+            String keyFingerprint,
+            String consensusId,
+            String runtimeId,
+            KnowledgeAnswerResolutionLogEntryType type,
+            String payloadFingerprint,
+            Instant createdAt,
+            String metadata
+    );
+}

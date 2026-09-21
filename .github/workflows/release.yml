@@ -1,4 +1,4 @@
-name: Release Wayang
+name: Release Andalus
 
 on:
   push:
@@ -23,23 +23,23 @@ jobs:
       matrix:
         include:
           - runner: ubuntu-latest
-            asset_name: wayang-standalone-linux-x86_64
-            service_bundle_name: wayang-service-bundle-linux-x86_64
+            asset_name: andalus-standalone-linux-x86_64
+            service_bundle_name: andalus-service-bundle-linux-x86_64
             service_os: linux
             shell: bash
           - runner: macos-13
-            asset_name: wayang-standalone-osx-x86_64
-            service_bundle_name: wayang-service-bundle-osx-x86_64
+            asset_name: andalus-standalone-osx-x86_64
+            service_bundle_name: andalus-service-bundle-osx-x86_64
             service_os: macos
             shell: bash
           - runner: macos-14
-            asset_name: wayang-standalone-osx-aarch_64
-            service_bundle_name: wayang-service-bundle-osx-aarch_64
+            asset_name: andalus-standalone-osx-aarch_64
+            service_bundle_name: andalus-service-bundle-osx-aarch_64
             service_os: macos
             shell: bash
           - runner: windows-latest
-            asset_name: wayang-standalone-windows-x86_64.exe
-            service_bundle_name: wayang-service-bundle-windows-x86_64
+            asset_name: andalus-standalone-windows-x86_64.exe
+            service_bundle_name: andalus-service-bundle-windows-x86_64
             service_os: windows
             shell: pwsh
 
@@ -75,29 +75,29 @@ jobs:
         run: |
           set -euo pipefail
           bundle_root="artifacts/${{ matrix.service_bundle_name }}"
-          wayang_home="${bundle_root}/.wayang"
-          mkdir -p "${wayang_home}/bin" "${wayang_home}/config" "${wayang_home}/logs/server" "${wayang_home}/plugins" "${wayang_home}/secrets" "${wayang_home}/models" "${wayang_home}/mcp" "${wayang_home}/run" "${wayang_home}/vector" "${wayang_home}/gollek/models" "${wayang_home}/gollek/storage"
+          andalus_home="${bundle_root}/.andalus"
+          mkdir -p "${andalus_home}/bin" "${andalus_home}/config" "${andalus_home}/logs/server" "${andalus_home}/plugins" "${andalus_home}/secrets" "${andalus_home}/models" "${andalus_home}/mcp" "${andalus_home}/run" "${andalus_home}/vector" "${andalus_home}/gollek/models" "${andalus_home}/gollek/storage"
           printf '%s\n' \
-            'WAYANG_HOME=$HOME/.wayang' \
-            'WAYANG_CONFIG_DIR=$WAYANG_HOME/config' \
-            'WAYANG_LOG_DIR=$WAYANG_HOME/logs' \
-            'WAYANG_SERVER_LOG_DIR=$WAYANG_LOG_DIR/server' \
-            'WAYANG_LOG_FILE_PATH=$WAYANG_SERVER_LOG_DIR/server.log' \
-            'WAYANG_PLUGINS_DIR=$WAYANG_HOME/plugins' \
-            'WAYANG_SECRETS_DIR=$WAYANG_HOME/secrets' \
-            'WAYANG_MODELS_DIR=$WAYANG_HOME/models' \
-            'WAYANG_MCP_DIR=$WAYANG_HOME/mcp' \
-            'WAYANG_RUN_DIR=$WAYANG_HOME/run' \
-            'WAYANG_VECTOR_DIR=$WAYANG_HOME/vector' \
-            'WAYANG_GOLLEK_HOME=$WAYANG_HOME/gollek' \
-            'GOLLEK_HOME=$WAYANG_GOLLEK_HOME' \
+            'ANDALUS_HOME=$HOME/.andalus' \
+            'ANDALUS_CONFIG_DIR=$ANDALUS_HOME/config' \
+            'ANDALUS_LOG_DIR=$ANDALUS_HOME/logs' \
+            'ANDALUS_SERVER_LOG_DIR=$ANDALUS_LOG_DIR/server' \
+            'ANDALUS_LOG_FILE_PATH=$ANDALUS_SERVER_LOG_DIR/server.log' \
+            'ANDALUS_PLUGINS_DIR=$ANDALUS_HOME/plugins' \
+            'ANDALUS_SECRETS_DIR=$ANDALUS_HOME/secrets' \
+            'ANDALUS_MODELS_DIR=$ANDALUS_HOME/models' \
+            'ANDALUS_MCP_DIR=$ANDALUS_HOME/mcp' \
+            'ANDALUS_RUN_DIR=$ANDALUS_HOME/run' \
+            'ANDALUS_VECTOR_DIR=$ANDALUS_HOME/vector' \
+            'ANDALUS_GOLLEK_HOME=$ANDALUS_HOME/gollek' \
+            'GOLLEK_HOME=$ANDALUS_GOLLEK_HOME' \
             '# Legacy override (if needed): GOLLEK_HOME=$HOME/.gollek' \
-            'WAYANG_GOLLEK_MODELS_DIR=$WAYANG_GOLLEK_HOME/models' \
-            'WAYANG_GOLLEK_STORAGE_DIR=$WAYANG_GOLLEK_HOME/storage' \
-            > "${wayang_home}/config/wayang.env.example"
-          cp "artifacts/${{ matrix.asset_name }}" "${wayang_home}/bin/${{ matrix.asset_name }}"
-          cp "artifacts/${{ matrix.asset_name }}" "${wayang_home}/bin/wayang"
-          chmod +x "${wayang_home}/bin/${{ matrix.asset_name }}" "${wayang_home}/bin/wayang"
+            'ANDALUS_GOLLEK_MODELS_DIR=$ANDALUS_GOLLEK_HOME/models' \
+            'ANDALUS_GOLLEK_STORAGE_DIR=$ANDALUS_GOLLEK_HOME/storage' \
+            > "${andalus_home}/config/andalus.env.example"
+          cp "artifacts/${{ matrix.asset_name }}" "${andalus_home}/bin/${{ matrix.asset_name }}"
+          cp "artifacts/${{ matrix.asset_name }}" "${andalus_home}/bin/andalus"
+          chmod +x "${andalus_home}/bin/${{ matrix.asset_name }}" "${andalus_home}/bin/andalus"
           mkdir -p "${bundle_root}/scripts/service/${{ matrix.service_os }}"
           cp -R "scripts/service/${{ matrix.service_os }}/." "${bundle_root}/scripts/service/${{ matrix.service_os }}/"
           cp scripts/INSTALL.md "${bundle_root}/INSTALL.md"
@@ -121,44 +121,44 @@ jobs:
         shell: pwsh
         run: |
           $bundleRoot = "artifacts/${{ matrix.service_bundle_name }}"
-          $wayangHome = Join-Path $bundleRoot ".wayang"
-          New-Item -ItemType Directory -Force -Path "$wayangHome\bin" | Out-Null
-          New-Item -ItemType Directory -Force -Path "$wayangHome\config" | Out-Null
-          New-Item -ItemType Directory -Force -Path "$wayangHome\logs\server" | Out-Null
-          New-Item -ItemType Directory -Force -Path "$wayangHome\plugins" | Out-Null
-          New-Item -ItemType Directory -Force -Path "$wayangHome\secrets" | Out-Null
-          New-Item -ItemType Directory -Force -Path "$wayangHome\models" | Out-Null
-          New-Item -ItemType Directory -Force -Path "$wayangHome\mcp" | Out-Null
-          New-Item -ItemType Directory -Force -Path "$wayangHome\run" | Out-Null
-          New-Item -ItemType Directory -Force -Path "$wayangHome\vector" | Out-Null
-          New-Item -ItemType Directory -Force -Path "$wayangHome\gollek\models" | Out-Null
-          New-Item -ItemType Directory -Force -Path "$wayangHome\gollek\storage" | Out-Null
+          $andalusHome = Join-Path $bundleRoot ".andalus"
+          New-Item -ItemType Directory -Force -Path "$andalusHome\bin" | Out-Null
+          New-Item -ItemType Directory -Force -Path "$andalusHome\config" | Out-Null
+          New-Item -ItemType Directory -Force -Path "$andalusHome\logs\server" | Out-Null
+          New-Item -ItemType Directory -Force -Path "$andalusHome\plugins" | Out-Null
+          New-Item -ItemType Directory -Force -Path "$andalusHome\secrets" | Out-Null
+          New-Item -ItemType Directory -Force -Path "$andalusHome\models" | Out-Null
+          New-Item -ItemType Directory -Force -Path "$andalusHome\mcp" | Out-Null
+          New-Item -ItemType Directory -Force -Path "$andalusHome\run" | Out-Null
+          New-Item -ItemType Directory -Force -Path "$andalusHome\vector" | Out-Null
+          New-Item -ItemType Directory -Force -Path "$andalusHome\gollek\models" | Out-Null
+          New-Item -ItemType Directory -Force -Path "$andalusHome\gollek\storage" | Out-Null
           @(
-            "WAYANG_HOME=%USERPROFILE%\.wayang",
-            "WAYANG_CONFIG_DIR=%WAYANG_HOME%\config",
-            "WAYANG_LOG_DIR=%WAYANG_HOME%\logs",
-            "WAYANG_SERVER_LOG_DIR=%WAYANG_LOG_DIR%\server",
-            "WAYANG_LOG_FILE_PATH=%WAYANG_SERVER_LOG_DIR%\server.log",
-            "WAYANG_PLUGINS_DIR=%WAYANG_HOME%\plugins",
-            "WAYANG_SECRETS_DIR=%WAYANG_HOME%\secrets",
-            "WAYANG_MODELS_DIR=%WAYANG_HOME%\models",
-            "WAYANG_MCP_DIR=%WAYANG_HOME%\mcp",
-            "WAYANG_RUN_DIR=%WAYANG_HOME%\run",
-            "WAYANG_VECTOR_DIR=%WAYANG_HOME%\vector",
-            "WAYANG_GOLLEK_HOME=%WAYANG_HOME%\gollek",
-            "GOLLEK_HOME=%WAYANG_GOLLEK_HOME%",
+            "ANDALUS_HOME=%USERPROFILE%\.andalus",
+            "ANDALUS_CONFIG_DIR=%ANDALUS_HOME%\config",
+            "ANDALUS_LOG_DIR=%ANDALUS_HOME%\logs",
+            "ANDALUS_SERVER_LOG_DIR=%ANDALUS_LOG_DIR%\server",
+            "ANDALUS_LOG_FILE_PATH=%ANDALUS_SERVER_LOG_DIR%\server.log",
+            "ANDALUS_PLUGINS_DIR=%ANDALUS_HOME%\plugins",
+            "ANDALUS_SECRETS_DIR=%ANDALUS_HOME%\secrets",
+            "ANDALUS_MODELS_DIR=%ANDALUS_HOME%\models",
+            "ANDALUS_MCP_DIR=%ANDALUS_HOME%\mcp",
+            "ANDALUS_RUN_DIR=%ANDALUS_HOME%\run",
+            "ANDALUS_VECTOR_DIR=%ANDALUS_HOME%\vector",
+            "ANDALUS_GOLLEK_HOME=%ANDALUS_HOME%\gollek",
+            "GOLLEK_HOME=%ANDALUS_GOLLEK_HOME%",
             "; Legacy override (if needed): GOLLEK_HOME=%USERPROFILE%\.gollek",
-            "WAYANG_GOLLEK_MODELS_DIR=%WAYANG_GOLLEK_HOME%\models",
-            "WAYANG_GOLLEK_STORAGE_DIR=%WAYANG_GOLLEK_HOME%\storage"
-          ) | Set-Content "$wayangHome\config\wayang.env.example"
-          Copy-Item "artifacts/${{ matrix.asset_name }}" "$wayangHome\bin\${{ matrix.asset_name }}"
-          Copy-Item "artifacts/${{ matrix.asset_name }}" "$wayangHome\bin\wayang.exe"
+            "ANDALUS_GOLLEK_MODELS_DIR=%ANDALUS_GOLLEK_HOME%\models",
+            "ANDALUS_GOLLEK_STORAGE_DIR=%ANDALUS_GOLLEK_HOME%\storage"
+          ) | Set-Content "$andalusHome\config\andalus.env.example"
+          Copy-Item "artifacts/${{ matrix.asset_name }}" "$andalusHome\bin\${{ matrix.asset_name }}"
+          Copy-Item "artifacts/${{ matrix.asset_name }}" "$andalusHome\bin\andalus.exe"
           New-Item -ItemType Directory -Force -Path "$bundleRoot\scripts\service\windows" | Out-Null
           Copy-Item -Path "scripts\service\windows\*" -Destination "$bundleRoot\scripts\service\windows" -Recurse -Force
           Copy-Item "scripts\INSTALL.md" "$bundleRoot\INSTALL.md"
           Push-Location $bundleRoot
           try {
-            $bundleEntries = @(".wayang", "scripts", "INSTALL.md")
+            $bundleEntries = @(".andalus", "scripts", "INSTALL.md")
             Compress-Archive -LiteralPath $bundleEntries -DestinationPath "..\${{ matrix.service_bundle_name }}.zip" -Force
           } finally {
             Pop-Location
@@ -202,7 +202,7 @@ jobs:
           mvn -B -ntp -f pom.xml -pl gollek-runtime-standalone -am clean package -DskipTests
           release_version="${RELEASE_TAG#v}"
           mkdir -p artifacts
-          cp gollek-runtime-standalone/target/*-runner.jar "artifacts/wayang-runtime-standalone-${release_version}.jar"
+          cp gollek-runtime-standalone/target/*-runner.jar "artifacts/andalus-runtime-standalone-${release_version}.jar"
 
       - name: Package service assets
         shell: bash
@@ -210,46 +210,46 @@ jobs:
           set -euo pipefail
           release_version="${RELEASE_TAG#v}"
           mkdir -p artifacts/service-assets/scripts/service
-          mkdir -p artifacts/service-assets/.wayang/config artifacts/service-assets/.wayang/logs/server artifacts/service-assets/.wayang/plugins artifacts/service-assets/.wayang/secrets artifacts/service-assets/.wayang/models artifacts/service-assets/.wayang/mcp artifacts/service-assets/.wayang/run artifacts/service-assets/.wayang/vector artifacts/service-assets/.wayang/gollek/models artifacts/service-assets/.wayang/gollek/storage
+          mkdir -p artifacts/service-assets/.andalus/config artifacts/service-assets/.andalus/logs/server artifacts/service-assets/.andalus/plugins artifacts/service-assets/.andalus/secrets artifacts/service-assets/.andalus/models artifacts/service-assets/.andalus/mcp artifacts/service-assets/.andalus/run artifacts/service-assets/.andalus/vector artifacts/service-assets/.andalus/gollek/models artifacts/service-assets/.andalus/gollek/storage
           printf '%s\n' \
-            'WAYANG_HOME=$HOME/.wayang' \
-            'WAYANG_CONFIG_DIR=$WAYANG_HOME/config' \
-            'WAYANG_LOG_DIR=$WAYANG_HOME/logs' \
-            'WAYANG_SERVER_LOG_DIR=$WAYANG_LOG_DIR/server' \
-            'WAYANG_LOG_FILE_PATH=$WAYANG_SERVER_LOG_DIR/server.log' \
-            'WAYANG_PLUGINS_DIR=$WAYANG_HOME/plugins' \
-            'WAYANG_SECRETS_DIR=$WAYANG_HOME/secrets' \
-            'WAYANG_MODELS_DIR=$WAYANG_HOME/models' \
-            'WAYANG_MCP_DIR=$WAYANG_HOME/mcp' \
-            'WAYANG_RUN_DIR=$WAYANG_HOME/run' \
-            'WAYANG_VECTOR_DIR=$WAYANG_HOME/vector' \
-            'WAYANG_GOLLEK_HOME=$WAYANG_HOME/gollek' \
-            'GOLLEK_HOME=$WAYANG_GOLLEK_HOME' \
+            'ANDALUS_HOME=$HOME/.andalus' \
+            'ANDALUS_CONFIG_DIR=$ANDALUS_HOME/config' \
+            'ANDALUS_LOG_DIR=$ANDALUS_HOME/logs' \
+            'ANDALUS_SERVER_LOG_DIR=$ANDALUS_LOG_DIR/server' \
+            'ANDALUS_LOG_FILE_PATH=$ANDALUS_SERVER_LOG_DIR/server.log' \
+            'ANDALUS_PLUGINS_DIR=$ANDALUS_HOME/plugins' \
+            'ANDALUS_SECRETS_DIR=$ANDALUS_HOME/secrets' \
+            'ANDALUS_MODELS_DIR=$ANDALUS_HOME/models' \
+            'ANDALUS_MCP_DIR=$ANDALUS_HOME/mcp' \
+            'ANDALUS_RUN_DIR=$ANDALUS_HOME/run' \
+            'ANDALUS_VECTOR_DIR=$ANDALUS_HOME/vector' \
+            'ANDALUS_GOLLEK_HOME=$ANDALUS_HOME/gollek' \
+            'GOLLEK_HOME=$ANDALUS_GOLLEK_HOME' \
             '# Legacy override (if needed): GOLLEK_HOME=$HOME/.gollek' \
-            'WAYANG_GOLLEK_MODELS_DIR=$WAYANG_GOLLEK_HOME/models' \
-            'WAYANG_GOLLEK_STORAGE_DIR=$WAYANG_GOLLEK_HOME/storage' \
-            > artifacts/service-assets/.wayang/config/wayang.env.example
+            'ANDALUS_GOLLEK_MODELS_DIR=$ANDALUS_GOLLEK_HOME/models' \
+            'ANDALUS_GOLLEK_STORAGE_DIR=$ANDALUS_GOLLEK_HOME/storage' \
+            > artifacts/service-assets/.andalus/config/andalus.env.example
           cp -R scripts/service/linux artifacts/service-assets/scripts/service/
           cp -R scripts/service/macos artifacts/service-assets/scripts/service/
           cp -R scripts/service/windows artifacts/service-assets/scripts/service/
           cp scripts/INSTALL.md artifacts/service-assets/INSTALL.md
           (
             cd artifacts/service-assets
-            zip -r "../wayang-service-assets-${release_version}.zip" .
+            zip -r "../andalus-service-assets-${release_version}.zip" .
           )
 
       - name: Upload jar artifact
         uses: actions/upload-artifact@v4
         with:
-          name: wayang-runtime-standalone-jar
-          path: artifacts/wayang-runtime-standalone-*.jar
+          name: andalus-runtime-standalone-jar
+          path: artifacts/andalus-runtime-standalone-*.jar
           if-no-files-found: error
 
       - name: Upload service assets artifact
         uses: actions/upload-artifact@v4
         with:
-          name: wayang-service-assets
-          path: artifacts/wayang-service-assets-*.zip
+          name: andalus-service-assets
+          path: artifacts/andalus-service-assets-*.zip
           if-no-files-found: error
 
   publish-release:
@@ -277,20 +277,20 @@ jobs:
           set -euo pipefail
           ls -lah release-assets
           expected_assets=(
-            "wayang-standalone-linux-x86_64"
-            "wayang-standalone-osx-x86_64"
-            "wayang-standalone-osx-aarch_64"
-            "wayang-standalone-windows-x86_64.exe"
-            "wayang-service-bundle-linux-x86_64.zip"
-            "wayang-service-bundle-osx-x86_64.zip"
-            "wayang-service-bundle-osx-aarch_64.zip"
-            "wayang-service-bundle-windows-x86_64.zip"
+            "andalus-standalone-linux-x86_64"
+            "andalus-standalone-osx-x86_64"
+            "andalus-standalone-osx-aarch_64"
+            "andalus-standalone-windows-x86_64.exe"
+            "andalus-service-bundle-linux-x86_64.zip"
+            "andalus-service-bundle-osx-x86_64.zip"
+            "andalus-service-bundle-osx-aarch_64.zip"
+            "andalus-service-bundle-windows-x86_64.zip"
           )
           for asset in "${expected_assets[@]}"; do
             test -e "release-assets/${asset}"
           done
-          ls -1 release-assets/wayang-runtime-standalone-*.jar >/dev/null
-          ls -1 release-assets/wayang-service-assets-*.zip >/dev/null
+          ls -1 release-assets/andalus-runtime-standalone-*.jar >/dev/null
+          ls -1 release-assets/andalus-service-assets-*.zip >/dev/null
 
       - name: Verify service bundle layouts
         shell: bash
@@ -317,134 +317,134 @@ jobs:
           }
 
           bundles=(
-            "wayang-service-bundle-linux-x86_64.zip"
-            "wayang-service-bundle-osx-x86_64.zip"
-            "wayang-service-bundle-osx-aarch_64.zip"
-            "wayang-service-bundle-windows-x86_64.zip"
+            "andalus-service-bundle-linux-x86_64.zip"
+            "andalus-service-bundle-osx-x86_64.zip"
+            "andalus-service-bundle-osx-aarch_64.zip"
+            "andalus-service-bundle-windows-x86_64.zip"
           )
           for bundle in "${bundles[@]}"; do
             listing="$(unzip -Z1 "release-assets/${bundle}" | normalize_zip_listing)"
-            printf '%s\n' "${listing}" | grep -q '^\.wayang/bin/'
-            printf '%s\n' "${listing}" | grep -q '^\.wayang/config/'
-            printf '%s\n' "${listing}" | grep -q '^\.wayang/logs/'
-            printf '%s\n' "${listing}" | grep -q '^\.wayang/logs/server/'
-            printf '%s\n' "${listing}" | grep -q '^\.wayang/plugins/'
-            printf '%s\n' "${listing}" | grep -q '^\.wayang/secrets/'
-            printf '%s\n' "${listing}" | grep -q '^\.wayang/models/'
-            printf '%s\n' "${listing}" | grep -q '^\.wayang/mcp/'
-            printf '%s\n' "${listing}" | grep -q '^\.wayang/run/'
-            printf '%s\n' "${listing}" | grep -q '^\.wayang/vector/'
-            printf '%s\n' "${listing}" | grep -q '^\.wayang/gollek/models/'
-            printf '%s\n' "${listing}" | grep -q '^\.wayang/gollek/storage/'
-            printf '%s\n' "${listing}" | grep -q '^\.wayang/config/wayang.env.example$'
+            printf '%s\n' "${listing}" | grep -q '^\.andalus/bin/'
+            printf '%s\n' "${listing}" | grep -q '^\.andalus/config/'
+            printf '%s\n' "${listing}" | grep -q '^\.andalus/logs/'
+            printf '%s\n' "${listing}" | grep -q '^\.andalus/logs/server/'
+            printf '%s\n' "${listing}" | grep -q '^\.andalus/plugins/'
+            printf '%s\n' "${listing}" | grep -q '^\.andalus/secrets/'
+            printf '%s\n' "${listing}" | grep -q '^\.andalus/models/'
+            printf '%s\n' "${listing}" | grep -q '^\.andalus/mcp/'
+            printf '%s\n' "${listing}" | grep -q '^\.andalus/run/'
+            printf '%s\n' "${listing}" | grep -q '^\.andalus/vector/'
+            printf '%s\n' "${listing}" | grep -q '^\.andalus/gollek/models/'
+            printf '%s\n' "${listing}" | grep -q '^\.andalus/gollek/storage/'
+            printf '%s\n' "${listing}" | grep -q '^\.andalus/config/andalus.env.example$'
             printf '%s\n' "${listing}" | grep -q '^scripts/service/'
             printf '%s\n' "${listing}" | grep -q '^INSTALL.md$'
             case "${bundle}" in
-              wayang-service-bundle-linux-x86_64.zip)
-                printf '%s\n' "${listing}" | grep -q '^\.wayang/bin/wayang-standalone-linux-x86_64$'
-                printf '%s\n' "${listing}" | grep -q '^\.wayang/bin/wayang$'
+              andalus-service-bundle-linux-x86_64.zip)
+                printf '%s\n' "${listing}" | grep -q '^\.andalus/bin/andalus-standalone-linux-x86_64$'
+                printf '%s\n' "${listing}" | grep -q '^\.andalus/bin/andalus$'
                 printf '%s\n' "${listing}" | grep -q '^scripts/service/linux/install-systemd-user\.sh$'
                 ;;
-              wayang-service-bundle-osx-x86_64.zip)
-                printf '%s\n' "${listing}" | grep -q '^\.wayang/bin/wayang-standalone-osx-x86_64$'
-                printf '%s\n' "${listing}" | grep -q '^\.wayang/bin/wayang$'
+              andalus-service-bundle-osx-x86_64.zip)
+                printf '%s\n' "${listing}" | grep -q '^\.andalus/bin/andalus-standalone-osx-x86_64$'
+                printf '%s\n' "${listing}" | grep -q '^\.andalus/bin/andalus$'
                 printf '%s\n' "${listing}" | grep -q '^scripts/service/macos/install-launchd-agent\.sh$'
                 ;;
-              wayang-service-bundle-osx-aarch_64.zip)
-                printf '%s\n' "${listing}" | grep -q '^\.wayang/bin/wayang-standalone-osx-aarch_64$'
-                printf '%s\n' "${listing}" | grep -q '^\.wayang/bin/wayang$'
+              andalus-service-bundle-osx-aarch_64.zip)
+                printf '%s\n' "${listing}" | grep -q '^\.andalus/bin/andalus-standalone-osx-aarch_64$'
+                printf '%s\n' "${listing}" | grep -q '^\.andalus/bin/andalus$'
                 printf '%s\n' "${listing}" | grep -q '^scripts/service/macos/install-launchd-agent\.sh$'
                 ;;
-              wayang-service-bundle-windows-x86_64.zip)
-                printf '%s\n' "${listing}" | grep -q '^\.wayang/bin/wayang-standalone-windows-x86_64\.exe$'
-                printf '%s\n' "${listing}" | grep -q '^\.wayang/bin/wayang\.exe$'
+              andalus-service-bundle-windows-x86_64.zip)
+                printf '%s\n' "${listing}" | grep -q '^\.andalus/bin/andalus-standalone-windows-x86_64\.exe$'
+                printf '%s\n' "${listing}" | grep -q '^\.andalus/bin/andalus\.exe$'
                 printf '%s\n' "${listing}" | grep -q '^scripts/service/windows/install-service\.ps1$'
                 ;;
             esac
           done
 
           env_checks_file="$(mktemp)"
-          extract_zip_entry "release-assets/wayang-service-bundle-linux-x86_64.zip" ".wayang/config/wayang.env.example" "${env_checks_file}"
-          grep -q '^WAYANG_HOME=\$HOME/\.wayang$' "${env_checks_file}"
-          grep -q '^WAYANG_CONFIG_DIR=\$WAYANG_HOME/config$' "${env_checks_file}"
-          grep -q '^WAYANG_LOG_DIR=\$WAYANG_HOME/logs$' "${env_checks_file}"
-          grep -q '^WAYANG_SERVER_LOG_DIR=\$WAYANG_LOG_DIR/server$' "${env_checks_file}"
-          grep -q '^WAYANG_LOG_FILE_PATH=\$WAYANG_SERVER_LOG_DIR/server\.log$' "${env_checks_file}"
-          grep -q '^WAYANG_PLUGINS_DIR=\$WAYANG_HOME/plugins$' "${env_checks_file}"
-          grep -q '^WAYANG_SECRETS_DIR=\$WAYANG_HOME/secrets$' "${env_checks_file}"
-          grep -q '^WAYANG_MODELS_DIR=\$WAYANG_HOME/models$' "${env_checks_file}"
-          grep -q '^WAYANG_MCP_DIR=\$WAYANG_HOME/mcp$' "${env_checks_file}"
-          grep -q '^WAYANG_RUN_DIR=\$WAYANG_HOME/run$' "${env_checks_file}"
-          grep -q '^WAYANG_VECTOR_DIR=\$WAYANG_HOME/vector$' "${env_checks_file}"
-          grep -q '^WAYANG_GOLLEK_HOME=\$WAYANG_HOME/gollek$' "${env_checks_file}"
-          grep -q '^GOLLEK_HOME=\$WAYANG_GOLLEK_HOME$' "${env_checks_file}"
-          grep -q '^WAYANG_GOLLEK_MODELS_DIR=\$WAYANG_GOLLEK_HOME/models$' "${env_checks_file}"
-          grep -q '^WAYANG_GOLLEK_STORAGE_DIR=\$WAYANG_GOLLEK_HOME/storage$' "${env_checks_file}"
+          extract_zip_entry "release-assets/andalus-service-bundle-linux-x86_64.zip" ".andalus/config/andalus.env.example" "${env_checks_file}"
+          grep -q '^ANDALUS_HOME=\$HOME/\.andalus$' "${env_checks_file}"
+          grep -q '^ANDALUS_CONFIG_DIR=\$ANDALUS_HOME/config$' "${env_checks_file}"
+          grep -q '^ANDALUS_LOG_DIR=\$ANDALUS_HOME/logs$' "${env_checks_file}"
+          grep -q '^ANDALUS_SERVER_LOG_DIR=\$ANDALUS_LOG_DIR/server$' "${env_checks_file}"
+          grep -q '^ANDALUS_LOG_FILE_PATH=\$ANDALUS_SERVER_LOG_DIR/server\.log$' "${env_checks_file}"
+          grep -q '^ANDALUS_PLUGINS_DIR=\$ANDALUS_HOME/plugins$' "${env_checks_file}"
+          grep -q '^ANDALUS_SECRETS_DIR=\$ANDALUS_HOME/secrets$' "${env_checks_file}"
+          grep -q '^ANDALUS_MODELS_DIR=\$ANDALUS_HOME/models$' "${env_checks_file}"
+          grep -q '^ANDALUS_MCP_DIR=\$ANDALUS_HOME/mcp$' "${env_checks_file}"
+          grep -q '^ANDALUS_RUN_DIR=\$ANDALUS_HOME/run$' "${env_checks_file}"
+          grep -q '^ANDALUS_VECTOR_DIR=\$ANDALUS_HOME/vector$' "${env_checks_file}"
+          grep -q '^ANDALUS_GOLLEK_HOME=\$ANDALUS_HOME/gollek$' "${env_checks_file}"
+          grep -q '^GOLLEK_HOME=\$ANDALUS_GOLLEK_HOME$' "${env_checks_file}"
+          grep -q '^ANDALUS_GOLLEK_MODELS_DIR=\$ANDALUS_GOLLEK_HOME/models$' "${env_checks_file}"
+          grep -q '^ANDALUS_GOLLEK_STORAGE_DIR=\$ANDALUS_GOLLEK_HOME/storage$' "${env_checks_file}"
           grep -q '^# Legacy override \(if needed\): GOLLEK_HOME=\$HOME/\.gollek$' "${env_checks_file}"
 
           windows_env_checks_file="$(mktemp)"
-          extract_zip_entry "release-assets/wayang-service-bundle-windows-x86_64.zip" ".wayang/config/wayang.env.example" "${windows_env_checks_file}"
-          grep -q '^WAYANG_HOME=%USERPROFILE%\\\.wayang$' "${windows_env_checks_file}"
-          grep -q '^WAYANG_CONFIG_DIR=%WAYANG_HOME%\\config$' "${windows_env_checks_file}"
-          grep -q '^WAYANG_LOG_DIR=%WAYANG_HOME%\\logs$' "${windows_env_checks_file}"
-          grep -q '^WAYANG_SERVER_LOG_DIR=%WAYANG_LOG_DIR%\\server$' "${windows_env_checks_file}"
-          grep -q '^WAYANG_LOG_FILE_PATH=%WAYANG_SERVER_LOG_DIR%\\server\.log$' "${windows_env_checks_file}"
-          grep -q '^WAYANG_PLUGINS_DIR=%WAYANG_HOME%\\plugins$' "${windows_env_checks_file}"
-          grep -q '^WAYANG_SECRETS_DIR=%WAYANG_HOME%\\secrets$' "${windows_env_checks_file}"
-          grep -q '^WAYANG_MODELS_DIR=%WAYANG_HOME%\\models$' "${windows_env_checks_file}"
-          grep -q '^WAYANG_MCP_DIR=%WAYANG_HOME%\\mcp$' "${windows_env_checks_file}"
-          grep -q '^WAYANG_RUN_DIR=%WAYANG_HOME%\\run$' "${windows_env_checks_file}"
-          grep -q '^WAYANG_VECTOR_DIR=%WAYANG_HOME%\\vector$' "${windows_env_checks_file}"
-          grep -q '^WAYANG_GOLLEK_HOME=%WAYANG_HOME%\\gollek$' "${windows_env_checks_file}"
-          grep -q '^GOLLEK_HOME=%WAYANG_GOLLEK_HOME%$' "${windows_env_checks_file}"
-          grep -q '^WAYANG_GOLLEK_MODELS_DIR=%WAYANG_GOLLEK_HOME%\\models$' "${windows_env_checks_file}"
-          grep -q '^WAYANG_GOLLEK_STORAGE_DIR=%WAYANG_GOLLEK_HOME%\\storage$' "${windows_env_checks_file}"
+          extract_zip_entry "release-assets/andalus-service-bundle-windows-x86_64.zip" ".andalus/config/andalus.env.example" "${windows_env_checks_file}"
+          grep -q '^ANDALUS_HOME=%USERPROFILE%\\\.andalus$' "${windows_env_checks_file}"
+          grep -q '^ANDALUS_CONFIG_DIR=%ANDALUS_HOME%\\config$' "${windows_env_checks_file}"
+          grep -q '^ANDALUS_LOG_DIR=%ANDALUS_HOME%\\logs$' "${windows_env_checks_file}"
+          grep -q '^ANDALUS_SERVER_LOG_DIR=%ANDALUS_LOG_DIR%\\server$' "${windows_env_checks_file}"
+          grep -q '^ANDALUS_LOG_FILE_PATH=%ANDALUS_SERVER_LOG_DIR%\\server\.log$' "${windows_env_checks_file}"
+          grep -q '^ANDALUS_PLUGINS_DIR=%ANDALUS_HOME%\\plugins$' "${windows_env_checks_file}"
+          grep -q '^ANDALUS_SECRETS_DIR=%ANDALUS_HOME%\\secrets$' "${windows_env_checks_file}"
+          grep -q '^ANDALUS_MODELS_DIR=%ANDALUS_HOME%\\models$' "${windows_env_checks_file}"
+          grep -q '^ANDALUS_MCP_DIR=%ANDALUS_HOME%\\mcp$' "${windows_env_checks_file}"
+          grep -q '^ANDALUS_RUN_DIR=%ANDALUS_HOME%\\run$' "${windows_env_checks_file}"
+          grep -q '^ANDALUS_VECTOR_DIR=%ANDALUS_HOME%\\vector$' "${windows_env_checks_file}"
+          grep -q '^ANDALUS_GOLLEK_HOME=%ANDALUS_HOME%\\gollek$' "${windows_env_checks_file}"
+          grep -q '^GOLLEK_HOME=%ANDALUS_GOLLEK_HOME%$' "${windows_env_checks_file}"
+          grep -q '^ANDALUS_GOLLEK_MODELS_DIR=%ANDALUS_GOLLEK_HOME%\\models$' "${windows_env_checks_file}"
+          grep -q '^ANDALUS_GOLLEK_STORAGE_DIR=%ANDALUS_GOLLEK_HOME%\\storage$' "${windows_env_checks_file}"
           grep -q '^; Legacy override \(if needed\): GOLLEK_HOME=%USERPROFILE%\\\.gollek$' "${windows_env_checks_file}"
 
           linux_installer_checks_file="$(mktemp)"
-          extract_zip_entry "release-assets/wayang-service-bundle-linux-x86_64.zip" "scripts/service/linux/install-systemd-user.sh" "${linux_installer_checks_file}"
+          extract_zip_entry "release-assets/andalus-service-bundle-linux-x86_64.zip" "scripts/service/linux/install-systemd-user.sh" "${linux_installer_checks_file}"
           grep -q '^SCRIPT_DIR=' "${linux_installer_checks_file}"
-          grep -q '^BUNDLED_WAYANG_HOME="\${BUNDLE_ROOT}/\.wayang"$' "${linux_installer_checks_file}"
-          grep -q '^if \[ -d "\$BUNDLED_WAYANG_HOME" \] && \[ "\$BUNDLED_WAYANG_HOME" != "\$WAYANG_HOME" \]; then$' "${linux_installer_checks_file}"
-          grep -q 'tar -C "\$BUNDLED_WAYANG_HOME" -cf - \. | tar -C "\$WAYANG_HOME" -xf -' "${linux_installer_checks_file}"
-          grep -q '^WAYANG_HOME="\${WAYANG_HOME:-\$HOME/\.wayang}"$' "${linux_installer_checks_file}"
-          grep -q '^WAYANG_MODELS_DIR="\${WAYANG_MODELS_DIR:-\$WAYANG_HOME/models}"$' "${linux_installer_checks_file}"
-          grep -q '^WAYANG_MCP_DIR="\${WAYANG_MCP_DIR:-\$WAYANG_HOME/mcp}"$' "${linux_installer_checks_file}"
-          grep -q '^WAYANG_RUN_DIR="\${WAYANG_RUN_DIR:-\$WAYANG_HOME/run}"$' "${linux_installer_checks_file}"
-          grep -q '^WAYANG_VECTOR_DIR="\${WAYANG_VECTOR_DIR:-\$WAYANG_HOME/vector}"$' "${linux_installer_checks_file}"
-          grep -q '^WAYANG_GOLLEK_HOME="\${WAYANG_GOLLEK_HOME:-\$WAYANG_HOME/gollek}"$' "${linux_installer_checks_file}"
+          grep -q '^BUNDLED_ANDALUS_HOME="\${BUNDLE_ROOT}/\.andalus"$' "${linux_installer_checks_file}"
+          grep -q '^if \[ -d "\$BUNDLED_ANDALUS_HOME" \] && \[ "\$BUNDLED_ANDALUS_HOME" != "\$ANDALUS_HOME" \]; then$' "${linux_installer_checks_file}"
+          grep -q 'tar -C "\$BUNDLED_ANDALUS_HOME" -cf - \. | tar -C "\$ANDALUS_HOME" -xf -' "${linux_installer_checks_file}"
+          grep -q '^ANDALUS_HOME="\${ANDALUS_HOME:-\$HOME/\.andalus}"$' "${linux_installer_checks_file}"
+          grep -q '^ANDALUS_MODELS_DIR="\${ANDALUS_MODELS_DIR:-\$ANDALUS_HOME/models}"$' "${linux_installer_checks_file}"
+          grep -q '^ANDALUS_MCP_DIR="\${ANDALUS_MCP_DIR:-\$ANDALUS_HOME/mcp}"$' "${linux_installer_checks_file}"
+          grep -q '^ANDALUS_RUN_DIR="\${ANDALUS_RUN_DIR:-\$ANDALUS_HOME/run}"$' "${linux_installer_checks_file}"
+          grep -q '^ANDALUS_VECTOR_DIR="\${ANDALUS_VECTOR_DIR:-\$ANDALUS_HOME/vector}"$' "${linux_installer_checks_file}"
+          grep -q '^ANDALUS_GOLLEK_HOME="\${ANDALUS_GOLLEK_HOME:-\$ANDALUS_HOME/gollek}"$' "${linux_installer_checks_file}"
           grep -q '^LEGACY_GOLLEK_HOME="\${GOLLEK_HOME:-\$HOME/\.gollek}"$' "${linux_installer_checks_file}"
 
           macos_installer_checks_file="$(mktemp)"
-          extract_zip_entry "release-assets/wayang-service-bundle-osx-x86_64.zip" "scripts/service/macos/install-launchd-agent.sh" "${macos_installer_checks_file}"
+          extract_zip_entry "release-assets/andalus-service-bundle-osx-x86_64.zip" "scripts/service/macos/install-launchd-agent.sh" "${macos_installer_checks_file}"
           grep -q '^SCRIPT_DIR=' "${macos_installer_checks_file}"
-          grep -q '^BUNDLED_WAYANG_HOME="\${BUNDLE_ROOT}/\.wayang"$' "${macos_installer_checks_file}"
-          grep -q '^if \[ -d "\$BUNDLED_WAYANG_HOME" \] && \[ "\$BUNDLED_WAYANG_HOME" != "\$WAYANG_HOME" \]; then$' "${macos_installer_checks_file}"
-          grep -q 'tar -C "\$BUNDLED_WAYANG_HOME" -cf - \. | tar -C "\$WAYANG_HOME" -xf -' "${macos_installer_checks_file}"
-          grep -q '^WAYANG_HOME="\${WAYANG_HOME:-\$HOME/\.wayang}"$' "${macos_installer_checks_file}"
-          grep -q '^WAYANG_MODELS_DIR="\${WAYANG_MODELS_DIR:-\$WAYANG_HOME/models}"$' "${macos_installer_checks_file}"
-          grep -q '^WAYANG_MCP_DIR="\${WAYANG_MCP_DIR:-\$WAYANG_HOME/mcp}"$' "${macos_installer_checks_file}"
-          grep -q '^WAYANG_RUN_DIR="\${WAYANG_RUN_DIR:-\$WAYANG_HOME/run}"$' "${macos_installer_checks_file}"
-          grep -q '^WAYANG_VECTOR_DIR="\${WAYANG_VECTOR_DIR:-\$WAYANG_HOME/vector}"$' "${macos_installer_checks_file}"
-          grep -q '^WAYANG_GOLLEK_HOME="\${WAYANG_GOLLEK_HOME:-\$WAYANG_HOME/gollek}"$' "${macos_installer_checks_file}"
+          grep -q '^BUNDLED_ANDALUS_HOME="\${BUNDLE_ROOT}/\.andalus"$' "${macos_installer_checks_file}"
+          grep -q '^if \[ -d "\$BUNDLED_ANDALUS_HOME" \] && \[ "\$BUNDLED_ANDALUS_HOME" != "\$ANDALUS_HOME" \]; then$' "${macos_installer_checks_file}"
+          grep -q 'tar -C "\$BUNDLED_ANDALUS_HOME" -cf - \. | tar -C "\$ANDALUS_HOME" -xf -' "${macos_installer_checks_file}"
+          grep -q '^ANDALUS_HOME="\${ANDALUS_HOME:-\$HOME/\.andalus}"$' "${macos_installer_checks_file}"
+          grep -q '^ANDALUS_MODELS_DIR="\${ANDALUS_MODELS_DIR:-\$ANDALUS_HOME/models}"$' "${macos_installer_checks_file}"
+          grep -q '^ANDALUS_MCP_DIR="\${ANDALUS_MCP_DIR:-\$ANDALUS_HOME/mcp}"$' "${macos_installer_checks_file}"
+          grep -q '^ANDALUS_RUN_DIR="\${ANDALUS_RUN_DIR:-\$ANDALUS_HOME/run}"$' "${macos_installer_checks_file}"
+          grep -q '^ANDALUS_VECTOR_DIR="\${ANDALUS_VECTOR_DIR:-\$ANDALUS_HOME/vector}"$' "${macos_installer_checks_file}"
+          grep -q '^ANDALUS_GOLLEK_HOME="\${ANDALUS_GOLLEK_HOME:-\$ANDALUS_HOME/gollek}"$' "${macos_installer_checks_file}"
           grep -q '^LEGACY_GOLLEK_HOME="\${GOLLEK_HOME:-\$HOME/\.gollek}"$' "${macos_installer_checks_file}"
 
           windows_installer_checks_file="$(mktemp)"
-          extract_zip_entry "release-assets/wayang-service-bundle-windows-x86_64.zip" "scripts/service/windows/install-service.ps1" "${windows_installer_checks_file}"
+          extract_zip_entry "release-assets/andalus-service-bundle-windows-x86_64.zip" "scripts/service/windows/install-service.ps1" "${windows_installer_checks_file}"
           grep -q '^\$ScriptDir = Split-Path -Parent \$MyInvocation\.MyCommand\.Path$' "${windows_installer_checks_file}"
           grep -q '^\$BundleRoot = \(Resolve-Path \(Join-Path \$ScriptDir "\.\.\\\.\.\\\.\."\)\)\.Path$' "${windows_installer_checks_file}"
-          grep -q '^\$BundledWayangHome = Join-Path \$BundleRoot "\.wayang"$' "${windows_installer_checks_file}"
-          grep -q '^\s*Copy-Item -Path \(Join-Path \$BundledWayangHome "\*"\) -Destination \$WayangHome -Recurse -Force$' "${windows_installer_checks_file}"
-          grep -q '^\s*\$WayangHome = if \(\$env:WAYANG_HOME\) \{ \$env:WAYANG_HOME \} else \{ "\$env:USERPROFILE\\\.wayang" \}$' "${windows_installer_checks_file}"
-          grep -q '^\$WayangModelsDir = if \(\$env:WAYANG_MODELS_DIR\) \{ \$env:WAYANG_MODELS_DIR \} else \{ Join-Path \$WayangHome "models" \}$' "${windows_installer_checks_file}"
-          grep -q '^\$WayangMcpDir = if \(\$env:WAYANG_MCP_DIR\) \{ \$env:WAYANG_MCP_DIR \} else \{ Join-Path \$WayangHome "mcp" \}$' "${windows_installer_checks_file}"
-          grep -q '^\$WayangRunDir = if \(\$env:WAYANG_RUN_DIR\) \{ \$env:WAYANG_RUN_DIR \} else \{ Join-Path \$WayangHome "run" \}$' "${windows_installer_checks_file}"
-          grep -q '^\$WayangVectorDir = if \(\$env:WAYANG_VECTOR_DIR\) \{ \$env:WAYANG_VECTOR_DIR \} else \{ Join-Path \$WayangHome "vector" \}$' "${windows_installer_checks_file}"
-          grep -q '^\s*"WAYANG_MODELS_DIR=\$WayangModelsDir",' "${windows_installer_checks_file}"
-          grep -q '^\s*"WAYANG_MCP_DIR=\$WayangMcpDir",' "${windows_installer_checks_file}"
-          grep -q '^\s*"WAYANG_RUN_DIR=\$WayangRunDir",' "${windows_installer_checks_file}"
-          grep -q '^\s*"WAYANG_VECTOR_DIR=\$WayangVectorDir",' "${windows_installer_checks_file}"
-          grep -q '^\$GollekHome = if \(\$env:WAYANG_GOLLEK_HOME\) \{ \$env:WAYANG_GOLLEK_HOME \} else \{ Join-Path \$WayangHome "gollek" \}$' "${windows_installer_checks_file}"
+          grep -q '^\$BundledAndalusHome = Join-Path \$BundleRoot "\.andalus"$' "${windows_installer_checks_file}"
+          grep -q '^\s*Copy-Item -Path \(Join-Path \$BundledAndalusHome "\*"\) -Destination \$AndalusHome -Recurse -Force$' "${windows_installer_checks_file}"
+          grep -q '^\s*\$AndalusHome = if \(\$env:ANDALUS_HOME\) \{ \$env:ANDALUS_HOME \} else \{ "\$env:USERPROFILE\\\.andalus" \}$' "${windows_installer_checks_file}"
+          grep -q '^\$AndalusModelsDir = if \(\$env:ANDALUS_MODELS_DIR\) \{ \$env:ANDALUS_MODELS_DIR \} else \{ Join-Path \$AndalusHome "models" \}$' "${windows_installer_checks_file}"
+          grep -q '^\$AndalusMcpDir = if \(\$env:ANDALUS_MCP_DIR\) \{ \$env:ANDALUS_MCP_DIR \} else \{ Join-Path \$AndalusHome "mcp" \}$' "${windows_installer_checks_file}"
+          grep -q '^\$AndalusRunDir = if \(\$env:ANDALUS_RUN_DIR\) \{ \$env:ANDALUS_RUN_DIR \} else \{ Join-Path \$AndalusHome "run" \}$' "${windows_installer_checks_file}"
+          grep -q '^\$AndalusVectorDir = if \(\$env:ANDALUS_VECTOR_DIR\) \{ \$env:ANDALUS_VECTOR_DIR \} else \{ Join-Path \$AndalusHome "vector" \}$' "${windows_installer_checks_file}"
+          grep -q '^\s*"ANDALUS_MODELS_DIR=\$AndalusModelsDir",' "${windows_installer_checks_file}"
+          grep -q '^\s*"ANDALUS_MCP_DIR=\$AndalusMcpDir",' "${windows_installer_checks_file}"
+          grep -q '^\s*"ANDALUS_RUN_DIR=\$AndalusRunDir",' "${windows_installer_checks_file}"
+          grep -q '^\s*"ANDALUS_VECTOR_DIR=\$AndalusVectorDir",' "${windows_installer_checks_file}"
+          grep -q '^\$GollekHome = if \(\$env:ANDALUS_GOLLEK_HOME\) \{ \$env:ANDALUS_GOLLEK_HOME \} else \{ Join-Path \$AndalusHome "gollek" \}$' "${windows_installer_checks_file}"
           grep -q '^\$legacyGollekHome = if \(\$env:GOLLEK_HOME\) \{ \$env:GOLLEK_HOME \} else \{ "\$env:USERPROFILE\\\.gollek" \}$' "${windows_installer_checks_file}"
 
       - name: Verify service assets archive layout
@@ -471,40 +471,40 @@ jobs:
             return 1
           }
 
-          service_assets_zip="$(ls -1 release-assets/wayang-service-assets-*.zip | head -n1)"
+          service_assets_zip="$(ls -1 release-assets/andalus-service-assets-*.zip | head -n1)"
           test -n "${service_assets_zip}"
           listing="$(unzip -Z1 "${service_assets_zip}" | normalize_zip_listing)"
-          printf '%s\n' "${listing}" | grep -q '^\.wayang/config/wayang.env.example$'
-          printf '%s\n' "${listing}" | grep -q '^\.wayang/logs/'
-          printf '%s\n' "${listing}" | grep -q '^\.wayang/logs/server/'
-          printf '%s\n' "${listing}" | grep -q '^\.wayang/plugins/'
-          printf '%s\n' "${listing}" | grep -q '^\.wayang/secrets/'
-          printf '%s\n' "${listing}" | grep -q '^\.wayang/models/'
-          printf '%s\n' "${listing}" | grep -q '^\.wayang/mcp/'
-          printf '%s\n' "${listing}" | grep -q '^\.wayang/run/'
-          printf '%s\n' "${listing}" | grep -q '^\.wayang/vector/'
-          printf '%s\n' "${listing}" | grep -q '^\.wayang/gollek/models/'
-          printf '%s\n' "${listing}" | grep -q '^\.wayang/gollek/storage/'
+          printf '%s\n' "${listing}" | grep -q '^\.andalus/config/andalus.env.example$'
+          printf '%s\n' "${listing}" | grep -q '^\.andalus/logs/'
+          printf '%s\n' "${listing}" | grep -q '^\.andalus/logs/server/'
+          printf '%s\n' "${listing}" | grep -q '^\.andalus/plugins/'
+          printf '%s\n' "${listing}" | grep -q '^\.andalus/secrets/'
+          printf '%s\n' "${listing}" | grep -q '^\.andalus/models/'
+          printf '%s\n' "${listing}" | grep -q '^\.andalus/mcp/'
+          printf '%s\n' "${listing}" | grep -q '^\.andalus/run/'
+          printf '%s\n' "${listing}" | grep -q '^\.andalus/vector/'
+          printf '%s\n' "${listing}" | grep -q '^\.andalus/gollek/models/'
+          printf '%s\n' "${listing}" | grep -q '^\.andalus/gollek/storage/'
           printf '%s\n' "${listing}" | grep -q '^scripts/service/linux/'
           printf '%s\n' "${listing}" | grep -q '^scripts/service/macos/'
           printf '%s\n' "${listing}" | grep -q '^scripts/service/windows/'
           env_checks_file="$(mktemp)"
-          extract_zip_entry "${service_assets_zip}" ".wayang/config/wayang.env.example" "${env_checks_file}"
-          grep -q '^WAYANG_HOME=\$HOME/\.wayang$' "${env_checks_file}"
-          grep -q '^WAYANG_CONFIG_DIR=\$WAYANG_HOME/config$' "${env_checks_file}"
-          grep -q '^WAYANG_LOG_DIR=\$WAYANG_HOME/logs$' "${env_checks_file}"
-          grep -q '^WAYANG_SERVER_LOG_DIR=\$WAYANG_LOG_DIR/server$' "${env_checks_file}"
-          grep -q '^WAYANG_LOG_FILE_PATH=\$WAYANG_SERVER_LOG_DIR/server\.log$' "${env_checks_file}"
-          grep -q '^WAYANG_PLUGINS_DIR=\$WAYANG_HOME/plugins$' "${env_checks_file}"
-          grep -q '^WAYANG_SECRETS_DIR=\$WAYANG_HOME/secrets$' "${env_checks_file}"
-          grep -q '^WAYANG_MODELS_DIR=\$WAYANG_HOME/models$' "${env_checks_file}"
-          grep -q '^WAYANG_MCP_DIR=\$WAYANG_HOME/mcp$' "${env_checks_file}"
-          grep -q '^WAYANG_RUN_DIR=\$WAYANG_HOME/run$' "${env_checks_file}"
-          grep -q '^WAYANG_VECTOR_DIR=\$WAYANG_HOME/vector$' "${env_checks_file}"
-          grep -q '^WAYANG_GOLLEK_HOME=\$WAYANG_HOME/gollek$' "${env_checks_file}"
-          grep -q '^GOLLEK_HOME=\$WAYANG_GOLLEK_HOME$' "${env_checks_file}"
-          grep -q '^WAYANG_GOLLEK_MODELS_DIR=\$WAYANG_GOLLEK_HOME/models$' "${env_checks_file}"
-          grep -q '^WAYANG_GOLLEK_STORAGE_DIR=\$WAYANG_GOLLEK_HOME/storage$' "${env_checks_file}"
+          extract_zip_entry "${service_assets_zip}" ".andalus/config/andalus.env.example" "${env_checks_file}"
+          grep -q '^ANDALUS_HOME=\$HOME/\.andalus$' "${env_checks_file}"
+          grep -q '^ANDALUS_CONFIG_DIR=\$ANDALUS_HOME/config$' "${env_checks_file}"
+          grep -q '^ANDALUS_LOG_DIR=\$ANDALUS_HOME/logs$' "${env_checks_file}"
+          grep -q '^ANDALUS_SERVER_LOG_DIR=\$ANDALUS_LOG_DIR/server$' "${env_checks_file}"
+          grep -q '^ANDALUS_LOG_FILE_PATH=\$ANDALUS_SERVER_LOG_DIR/server\.log$' "${env_checks_file}"
+          grep -q '^ANDALUS_PLUGINS_DIR=\$ANDALUS_HOME/plugins$' "${env_checks_file}"
+          grep -q '^ANDALUS_SECRETS_DIR=\$ANDALUS_HOME/secrets$' "${env_checks_file}"
+          grep -q '^ANDALUS_MODELS_DIR=\$ANDALUS_HOME/models$' "${env_checks_file}"
+          grep -q '^ANDALUS_MCP_DIR=\$ANDALUS_HOME/mcp$' "${env_checks_file}"
+          grep -q '^ANDALUS_RUN_DIR=\$ANDALUS_HOME/run$' "${env_checks_file}"
+          grep -q '^ANDALUS_VECTOR_DIR=\$ANDALUS_HOME/vector$' "${env_checks_file}"
+          grep -q '^ANDALUS_GOLLEK_HOME=\$ANDALUS_HOME/gollek$' "${env_checks_file}"
+          grep -q '^GOLLEK_HOME=\$ANDALUS_GOLLEK_HOME$' "${env_checks_file}"
+          grep -q '^ANDALUS_GOLLEK_MODELS_DIR=\$ANDALUS_GOLLEK_HOME/models$' "${env_checks_file}"
+          grep -q '^ANDALUS_GOLLEK_STORAGE_DIR=\$ANDALUS_GOLLEK_HOME/storage$' "${env_checks_file}"
           grep -q '^# Legacy override \(if needed\): GOLLEK_HOME=\$HOME/\.gollek$' "${env_checks_file}"
 
       - name: Verify runtime Gollek path defaults
@@ -512,59 +512,59 @@ jobs:
         run: |
           set -euo pipefail
           runtime_props="gollek-runtime-standalone/src/main/resources/application.properties"
-          grep -q '^wayang.home=\${WAYANG_HOME:\${user.home}/\.wayang}$' "${runtime_props}"
-          grep -q '^wayang.config.dir=\${WAYANG_CONFIG_DIR:\${wayang.home}/config}$' "${runtime_props}"
-          grep -q '^wayang.logs.dir=\${WAYANG_LOG_DIR:\${wayang.home}/logs}$' "${runtime_props}"
-          grep -q '^wayang.logs.server.dir=\${WAYANG_SERVER_LOG_DIR:\${wayang.logs.dir}/server}$' "${runtime_props}"
-          grep -q '^wayang.plugins.dir=\${WAYANG_PLUGINS_DIR:\${wayang.home}/plugins}$' "${runtime_props}"
-          grep -q '^wayang.secrets.dir=\${WAYANG_SECRETS_DIR:\${wayang.home}/secrets}$' "${runtime_props}"
-          grep -q '^wayang.models.dir=\${WAYANG_MODELS_DIR:\${wayang.home}/models}$' "${runtime_props}"
-          grep -q '^wayang.mcp.dir=\${WAYANG_MCP_DIR:\${wayang.home}/mcp}$' "${runtime_props}"
-          grep -q '^wayang.run.dir=\${WAYANG_RUN_DIR:\${wayang.home}/run}$' "${runtime_props}"
-          grep -q '^wayang.vector.dir=\${WAYANG_VECTOR_DIR:\${wayang.home}/vector}$' "${runtime_props}"
-          grep -q '^wayang.vector.faiss.index.path=\${WAYANG_FAISS_INDEX_PATH:\${wayang.vector.dir}/index.faiss}$' "${runtime_props}"
-          grep -q '^wayang.gollek.home=\${WAYANG_GOLLEK_HOME:\${wayang.home}/gollek}$' "${runtime_props}"
-          grep -q '^wayang.gollek.models.dir=\${WAYANG_GOLLEK_MODELS_DIR:\${wayang.gollek.home}/models}$' "${runtime_props}"
-          grep -q '^wayang.gollek.storage.dir=\${WAYANG_GOLLEK_STORAGE_DIR:\${wayang.gollek.home}/storage}$' "${runtime_props}"
-          grep -q '^gollek.home=\${WAYANG_GOLLEK_HOME:\${GOLLEK_HOME:\${wayang.gollek.home}}}$' "${runtime_props}"
-          grep -q '^quarkus.log.file.path=\${WAYANG_LOG_FILE_PATH:\${wayang.logs.server.dir}/server.log}$' "${runtime_props}"
+          grep -q '^andalus.home=\${ANDALUS_HOME:\${user.home}/\.andalus}$' "${runtime_props}"
+          grep -q '^andalus.config.dir=\${ANDALUS_CONFIG_DIR:\${andalus.home}/config}$' "${runtime_props}"
+          grep -q '^andalus.logs.dir=\${ANDALUS_LOG_DIR:\${andalus.home}/logs}$' "${runtime_props}"
+          grep -q '^andalus.logs.server.dir=\${ANDALUS_SERVER_LOG_DIR:\${andalus.logs.dir}/server}$' "${runtime_props}"
+          grep -q '^andalus.plugins.dir=\${ANDALUS_PLUGINS_DIR:\${andalus.home}/plugins}$' "${runtime_props}"
+          grep -q '^andalus.secrets.dir=\${ANDALUS_SECRETS_DIR:\${andalus.home}/secrets}$' "${runtime_props}"
+          grep -q '^andalus.models.dir=\${ANDALUS_MODELS_DIR:\${andalus.home}/models}$' "${runtime_props}"
+          grep -q '^andalus.mcp.dir=\${ANDALUS_MCP_DIR:\${andalus.home}/mcp}$' "${runtime_props}"
+          grep -q '^andalus.run.dir=\${ANDALUS_RUN_DIR:\${andalus.home}/run}$' "${runtime_props}"
+          grep -q '^andalus.vector.dir=\${ANDALUS_VECTOR_DIR:\${andalus.home}/vector}$' "${runtime_props}"
+          grep -q '^andalus.vector.faiss.index.path=\${ANDALUS_FAISS_INDEX_PATH:\${andalus.vector.dir}/index.faiss}$' "${runtime_props}"
+          grep -q '^andalus.gollek.home=\${ANDALUS_GOLLEK_HOME:\${andalus.home}/gollek}$' "${runtime_props}"
+          grep -q '^andalus.gollek.models.dir=\${ANDALUS_GOLLEK_MODELS_DIR:\${andalus.gollek.home}/models}$' "${runtime_props}"
+          grep -q '^andalus.gollek.storage.dir=\${ANDALUS_GOLLEK_STORAGE_DIR:\${andalus.gollek.home}/storage}$' "${runtime_props}"
+          grep -q '^gollek.home=\${ANDALUS_GOLLEK_HOME:\${GOLLEK_HOME:\${andalus.gollek.home}}}$' "${runtime_props}"
+          grep -q '^quarkus.log.file.path=\${ANDALUS_LOG_FILE_PATH:\${andalus.logs.server.dir}/server.log}$' "${runtime_props}"
 
       - name: Create/Update GitHub release
         uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ env.RELEASE_TAG }}
           files: |
-            release-assets/wayang-standalone-linux-x86_64
-            release-assets/wayang-standalone-osx-x86_64
-            release-assets/wayang-standalone-osx-aarch_64
-            release-assets/wayang-standalone-windows-x86_64.exe
-            release-assets/wayang-service-bundle-linux-x86_64.zip
-            release-assets/wayang-service-bundle-osx-x86_64.zip
-            release-assets/wayang-service-bundle-osx-aarch_64.zip
-            release-assets/wayang-service-bundle-windows-x86_64.zip
-            release-assets/wayang-runtime-standalone-*.jar
-            release-assets/wayang-service-assets-*.zip
+            release-assets/andalus-standalone-linux-x86_64
+            release-assets/andalus-standalone-osx-x86_64
+            release-assets/andalus-standalone-osx-aarch_64
+            release-assets/andalus-standalone-windows-x86_64.exe
+            release-assets/andalus-service-bundle-linux-x86_64.zip
+            release-assets/andalus-service-bundle-osx-x86_64.zip
+            release-assets/andalus-service-bundle-osx-aarch_64.zip
+            release-assets/andalus-service-bundle-windows-x86_64.zip
+            release-assets/andalus-runtime-standalone-*.jar
+            release-assets/andalus-service-assets-*.zip
           generate_release_notes: true
           fail_on_unmatched_files: true
           overwrite_files: true
           body: |
-            Wayang standalone release assets:
+            Andalus standalone release assets:
             - Native executables
-            - Service-ready executable bundles with `.wayang/*` layout
+            - Service-ready executable bundles with `.andalus/*` layout
             - Runnable standalone jar
             - Service helper scripts archive
             
             Service/runtime default paths:
-            - `WAYANG_HOME` => `~/.wayang`
-            - `WAYANG_CONFIG_DIR` => `~/.wayang/config`
-            - `WAYANG_LOG_DIR` => `~/.wayang/logs`
-            - `WAYANG_SERVER_LOG_DIR` => `~/.wayang/logs/server`
-            - `WAYANG_LOG_FILE_PATH` => `~/.wayang/logs/server/server.log`
-            - `WAYANG_PLUGINS_DIR` => `~/.wayang/plugins`
-            - `WAYANG_SECRETS_DIR` => `~/.wayang/secrets`
-            - `WAYANG_MODELS_DIR` => `~/.wayang/models`
-            - `WAYANG_MCP_DIR` => `~/.wayang/mcp`
-            - `WAYANG_RUN_DIR` => `~/.wayang/run`
-            - `WAYANG_VECTOR_DIR` => `~/.wayang/vector`
-            - `WAYANG_GOLLEK_HOME` => `~/.wayang/gollek`
-            - `GOLLEK_HOME` => `~/.wayang/gollek` (default via `WAYANG_GOLLEK_HOME`), fallback `~/.gollek` if needed
+            - `ANDALUS_HOME` => `~/.andalus`
+            - `ANDALUS_CONFIG_DIR` => `~/.andalus/config`
+            - `ANDALUS_LOG_DIR` => `~/.andalus/logs`
+            - `ANDALUS_SERVER_LOG_DIR` => `~/.andalus/logs/server`
+            - `ANDALUS_LOG_FILE_PATH` => `~/.andalus/logs/server/server.log`
+            - `ANDALUS_PLUGINS_DIR` => `~/.andalus/plugins`
+            - `ANDALUS_SECRETS_DIR` => `~/.andalus/secrets`
+            - `ANDALUS_MODELS_DIR` => `~/.andalus/models`
+            - `ANDALUS_MCP_DIR` => `~/.andalus/mcp`
+            - `ANDALUS_RUN_DIR` => `~/.andalus/run`
+            - `ANDALUS_VECTOR_DIR` => `~/.andalus/vector`
+            - `ANDALUS_GOLLEK_HOME` => `~/.andalus/gollek`
+            - `GOLLEK_HOME` => `~/.andalus/gollek` (default via `ANDALUS_GOLLEK_HOME`), fallback `~/.gollek` if needed

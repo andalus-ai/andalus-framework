@@ -1,0 +1,36 @@
+package tech.kayys.andalus.knowledge.snapshot.lifecycle;
+
+import tech.kayys.andalus.knowledge.snapshot.KnowledgeDecisionSnapshot;
+import tech.kayys.andalus.knowledge.snapshot.KnowledgeSnapshotId;
+
+import java.time.Instant;
+import java.util.List;
+import java.util.Optional;
+
+/**
+ * Defines the contract for knowledge snapshot registry store operations in the Wayang framework.
+ */
+
+
+public interface KnowledgeSnapshotRegistryStore {
+
+    void saveSnapshot(KnowledgeDecisionSnapshot snapshot);
+
+    Optional<KnowledgeDecisionSnapshot> getSnapshot(KnowledgeSnapshotId snapshotId);
+
+    void saveReference(KnowledgeSnapshotReference reference);
+
+    void deleteReference(String referenceId);
+
+    List<KnowledgeSnapshotReference> findReferences(KnowledgeSnapshotId snapshotId);
+
+    void saveHold(KnowledgeSnapshotHold hold);
+
+    void deleteHold(String holdId);
+
+    List<KnowledgeSnapshotHold> findHolds(KnowledgeSnapshotId snapshotId);
+
+    void updateState(KnowledgeSnapshotId snapshotId, KnowledgeSnapshotLifecycleState state);
+
+    List<KnowledgeDecisionSnapshot> findCandidates(Instant before);
+}

@@ -15,7 +15,7 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout wayang
+      - name: Checkout andalus
         uses: actions/checkout@v4
 
       - name: Setup GraalVM (Java 25)
@@ -62,7 +62,7 @@ jobs:
           if [ ! -d "../alkhawarizm" ]; then
             sed -i '/includeBuild("\.\.\/alkhawarizm")/d' settings.gradle.kts || true
           fi
-          # Publish only the modules that exist and that wayang depends on.
+          # Publish only the modules that exist and that andalus depends on.
           TASKS=(
             :spi:gollek-spi:publishToMavenLocal
             :spi:gollek-spi-audio:publishToMavenLocal

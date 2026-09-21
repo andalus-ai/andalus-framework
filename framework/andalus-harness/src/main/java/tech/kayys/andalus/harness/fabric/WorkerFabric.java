@@ -1,0 +1,27 @@
+package tech.kayys.andalus.harness.fabric;
+
+import tech.kayys.andalus.harness.consistency.state.ExecutionId;
+import tech.kayys.andalus.workflow.graph.NodeId;
+
+import java.util.List;
+import java.util.Optional;
+
+/**
+ * Worker fabric coordinator managing worker registrations, heartbeats, and assignment dispatching.
+ */
+public interface WorkerFabric {
+
+    void register(ExecutionWorker worker);
+
+    void unregister(WorkerId workerId);
+
+    void heartbeat(WorkerHeartbeat heartbeat);
+
+    Optional<ExecutionWorker> get(WorkerId workerId);
+
+    List<ExecutionWorker> findCapable(WorkerCapabilities requirements);
+
+    ExecutionAssignment assign(ExecutionId executionId, NodeId nodeId, WorkerId workerId, AssignmentConstraints constraints);
+
+    boolean validateFence(AssignmentFence fence);
+}

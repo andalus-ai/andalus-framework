@@ -1,0 +1,42 @@
+package tech.kayys.andalus.knowledge.exchange.capability;
+
+import tech.kayys.andalus.knowledge.*;
+import tech.kayys.andalus.knowledge.seal.*;
+import tech.kayys.andalus.knowledge.snapshot.*;
+import tech.kayys.andalus.knowledge.snapshot.pack.*;
+import tech.kayys.andalus.knowledge.snapshot.artifact.*;
+import tech.kayys.andalus.knowledge.snapshot.merkle.*;
+import tech.kayys.andalus.knowledge.exchange.*;
+import tech.kayys.andalus.knowledge.exchange.auth.*;
+import tech.kayys.andalus.knowledge.exchange.session.*;
+import tech.kayys.andalus.knowledge.exchange.binding.*;
+import tech.kayys.andalus.knowledge.exchange.envelope.*;
+import tech.kayys.andalus.knowledge.exchange.trust.*;
+import tech.kayys.andalus.knowledge.exchange.identity.*;
+import tech.kayys.andalus.knowledge.exchange.capability.*;
+import tech.kayys.andalus.knowledge.exchange.protocol.*;
+import tech.kayys.andalus.knowledge.exchange.transport.*;
+import tech.kayys.andalus.knowledge.exchange.framing.*;
+
+/**
+ * Defines the knowledge evidence exchange capability negotiation status values used by the Wayang framework.
+ */
+
+
+
+public enum KnowledgeEvidenceExchangeCapabilityNegotiationStatus {
+
+    NEGOTIATED,
+
+    NO_COMMON_PROTOCOL,
+
+    REQUIRED_CAPABILITY_MISSING,
+
+    MANIFEST_EXPIRED,
+
+    MANIFEST_INVALID,
+
+    RUNTIME_UNTRUSTED,
+
+    FAILED
+}

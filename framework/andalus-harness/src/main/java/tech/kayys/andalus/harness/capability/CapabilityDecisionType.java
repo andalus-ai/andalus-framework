@@ -1,0 +1,10 @@
+package tech.kayys.andalus.harness.capability;
+
+/**
+ * Outcome classification for a capability evaluation.
+ */
+public enum CapabilityDecisionType {
+    ALLOW,
+    DENY,
+    REQUIRE_APPROVAL
+}

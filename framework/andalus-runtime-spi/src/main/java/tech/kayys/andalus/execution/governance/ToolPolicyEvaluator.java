@@ -1,0 +1,55 @@
+package tech.kayys.andalus.execution.governance;
+
+import tech.kayys.andalus.tool.ToolInvocation;
+import java.util.List;
+
+/**
+ * Evaluates an ordered list of {@link ToolPolicy} instances against an invocation
+ * and returns the aggregate {@link PolicyDecision} (§30 — Policy Engine).
+ *
+ * <p>Evaluation rules:
+ * <ol>
+ *   <li>Policies are sorted by {@link ToolPolicy#priority()} ascending (lower = first).</li>
+ *   <li>The first {@link PolicyDecision.Deny} short-circuits — no further policies run.</li>
+ *   <li>If any policy returns {@link PolicyDecision.RequireApproval}, that is the result
+ *       (after all non-deny policies complete).</li>
+ *   <li>If all policies return {@link PolicyDecision.Allow}, the tool is permitted.</li>
+ * </ol>
+ */
+public interface ToolPolicyEvaluator {
+
+    /**
+     * Evaluate all registered policies for the given invocation and context.
+     *
+     * @param invocation The tool invocation to check.
+     * @param context    The caller's permission context.
+     * @return Aggregate decision; never null.
+     */
+    PolicyDecision evaluate(ToolInvocation invocation, ToolPermissionContext context);
+
+    /**
+     * Evaluate all registered policies for the given policy evaluation context.
+     *
+     * @param context The policy evaluation context.
+     * @return Aggregate decision; never null.
+     */
+    default PolicyDecision evaluate(PolicyEvaluationContext context) {
+        return evaluate(context.invocation(), context.permissionContext());
+    }
+
+    /**
+     * Evaluate all registered policies and return a detailed result including individual evaluations.
+     *
+     * @param invocation The tool invocation to check.
+     * @param context    The caller's permission context.
+     * @return Detailed evaluation result.
+     */
+    default PolicyEvaluationResult evaluateDetailed(ToolInvocation invocation, ToolPermissionContext context) {
+        return new PolicyEvaluationResult(evaluate(invocation, context), List.of());
+    }
+
+    /**
+     * Returns all registered policies in evaluation order.
+     */
+    List<ToolPolicy> policies();
+}

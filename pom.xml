@@ -3,25 +3,25 @@
     xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
     xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
-    <groupId>tech.kayys.wayang</groupId>
-    <artifactId>wayang-framework-build</artifactId>
+    <groupId>tech.kayys.andalus</groupId>
+    <artifactId>andalus-framework-build</artifactId>
     <version>0.0.1</version>
     <packaging>pom</packaging>
 
-    <name>wayang-framework-parent</name>
-    <description>wayang Framework</description>
+    <name>andalus-framework-parent</name>
+    <description>andalus Framework</description>
 
     <distributionManagement>
-        <!-- GitHub Packages: replace 'workkayys' and 'wayang' if your repo slug differs -->
+        <!-- GitHub Packages: replace 'workkayys' and 'andalus' if your repo slug differs -->
         <repository>
             <id>github</id>
-            <name>GitHub Packages — Wayang (Release)</name>
-            <url>https://maven.pkg.github.com/workkayys/wayang</url>
+            <name>GitHub Packages — Andalus (Release)</name>
+            <url>https://maven.pkg.github.com/workkayys/andalus</url>
         </repository>
         <snapshotRepository>
             <id>github</id>
-            <name>GitHub Packages — Wayang (Snapshot)</name>
-            <url>https://maven.pkg.github.com/workkayys/wayang</url>
+            <name>GitHub Packages — Andalus (Snapshot)</name>
+            <url>https://maven.pkg.github.com/workkayys/andalus</url>
         </snapshotRepository>
     </distributionManagement>
 
@@ -31,7 +31,7 @@
         <maven.compiler.target>25</maven.compiler.target>
         <gollek.version>0.1.0-SNAPSHOT</gollek.version>
         <gamelan.version>0.1.1</gamelan.version>
-        <wayang-gollek-sdk.version>1.0.0-SNAPSHOT</wayang-gollek-sdk.version>
+        <andalus-gollek-sdk.version>1.0.0-SNAPSHOT</andalus-gollek-sdk.version>
         <maven.compiler.plugin.version>3.13.0</maven.compiler.plugin.version>
         <jandex.maven.plugin.version>3.2.7</jandex.maven.plugin.version>
         <quarkus.platform.version>3.32.2</quarkus.platform.version>
@@ -57,14 +57,14 @@
                 <scope>test</scope>
             </dependency>
             <dependency>
-                <groupId>tech.kayys.wayang</groupId>
-                <artifactId>wayang-tool</artifactId>
+                <groupId>tech.kayys.andalus</groupId>
+                <artifactId>andalus-tool</artifactId>
                 <version>${project.version}</version>
             </dependency>
             <dependency>
-                <groupId>tech.kayys.wayang</groupId>
-                <artifactId>wayang-gollek-sdk</artifactId>
-                <version>${wayang-gollek-sdk.version}</version>
+                <groupId>tech.kayys.andalus</groupId>
+                <artifactId>andalus-gollek-sdk</artifactId>
+                <version>${andalus-gollek-sdk.version}</version>
             </dependency>
         </dependencies>
     </dependencyManagement>
@@ -165,7 +165,7 @@
                                         <exclude>tech.kayys.gamelan:gamelan-engine-core</exclude>
                                     </excludes>
                                     <message>
-                                        wayang-gollek modules must not depend on gamelan-engine-core.
+                                        andalus-gollek modules must not depend on gamelan-engine-core.
                                         Use gamelan-engine-spi and gamelan-sdk-*-core instead.
                                         See DEPENDENCIES.md for the allowed dependency policy.
                                     </message>
