@@ -10,6 +10,7 @@ import java.util.Objects;
 public record MemoryEntry(
         String entryId,
         MemoryTier tier,
+        MemoryKind kind,
         String content,
         Map<String, Object> metadata,
         Instant timestamp) {
@@ -17,12 +18,17 @@ public record MemoryEntry(
     public MemoryEntry {
         Objects.requireNonNull(entryId, "entryId must not be null");
         Objects.requireNonNull(tier, "tier must not be null");
+        kind = kind != null ? kind : MemoryKind.FACT;
         content = content != null ? content : "";
         metadata = metadata != null ? Map.copyOf(metadata) : Map.of();
         timestamp = timestamp != null ? timestamp : Instant.now();
     }
 
     public static MemoryEntry of(String entryId, MemoryTier tier, String content, Map<String, Object> metadata) {
-        return new MemoryEntry(entryId, tier, content, metadata, Instant.now());
+        return new MemoryEntry(entryId, tier, MemoryKind.FACT, content, metadata, Instant.now());
+    }
+
+    public static MemoryEntry of(String entryId, MemoryTier tier, MemoryKind kind, String content, Map<String, Object> metadata) {
+        return new MemoryEntry(entryId, tier, kind, content, metadata, Instant.now());
     }
 }
