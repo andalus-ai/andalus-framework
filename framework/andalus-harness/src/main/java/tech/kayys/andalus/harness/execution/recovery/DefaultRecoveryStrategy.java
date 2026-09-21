@@ -49,7 +49,7 @@ public class DefaultRecoveryStrategy implements RecoveryStrategy {
         // Safely parked before crash — can resume from persisted cursor
         if (state.status() == ExecutionStatus.SUSPENDED || state.status() == ExecutionStatus.WAITING) {
             return RecoveryDecision.resume(
-                    "Execution was safely parked (" + state.status() + "); resuming from cursor " + state.cursor().phaseId());
+                    "Execution was safely suspended (" + state.status() + "); resuming from cursor " + state.cursor().phaseId());
         }
 
         // If the execution was mid-recovery when the second crash happened, re-analyze actions
