@@ -36,7 +36,7 @@ public final class DefaultA2AExecutionBridge implements A2AExecutionBridge {
     @Override
     public CompletionStage<A2ATaskExecution> submit(A2AExecutionRequest request) {
         ProtocolContext protoCtx = createProtocolContext(request);
-        String executionId = "exec-" + UUID.randomUUID();
+        String executionId = resolveExecutionId(request);
 
         // Submit to communicator
         AgentTask agentTask = communicator.submit(request.request(), protoCtx);
@@ -49,11 +49,17 @@ public final class DefaultA2AExecutionBridge implements A2AExecutionBridge {
                 request.taskId(),
                 executionId,
                 agentTask != null ? agentTask.status() : TaskStatus.SUBMITTED,
-                resultStage
+                resultStage,
+                agentTask
         );
 
         taskRegistry.register(execution);
         return CompletableFuture.completedFuture(execution);
+    }
+
+    private String resolveExecutionId(A2AExecutionRequest request) {
+        return request.callerExecutionId()
+                .orElseGet(() -> "exec-" + UUID.randomUUID());
     }
 
     private ProtocolContext createProtocolContext(A2AExecutionRequest request) {
@@ -75,11 +81,17 @@ public final class DefaultA2AExecutionBridge implements A2AExecutionBridge {
             String a2aTaskId,
             String executionId,
             TaskStatus status,
-            CompletionStage<AgentResponse> result
+            CompletionStage<AgentResponse> result,
+            AgentTask agentTask
     ) implements A2ATaskExecution {
         @Override
         public CompletionStage<Void> cancel() {
-            return CompletableFuture.completedFuture(null);
+            // 6.16.7: propagate cancellation to the underlying remote task.
+            // Local cancellation remains authoritative; this is the best-effort
+            // remote side effect — the result is reconciled asynchronously.
+            return agentTask != null
+                    ? agentTask.cancel()
+                    : CompletableFuture.completedFuture(null);
         }
     }
 }

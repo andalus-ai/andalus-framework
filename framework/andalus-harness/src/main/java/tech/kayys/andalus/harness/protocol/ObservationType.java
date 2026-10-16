@@ -1,0 +1,40 @@
+package tech.kayys.andalus.harness.protocol;
+
+public enum ObservationType {
+
+    MODEL_STARTED,
+
+    MODEL_OUTPUT,
+
+    MODEL_ERROR,
+
+    TOOL_STARTED,
+
+    TOOL_RESULT,
+
+    TOOL_ERROR,
+
+    HUMAN_RESPONSE,
+
+    SYSTEM_EVENT,
+
+    EXTERNAL_EVENT,
+
+    CHILD_EXECUTION_RESULT,
+
+    POLICY_RESULT,
+
+    RESOURCE_RESULT,
+
+    MEMORY_RESULT,
+
+    KNOWLEDGE_RESULT,
+
+    CHECKPOINT,
+
+    WAITING,
+
+    EXECUTION_ERROR,
+
+    EXECUTION_COMPLETED
+}

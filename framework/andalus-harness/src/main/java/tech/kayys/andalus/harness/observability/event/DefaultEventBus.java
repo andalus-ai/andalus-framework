@@ -11,8 +11,22 @@ public class DefaultEventBus implements EventBus {
 
     private final List<SubscriptionEntry> subscriptions = new CopyOnWriteArrayList<>();
 
-    private record SubscriptionEntry(EventFilter filter, EventHandler handler) implements EventSubscription {
-        private static final java.util.concurrent.atomic.AtomicBoolean active = new java.util.concurrent.atomic.AtomicBoolean(true);
+    /**
+     * Per-subscription active state. This must be an instance field — a static flag
+     * would let one {@code unsubscribe()} silently disable every subscription in the
+     * process. Unsubscribing also removes the entry so the bus does not accumulate
+     * dead subscriptions.
+     */
+    private final class SubscriptionEntry implements EventSubscription {
+        private final EventFilter filter;
+        private final EventHandler handler;
+        private final java.util.concurrent.atomic.AtomicBoolean active =
+                new java.util.concurrent.atomic.AtomicBoolean(true);
+
+        private SubscriptionEntry(EventFilter filter, EventHandler handler) {
+            this.filter = filter;
+            this.handler = handler;
+        }
 
         @Override
         public boolean isActive() {
@@ -21,7 +35,9 @@ public class DefaultEventBus implements EventBus {
 
         @Override
         public void unsubscribe() {
-            active.set(false);
+            if (active.compareAndSet(true, false)) {
+                subscriptions.remove(this);
+            }
         }
     }
 
@@ -29,9 +45,9 @@ public class DefaultEventBus implements EventBus {
     public void publish(AndalusEvent event) {
         if (event == null) return;
         for (SubscriptionEntry sub : subscriptions) {
-            if (sub.isActive() && sub.filter().matches(event)) {
+            if (sub.isActive() && sub.filter.matches(event)) {
                 try {
-                    sub.handler().handle(event);
+                    sub.handler.handle(event);
                 } catch (Exception ignored) {
                     // Prevent faulty subscriber from interrupting event dispatch
                 }

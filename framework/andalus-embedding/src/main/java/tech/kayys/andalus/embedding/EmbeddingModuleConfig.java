@@ -2,7 +2,7 @@ package tech.kayys.andalus.embedding;
 
 public class EmbeddingModuleConfig {
 
-    private String defaultProvider = "gollek";
+    private String defaultProvider = "aqli";
     private String defaultModel = "Qwen/Qwen2.5-0.5B-Instruct";
     private String embeddingVersion = "v1";
     private boolean normalize = true;

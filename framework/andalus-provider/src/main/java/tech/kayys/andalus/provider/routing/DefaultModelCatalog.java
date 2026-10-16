@@ -82,14 +82,14 @@ public final class DefaultModelCatalog {
                 // 3. Vision & OCR Specialized Models
                 // ==========================================
                 new ModelSpec(
-                        "nougat-ocr-local", "nougat", "gollek",
+                        "nougat-ocr-local", "nougat", "aqli",
                         Set.of(ModelCapability.OCR, ModelCapability.DOCUMENT_UNDERSTANDING),
                         Set.of(Modality.IMAGE, Modality.PDF),
                         Set.of(Modality.TEXT),
                         8_192, 4_096, 0.0, 0.0, 350, 0.88, true
                 ),
                 new ModelSpec(
-                        "florence-2-vision-local", "florence", "gollek",
+                        "florence-2-vision-local", "florence", "aqli",
                         Set.of(ModelCapability.VISION, ModelCapability.OCR, ModelCapability.IMAGE_UNDERSTANDING),
                         Set.of(Modality.IMAGE),
                         Set.of(Modality.TEXT),
@@ -107,7 +107,7 @@ public final class DefaultModelCatalog {
                         4_096, 4_096, 0.10, 0.10, 250, 0.94, false
                 ),
                 new ModelSpec(
-                        "whisper-local", "whisper", "gollek",
+                        "whisper-local", "whisper", "aqli",
                         Set.of(ModelCapability.SPEECH_TO_TEXT, ModelCapability.AUDIO_UNDERSTANDING),
                         Set.of(Modality.AUDIO),
                         Set.of(Modality.TEXT),
@@ -125,7 +125,7 @@ public final class DefaultModelCatalog {
                 // 5. Image & Video Generation Models
                 // ==========================================
                 new ModelSpec(
-                        "flux-1-schnell-local", "flux", "gollek",
+                        "flux-1-schnell-local", "flux", "aqli",
                         Set.of(ModelCapability.IMAGE_GENERATION, ModelCapability.IMAGE_EDITING),
                         Set.of(Modality.TEXT, Modality.IMAGE),
                         Set.of(Modality.IMAGE),
@@ -139,7 +139,7 @@ public final class DefaultModelCatalog {
                         8_192, 1_024, 0.04, 0.04, 4500, 0.92, false
                 ),
                 new ModelSpec(
-                        "stable-video-diffusion", "stability", "gollek",
+                        "stable-video-diffusion", "stability", "aqli",
                         Set.of(ModelCapability.VIDEO_GENERATION),
                         Set.of(Modality.IMAGE, Modality.TEXT),
                         Set.of(Modality.VIDEO),
@@ -150,14 +150,14 @@ public final class DefaultModelCatalog {
                 // 6. 3D Spatial & Mesh Generation Models
                 // ==========================================
                 new ModelSpec(
-                        "trellis-3d-local", "trellis", "gollek",
+                        "trellis-3d-local", "trellis", "aqli",
                         Set.of(ModelCapability.THREE_D_GENERATION, ModelCapability.MESH_GENERATION, ModelCapability.THREE_D_UNDERSTANDING),
                         Set.of(Modality.IMAGE, Modality.TEXT),
                         Set.of(Modality.THREE_D),
                         8_192, 2_048, 0.0, 0.0, 2500, 0.90, true
                 ),
                 new ModelSpec(
-                        "shap-e-local", "shap-e", "gollek",
+                        "shap-e-local", "shap-e", "aqli",
                         Set.of(ModelCapability.THREE_D_GENERATION, ModelCapability.POINT_CLOUD_GENERATION),
                         Set.of(Modality.TEXT, Modality.IMAGE),
                         Set.of(Modality.THREE_D),
@@ -182,7 +182,7 @@ public final class DefaultModelCatalog {
                         8_192, 1_536, 0.02, 0.0, 150, 0.88, false
                 ),
                 new ModelSpec(
-                        "bge-m3-local", "bge", "gollek",
+                        "bge-m3-local", "bge", "aqli",
                         Set.of(ModelCapability.EMBEDDING),
                         Set.of(Modality.TEXT),
                         Set.of(Modality.EMBEDDING),
@@ -196,7 +196,7 @@ public final class DefaultModelCatalog {
                         32_768, 8_192, 0.20, 0.20, 700, 0.88, false
                 ),
                 new ModelSpec(
-                        "gollek-local", "gollek", "gollek",
+                        "aqli-local", "aqli", "aqli",
                         Set.of(ModelCapability.CHAT, ModelCapability.TEXT_GENERATION, ModelCapability.TOOL_CALLING, ModelCapability.CODE_GENERATION),
                         Set.of(Modality.TEXT),
                         Set.of(Modality.TEXT),

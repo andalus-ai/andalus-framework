@@ -32,6 +32,8 @@ public abstract class BaseReActAgent implements Agent {
     protected List<Tool> tools = new ArrayList<>();
     protected boolean autoApproveTools = false;
     protected Path workspace;
+
+    protected tech.kayys.andalus.tool.ToolContext toolContext;
     
     protected BudgetedContextCompiler contextCompiler;
     protected ContextPlanner contextPlanner;
@@ -134,6 +136,16 @@ public abstract class BaseReActAgent implements Agent {
 
     public void setToolExecutor(ToolExecutorBridge toolExecutor) {
         this.toolExecutor = toolExecutor;
+    }
+
+    public void setToolContext(
+            tech.kayys.andalus.tool.ToolContext toolContext
+    ) {
+        this.toolContext = toolContext;
+    }
+
+    public tech.kayys.andalus.tool.ToolContext toolContext() {
+        return toolContext;
     }
 
     public void setCheckpointBridge(CheckpointBridge bridge, String executionId) {

@@ -42,7 +42,7 @@ class MultimodalModelRoutingTest {
     private Provider anthropicProvider;
     private Provider googleProvider;
     private Provider groqProvider;
-    private Provider gollekProvider;
+    private Provider aqliProvider;
     private Provider tripoProvider;
     private Provider elevenLabsProvider;
     private List<Provider> availableProviders;
@@ -67,13 +67,13 @@ class MultimodalModelRoutingTest {
         anthropicProvider = new MockProvider("anthropic", Set.of(Modality.TEXT, Modality.IMAGE));
         googleProvider = new MockProvider("google", Set.of(Modality.TEXT, Modality.IMAGE, Modality.AUDIO, Modality.PDF));
         groqProvider = new MockProvider("groq", Set.of(Modality.AUDIO, Modality.TEXT));
-        gollekProvider = new MockProvider("gollek", Set.of(Modality.TEXT, Modality.IMAGE, Modality.AUDIO, Modality.THREE_D, Modality.PDF));
+        aqliProvider = new MockProvider("aqli", Set.of(Modality.TEXT, Modality.IMAGE, Modality.AUDIO, Modality.THREE_D, Modality.PDF));
         tripoProvider = new MockProvider("tripo", Set.of(Modality.TEXT, Modality.IMAGE, Modality.THREE_D));
         elevenLabsProvider = new MockProvider("elevenlabs", Set.of(Modality.TEXT, Modality.AUDIO));
 
         availableProviders = List.of(
                 openaiProvider, anthropicProvider, googleProvider,
-                groqProvider, gollekProvider, tripoProvider, elevenLabsProvider
+                groqProvider, aqliProvider, tripoProvider, elevenLabsProvider
         );
     }
 

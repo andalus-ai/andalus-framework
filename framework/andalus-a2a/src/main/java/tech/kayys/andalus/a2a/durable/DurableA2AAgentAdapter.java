@@ -40,6 +40,13 @@ public class DurableA2AAgentAdapter implements A2AServer {
     private final AgentDefinition      agentDefinition;
     private final DurableA2ATaskLedger ledger;
 
+    /**
+     * Optional completion bridge (6.16.5.12). When present, terminal execution
+     * outcomes are routed through the bridge (persist-then-wake into the Claw
+     * WAITING lifecycle) instead of only updating the ledger directly.
+     */
+    private final A2ACompletionBridge completionBridge; // may be null (legacy mode)
+
     /** Remote endpoint URI of this adapter (used as the "remoteEndpoint" in the ledger). */
     private final String localEndpoint;
 
@@ -47,10 +54,19 @@ public class DurableA2AAgentAdapter implements A2AServer {
                                    AgentDefinition agentDefinition,
                                    DurableA2ATaskLedger ledger,
                                    String localEndpoint) {
-        this.runtime         = runtime;
-        this.agentDefinition = agentDefinition;
-        this.ledger          = ledger;
-        this.localEndpoint   = localEndpoint;
+        this(runtime, agentDefinition, ledger, localEndpoint, null);
+    }
+
+    public DurableA2AAgentAdapter(AndalusRuntime runtime,
+                                   AgentDefinition agentDefinition,
+                                   DurableA2ATaskLedger ledger,
+                                   String localEndpoint,
+                                   A2ACompletionBridge completionBridge) {
+        this.runtime          = runtime;
+        this.agentDefinition  = agentDefinition;
+        this.ledger           = ledger;
+        this.localEndpoint    = localEndpoint;
+        this.completionBridge = completionBridge;
     }
 
     // ── A2AServer ─────────────────────────────────────────────────────────────
@@ -94,10 +110,19 @@ public class DurableA2AAgentAdapter implements A2AServer {
         execution.whenComplete((response, error) -> {
             if (error != null) {
                 LOG.log(Level.WARNING, "Durable A2A task " + taskId + " failed", error);
-                ledger.fail(taskId, error.getMessage());
+                if (completionBridge != null) {
+                    // persist terminal state, then wake the parked caller (6.16.5.12)
+                    completionBridge.failed(taskId, error.getMessage());
+                } else {
+                    ledger.fail(taskId, error.getMessage());
+                }
             } else {
                 LOG.fine(() -> "Durable A2A task " + taskId + " completed");
-                ledger.complete(taskId);
+                if (completionBridge != null) {
+                    completionBridge.completed(taskId);
+                } else {
+                    ledger.complete(taskId);
+                }
             }
         });
 
@@ -118,9 +143,18 @@ public class DurableA2AAgentAdapter implements A2AServer {
     /**
      * Cancels a task — stops the wait state and transitions status to CANCELLED.
      */
+    /**
+     * Cancels a task — stops the wait state and transitions status to CANCELLED.
+     * When a completion bridge is present the cancellation also wakes the caller,
+     * which validates the cancellation against durable execution state (6.16.7.10).
+     */
     @Override
     public CompletionStage<Void> cancelTask(String taskId) {
-        ledger.cancel(taskId);
+        if (completionBridge != null) {
+            completionBridge.cancelled(taskId);
+        } else {
+            ledger.cancel(taskId);
+        }
         return CompletableFuture.completedFuture(null);
     }
 

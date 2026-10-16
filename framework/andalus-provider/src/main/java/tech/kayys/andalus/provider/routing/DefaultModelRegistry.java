@@ -77,7 +77,7 @@ public class DefaultModelRegistry implements ModelRegistry {
         if (lower.startsWith("qwen")) return "openrouter";
         if (lower.startsWith("whisper")) return "groq";
         if (lower.startsWith("tripo")) return "tripo";
-        if (lower.contains("local") || lower.startsWith("gollek") || lower.startsWith("flux") || lower.startsWith("trellis") || lower.startsWith("shap-e")) return "gollek";
+        if (lower.contains("local") || lower.startsWith("aqli") || lower.startsWith("flux") || lower.startsWith("trellis") || lower.startsWith("shap-e")) return "aqli";
         return "default";
     }
 }

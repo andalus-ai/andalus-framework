@@ -242,7 +242,7 @@ public class ProjectStore {
     }
 
     /**
-     * Normalize legacy gollek.spi.Message-like objects into a generic Map shape:
+     * Normalize legacy aqli.spi.Message-like objects into a generic Map shape:
      * { "role": "user|assistant|system", "text": "...", "meta": { ...original... } }
      * If the incoming object is a primitive or already a simple Map with 'role'/'text', return as-is.
      */

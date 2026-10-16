@@ -37,34 +37,34 @@ jobs:
           server-username: GITHUB_ACTOR
           server-password: GITHUB_TOKEN
 
-      # ── Alkhawarizm & Gollek SPI/SDK Bootstrap ──────────────────────────────
-      # gollek depends on alkhawarizm for low-level tensor & error-code modules.
-      - name: Checkout alkhawarizm (gollek dependency)
+      # ── Alkhawarizm & Aqli SPI/SDK Bootstrap ──────────────────────────────
+      # aqli depends on alkhawarizm for low-level tensor & error-code modules.
+      - name: Checkout alkhawarizm (aqli dependency)
         uses: actions/checkout@v4
         with:
           repository: bhangun/alkhawarizm
           path: alkhawarizm
           ref: main
 
-      - name: Checkout gollek (SPI/SDK bootstrap)
+      - name: Checkout aqli (SPI/SDK bootstrap)
         uses: actions/checkout@v4
         with:
-          repository: bhangun/gollek
-          path: _gollek
+          repository: bhangun/aqli
+          path: _aqli
           ref: main
 
-      - name: Cache Gradle packages (gollek)
+      - name: Cache Gradle packages (aqli)
         uses: actions/cache@v4
         with:
           path: |
             ~/.gradle/caches
             ~/.gradle/wrapper
-          key: gollek-gradle-${{ hashFiles('_gollek/gradle/wrapper/gradle-wrapper.properties', '_gollek/build.gradle.kts') }}
+          key: aqli-gradle-${{ hashFiles('_aqli/gradle/wrapper/gradle-wrapper.properties', '_aqli/build.gradle.kts') }}
           restore-keys: |
-            gollek-gradle-
+            aqli-gradle-
 
-      - name: Publish gollek SPI & SDK to Maven Local
-        working-directory: _gollek
+      - name: Publish aqli SPI & SDK to Maven Local
+        working-directory: _aqli
         env:
           GRADLE_OPTS: "-Xmx2G -Dorg.gradle.daemon=false"
         run: |
@@ -73,16 +73,16 @@ jobs:
             sed -i '/includeBuild("\.\.\/alkhawarizm")/d' settings.gradle.kts || true
           fi
           TASKS=(
-            :spi:gollek-spi:publishToMavenLocal
-            :spi:gollek-spi-audio:publishToMavenLocal
-            :spi:gollek-spi-image:publishToMavenLocal
-            :spi:gollek-spi-inference:publishToMavenLocal
-            :spi:gollek-spi-multimodal:publishToMavenLocal
-            :spi:gollek-spi-plugin:publishToMavenLocal
-            :spi:gollek-spi-runtime:publishToMavenLocal
-            :sdk:gollek-sdk-core:publishToMavenLocal
-            :sdk:gollek-sdk:publishToMavenLocal
-            :sdk:gollek-sdk-local:publishToMavenLocal
+            :spi:aqli-spi:publishToMavenLocal
+            :spi:aqli-spi-audio:publishToMavenLocal
+            :spi:aqli-spi-image:publishToMavenLocal
+            :spi:aqli-spi-inference:publishToMavenLocal
+            :spi:aqli-spi-multimodal:publishToMavenLocal
+            :spi:aqli-spi-plugin:publishToMavenLocal
+            :spi:aqli-spi-runtime:publishToMavenLocal
+            :sdk:aqli-sdk-core:publishToMavenLocal
+            :sdk:aqli-sdk:publishToMavenLocal
+            :sdk:aqli-sdk-local:publishToMavenLocal
           )
           ./gradlew "${TASKS[@]}" --no-daemon -x test --parallel
       # ────────────────────────────────────────────────────────────────────────

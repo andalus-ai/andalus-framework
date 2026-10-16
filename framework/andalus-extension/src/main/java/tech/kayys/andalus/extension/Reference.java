@@ -1,15 +1,4 @@
 package tech.kayys.andalus.extension;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.HashMap;
-import java.util.ArrayList;
-import java.util.concurrent.CompletableFuture;
-import tech.kayys.andalus.extension.Extension;
-import tech.kayys.andalus.resource.Resource;
-import tech.kayys.andalus.resource.BaseResource;
-
-
 
 import java.time.Instant;
 import java.util.Objects;
@@ -26,6 +15,9 @@ public record Reference(
     Version version,
     Instant timestamp
 ) {
+    public Reference(String name) {
+        this(Id.random(), new ResourceType.Extension(), name, null, null);
+    }
     
     public static Reference of(Id id, ResourceType type) {
         return new Reference(id, type, null, null, null);
@@ -48,7 +40,7 @@ public record Reference(
     }
     
     public boolean matches(ResourceType type) {
-        return this.type == type;
+        return this.type != null && this.type.equals(type);
     }
     
     public boolean matches(String name) {

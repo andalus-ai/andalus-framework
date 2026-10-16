@@ -72,4 +72,50 @@ public class DefaultScheduler implements Scheduler {
                 .map(s -> new ScheduleHandle(s.id(), s.request().executionId(), s.state(), s.triggerTime()))
                 .toList();
     }
+
+    /**
+     * Atomically claims schedules that are due by transitioning them from SCHEDULED to FIRED (6.15.4.4).
+     * Prevents duplicate polling from delivering the same schedule multiple times.
+     */
+    public Collection<ScheduleHandle> claimDue() {
+        Instant now = clock.now();
+        return schedules.values().stream()
+                .filter(schedule ->
+                        schedule.state() == ScheduleState.SCHEDULED
+                                && !schedule.triggerTime().isAfter(now))
+                .map(this::claim)
+                .filter(Objects::nonNull)
+                .toList();
+    }
+
+    private ScheduleHandle claim(ScheduleRecord candidate) {
+        ScheduleRecord claimed = schedules.compute(
+                candidate.id(),
+                (id, current) -> {
+                    if (current == null) {
+                        return null;
+                    }
+                    if (current.state() != ScheduleState.SCHEDULED) {
+                        return current;
+                    }
+                    return new ScheduleRecord(
+                            current.id(),
+                            current.request(),
+                            ScheduleState.FIRED,
+                            current.triggerTime()
+                    );
+                }
+        );
+
+        if (claimed == null || claimed.state() != ScheduleState.FIRED) {
+            return null;
+        }
+
+        return new ScheduleHandle(
+                claimed.id(),
+                claimed.request().executionId(),
+                claimed.state(),
+                claimed.triggerTime()
+        );
+    }
 }

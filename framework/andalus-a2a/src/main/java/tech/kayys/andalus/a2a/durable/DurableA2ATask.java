@@ -83,6 +83,28 @@ public record DurableA2ATask(
             createdAt, completedAt, retryCount);
     }
 
+    public DurableA2ATask withMetadata(Map<String, Object> newMetadata) {
+        return new DurableA2ATask(taskId, executionId, status, artifacts, newMetadata,
+            callerExecutionId, checkpointId, lastEventSeq, remoteEndpoint,
+            createdAt, completedAt, retryCount);
+    }
+
+    /**
+     * Binds the remote execution identity discovered after submission (6.16.3).
+     *
+     * <p>{@link #executionId()} is the <em>remote</em> execution identity — it is never
+     * the local caller execution and it is never the A2A task id.</p>
+     */
+    public DurableA2ATask withRemoteExecutionId(String remoteExecutionId) {
+        java.util.Objects.requireNonNull(remoteExecutionId, "remoteExecutionId");
+        if (remoteExecutionId.isBlank()) {
+            throw new IllegalArgumentException("remoteExecutionId must not be blank");
+        }
+        return new DurableA2ATask(taskId, remoteExecutionId, status, artifacts, metadata,
+            callerExecutionId, checkpointId, lastEventSeq, remoteEndpoint,
+            createdAt, completedAt, retryCount);
+    }
+
     public DurableA2ATask incrementRetry() {
         return new DurableA2ATask(taskId, executionId, status, artifacts, metadata,
             callerExecutionId, checkpointId, lastEventSeq, remoteEndpoint,
@@ -105,10 +127,49 @@ public record DurableA2ATask(
 
     // ── Factory ───────────────────────────────────────────────────────────────
 
+    /**
+     * Legacy factory using the old semantic model where {@code executionId} was
+     * initialized to the caller execution id.
+     *
+     * @deprecated use {@link #createForCaller(String, String, String, String)} which
+     *             keeps the remote execution identity empty until it is bound via
+     *             {@link #withRemoteExecutionId(String)} (6.16.1.6).
+     */
+    @Deprecated
     public static DurableA2ATask create(String taskId, String callerExecutionId,
                                         String remoteEndpoint, String checkpointId) {
         return new DurableA2ATask(
             taskId, callerExecutionId, A2ATaskStatus.PENDING, List.of(), Map.of(),
+            callerExecutionId, checkpointId, 0L, remoteEndpoint,
+            Instant.now(), null, 0
+        );
+    }
+
+    /**
+     * Creates a task using the canonical Claw identity model (6.16.3):
+     *
+     * <ul>
+     *   <li>{@code taskId}            — stable A2A protocol correlation identity</li>
+     *   <li>{@code callerExecutionId} — the local Claw execution that initiated the call</li>
+     *   <li>{@code executionId}       — {@code null} until the remote execution id is discovered</li>
+     * </ul>
+     */
+    public static DurableA2ATask createForCaller(String taskId, String callerExecutionId,
+                                                 String remoteEndpoint, String checkpointId) {
+        java.util.Objects.requireNonNull(taskId, "taskId");
+        java.util.Objects.requireNonNull(callerExecutionId, "callerExecutionId");
+        java.util.Objects.requireNonNull(remoteEndpoint, "remoteEndpoint");
+        if (taskId.isBlank()) {
+            throw new IllegalArgumentException("taskId must not be blank");
+        }
+        if (callerExecutionId.isBlank()) {
+            throw new IllegalArgumentException("callerExecutionId must not be blank");
+        }
+        if (remoteEndpoint.isBlank()) {
+            throw new IllegalArgumentException("remoteEndpoint must not be blank");
+        }
+        return new DurableA2ATask(
+            taskId, null, A2ATaskStatus.PENDING, List.of(), Map.of(),
             callerExecutionId, checkpointId, 0L, remoteEndpoint,
             Instant.now(), null, 0
         );

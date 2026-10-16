@@ -27,4 +27,8 @@ public record MemoryId(String value) {
     public static MemoryId generate() {
         return new MemoryId("mem-" + UUID.randomUUID());
     }
+
+    public String asString() {
+        return value();
+    }
 }

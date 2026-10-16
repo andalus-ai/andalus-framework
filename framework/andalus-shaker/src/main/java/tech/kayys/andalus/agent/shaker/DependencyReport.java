@@ -10,7 +10,7 @@ import java.util.*;
  * @param requiredTools Tool implementations needed
  * @param requiredSkills Skill implementations needed
  * @param requiredMemoryTiers Memory tiers needed (short, long, episodic, etc.)
- * @param requiredBackends Backend adapters needed (gollek, gamelan, etc.)
+ * @param requiredBackends Backend adapters needed (aqli, gamelan, etc.)
  * @param requiredGuardrails Guardrail policies needed
  * @param requiredVectorStores Vector store implementations needed
  */
