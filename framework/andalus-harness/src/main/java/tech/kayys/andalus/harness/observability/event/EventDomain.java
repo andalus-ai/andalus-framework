@@ -14,5 +14,6 @@ public enum EventDomain {
     ARTIFACT,
     HUMAN,
     SECURITY,
-    SYSTEM
+    SYSTEM,
+    DECISION
 }

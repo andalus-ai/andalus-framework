@@ -1,7 +1,7 @@
 package tech.kayys.andalus.embedding.provider;
 
-import tech.kayys.gollek.sdk.core.GollekSdk;
-import tech.kayys.gollek.spi.embedding.EmbeddingRequest;
+import tech.kayys.aqli.sdk.core.AqliSdk;
+import tech.kayys.aqli.spi.embedding.EmbeddingRequest;
 import tech.kayys.andalus.embedding.EmbeddingProvider;
 
 import jakarta.enterprise.context.ApplicationScoped;
@@ -14,26 +14,26 @@ import java.util.UUID;
 import jakarta.enterprise.inject.Instance;
 
 /**
- * High-performance embedding provider using local Gollek (Llama.cpp/GGUF).
+ * High-performance embedding provider using local Aqli (Llama.cpp/GGUF).
  */
 @ApplicationScoped
-public class GollekEmbeddingProvider implements EmbeddingProvider {
+public class AqliEmbeddingProvider implements EmbeddingProvider {
 
-    private final Instance<GollekSdk> sdkInstance;
+    private final Instance<AqliSdk> sdkInstance;
 
     @Inject
-    public GollekEmbeddingProvider(Instance<GollekSdk> sdkInstance) {
+    public AqliEmbeddingProvider(Instance<AqliSdk> sdkInstance) {
         this.sdkInstance = sdkInstance;
     }
 
     @Override
     public String name() {
-        return "gollek";
+        return "aqli";
     }
 
     @Override
     public boolean supports(String model) {
-        // Broadly support local GGUF models via Gollek
+        // Broadly support local GGUF models via Aqli
         return model != null && !model.isBlank();
     }
 
@@ -50,14 +50,14 @@ public class GollekEmbeddingProvider implements EmbeddingProvider {
                 Collections.emptyMap());
 
         if (!sdkInstance.isResolvable()) {
-            throw new tech.kayys.andalus.embedding.EmbeddingException("GollekSdk is not available in the current environment.");
+            throw new tech.kayys.andalus.embedding.EmbeddingException("AqliSdk is not available in the current environment.");
         }
 
         try {
-            tech.kayys.gollek.spi.embedding.EmbeddingResponse response = sdkInstance.get().createEmbedding(request);
+            tech.kayys.aqli.spi.embedding.EmbeddingResponse response = sdkInstance.get().createEmbedding(request);
             return response.embeddings();
-        } catch (tech.kayys.gollek.sdk.exception.SdkException e) {
-            throw new tech.kayys.andalus.embedding.EmbeddingException("Gollek embedding failed: " + e.getMessage());
+        } catch (tech.kayys.aqli.sdk.exception.SdkException e) {
+            throw new tech.kayys.andalus.embedding.EmbeddingException("Aqli embedding failed: " + e.getMessage());
         }
     }
 }

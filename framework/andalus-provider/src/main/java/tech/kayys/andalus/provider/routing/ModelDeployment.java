@@ -26,7 +26,7 @@ public record ModelDeployment(
     }
 
     public static ModelDeployment local(String modelId, Provider provider) {
-        return new ModelDeployment("local-" + modelId, modelId, "gollek", provider, DeploymentType.LOCAL, "embedded://gollek", ModelStatus.AVAILABLE, Map.of(), Instant.now());
+        return new ModelDeployment("local-" + modelId, modelId, "aqli", provider, DeploymentType.LOCAL, "embedded://aqli", ModelStatus.AVAILABLE, Map.of(), Instant.now());
     }
 
     public static ModelDeployment cloud(String modelId, String providerId, Provider provider) {

@@ -4,7 +4,7 @@ import java.util.List;
 import java.util.Map;
 
 import tech.kayys.andalus.client.Andalus;
-import tech.kayys.andalus.client.AndalusGollekSdk;
+import tech.kayys.andalus.client.AndalusAqliSdk;
 import tech.kayys.andalus.client.AndalusWireApi;
 import tech.kayys.andalus.client.AndalusWorkbenchModel;
 import tech.kayys.andalus.workbench.WorkbenchCommand;
@@ -20,10 +20,10 @@ import tech.kayys.andalus.workbench.WorkbenchCommandQuery;
  */
 public final class AndalusCommandApi {
 
-    private final AndalusGollekSdk sdk;
+    private final AndalusAqliSdk sdk;
     private final AndalusWireApi wire;
 
-    public AndalusCommandApi(AndalusGollekSdk sdk, AndalusWireApi wire) {
+    public AndalusCommandApi(AndalusAqliSdk sdk, AndalusWireApi wire) {
         this.sdk = sdk == null ? Andalus.local() : sdk;
         this.wire = wire == null ? new AndalusWireApi() : wire;
     }

@@ -41,7 +41,7 @@ class AdaptiveModelRouterTest {
     private Provider openaiProvider;
     private Provider anthropicProvider;
     private Provider googleProvider;
-    private Provider gollekProvider;
+    private Provider aqliProvider;
     private List<Provider> availableProviders;
 
     @BeforeEach
@@ -54,9 +54,9 @@ class AdaptiveModelRouterTest {
         openaiProvider = new MockProvider("openai", Set.of(Modality.TEXT, Modality.IMAGE));
         anthropicProvider = new MockProvider("anthropic", Set.of(Modality.TEXT, Modality.IMAGE));
         googleProvider = new MockProvider("google", Set.of(Modality.TEXT, Modality.IMAGE, Modality.AUDIO));
-        gollekProvider = new MockProvider("gollek", Set.of(Modality.TEXT));
+        aqliProvider = new MockProvider("aqli", Set.of(Modality.TEXT));
 
-        availableProviders = List.of(openaiProvider, anthropicProvider, googleProvider, gollekProvider);
+        availableProviders = List.of(openaiProvider, anthropicProvider, googleProvider, aqliProvider);
     }
 
     @Test
@@ -87,21 +87,21 @@ class AdaptiveModelRouterTest {
         InferencePlan plan = router.plan(null, null, reqs, policy, availableProviders);
 
         assertNotNull(plan);
-        // Under cost minimizing, should pick cheap model like gemini-1.5-flash or gpt-4o-mini or local gollek
+        // Under cost minimizing, should pick cheap model like gemini-1.5-flash or gpt-4o-mini or local aqli
         assertTrue(plan.selectedModel().contains("flash") || plan.selectedModel().contains("mini") || plan.selectedModel().contains("local"));
         assertTrue(plan.estimatedCost() <= 0.05);
     }
 
     @Test
-    void testLocalFirstObjectivePrefersLocalGollekModel() {
+    void testLocalFirstObjectivePrefersLocalAqliModel() {
         InferenceRequirements reqs = InferenceRequirements.defaults();
         InferencePolicy policy = InferencePolicy.debug(); // LOCAL_FIRST
 
         InferencePlan plan = router.plan(null, null, reqs, policy, availableProviders);
 
         assertNotNull(plan);
-        assertTrue(plan.selectedModel().contains("local") || plan.selectedModel().contains("gollek"));
-        assertEquals("gollek", plan.selectedProvider().id());
+        assertTrue(plan.selectedModel().contains("local") || plan.selectedModel().contains("aqli"));
+        assertEquals("aqli", plan.selectedProvider().id());
         assertEquals(0.0, plan.estimatedCost());
     }
 

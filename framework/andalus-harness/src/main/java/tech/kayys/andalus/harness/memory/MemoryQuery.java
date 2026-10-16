@@ -23,7 +23,7 @@ public record MemoryQuery(
 ) {
     public MemoryQuery {
         query = query == null ? "" : query;
-        scope = scope == null ? MemoryScope.AGENT : scope;
+        scope = scope == null ? MemoryScope.GLOBAL : scope;
         limit = limit <= 0 ? 10 : limit;
         filters = filters == null ? Map.of() : Map.copyOf(filters);
     }

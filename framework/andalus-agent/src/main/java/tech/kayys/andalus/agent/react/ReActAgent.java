@@ -159,14 +159,17 @@ public class ReActAgent extends BaseReActAgent {
         if (toolExecutor != null) {
             return toolExecutor.executeViaPolicy(invocation, () -> {
                 try {
-                    return tool.execute(invocation, null).get();
+                    return tool.execute(
+                            invocation,
+                            toolContext
+                    ).get();
                 } catch (Exception e) {
                     throw new RuntimeException(e);
                 }
             });
         }
         // Fallback: direct execution (no policy, no retry, no CB).
-        return tool.execute(invocation, null).get();
+        return tool.execute(invocation, toolContext).get();
     }
 
     // -------------------------------------------------------------------------

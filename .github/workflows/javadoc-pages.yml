@@ -33,29 +33,29 @@ jobs:
           cache: maven
 
 
-      - name: Check out Gollek snapshot dependencies
+      - name: Check out Aqli snapshot dependencies
         uses: actions/checkout@v4
         with:
-          repository: bhangun/gollek
-          path: _gollek
+          repository: bhangun/aqli
+          path: _aqli
           ref: main
 
-      - name: Check out Alkhawarizm (Gollek dependency)
+      - name: Check out Alkhawarizm (Aqli dependency)
         uses: actions/checkout@v4
         with:
           repository: bhangun/alkhawarizm
           path: alkhawarizm
           ref: main
 
-      - name: Install Gollek snapshot dependencies
-        working-directory: _gollek
+      - name: Install Aqli snapshot dependencies
+        working-directory: _aqli
         env:
           GRADLE_OPTS: "-Xmx2G -Dorg.gradle.daemon=false"
         run: |
           ./gradlew --no-daemon --parallel -x test \
-            :spi:gollek-spi-inference:publishToMavenLocal \
-            :sdk:gollek-sdk-core:publishToMavenLocal \
-            :sdk:gollek-sdk:publishToMavenLocal
+            :spi:aqli-spi-inference:publishToMavenLocal \
+            :sdk:aqli-sdk-core:publishToMavenLocal \
+            :sdk:aqli-sdk:publishToMavenLocal
 
       - name: Generate aggregate Javadoc
         run: |

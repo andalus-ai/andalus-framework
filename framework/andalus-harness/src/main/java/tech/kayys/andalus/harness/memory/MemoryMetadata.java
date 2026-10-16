@@ -33,4 +33,12 @@ public record MemoryMetadata(
     public static MemoryMetadata observed(String agentId, String executionId, double confidence) {
         return new MemoryMetadata(Instant.now(), Instant.now(), MemorySource.of(agentId, executionId), confidence, Map.of());
     }
+
+    public MemoryMetadata withAttributes(Map<String, Object> newAttributes) {
+        var copy = new java.util.HashMap<>(attributes);
+        if (newAttributes != null) {
+            copy.putAll(newAttributes);
+        }
+        return new MemoryMetadata(createdAt, Instant.now(), source, confidence, Map.copyOf(copy));
+    }
 }

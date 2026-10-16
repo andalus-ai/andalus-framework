@@ -2,7 +2,7 @@
 metadata:
   name: order-status-query
   description: Query order status from database
-  backend: gollek
+  backend: aqli
   orchestrator: react
   version: "1.0.0"
 

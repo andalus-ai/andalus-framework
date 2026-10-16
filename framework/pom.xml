@@ -79,6 +79,7 @@
         <module>andalus-resilience</module>
         <module>andalus-runtime-spi</module>
         <module>andalus-schemas</module>
+        <module>andalus-schema-core</module>
         <module>andalus-security-api</module>
         <module>andalus-security-core</module>
         <module>andalus-execution-api</module>

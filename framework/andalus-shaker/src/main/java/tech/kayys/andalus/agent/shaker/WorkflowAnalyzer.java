@@ -18,7 +18,7 @@ import java.util.stream.Collectors;
  *   <li>Which orchestrators are needed (ReAct, Plan/Execute, Reflexion, etc.)</li>
  *   <li>Which tools/skills are referenced</li>
  *   <li>Which memory tiers are required</li>
- *   <li>Which backends are configured (gollek, gamelan, etc.)</li>
+ *   <li>Which backends are configured (aqli, gamelan, etc.)</li>
  * </ul>
  *
  * <p>
@@ -138,7 +138,7 @@ public class WorkflowAnalyzer {
 
         // Default backend if not specified
         if (requiredBackends.isEmpty()) {
-            requiredBackends.add("gollek");
+            requiredBackends.add("aqli");
             requiredBackends.add("gamelan");
         }
 

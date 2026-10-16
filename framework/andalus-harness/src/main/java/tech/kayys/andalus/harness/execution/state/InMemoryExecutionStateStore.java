@@ -1,5 +1,6 @@
 package tech.kayys.andalus.harness.execution.state;
 
+import java.util.Collection;
 import java.util.ConcurrentModificationException;
 import java.util.Map;
 import java.util.Objects;
@@ -9,7 +10,7 @@ import java.util.concurrent.ConcurrentHashMap;
 /**
  * In-memory implementation of {@link ExecutionStateStore} with optimistic concurrency control.
  */
-public class InMemoryExecutionStateStore implements ExecutionStateStore {
+public class InMemoryExecutionStateStore implements ExecutionStateStore, ExecutionStateDiscovery {
 
     private final Map<ExecutionId, ExecutionState> store = new ConcurrentHashMap<>();
 
@@ -35,5 +36,13 @@ public class InMemoryExecutionStateStore implements ExecutionStateStore {
             }
             return state;
         });
+    }
+
+    @Override
+    public Collection<ExecutionId> findWaitingExecutions() {
+        return store.values().stream()
+                .filter(s -> s.status() == ExecutionStatus.WAITING)
+                .map(ExecutionState::executionId)
+                .toList();
     }
 }

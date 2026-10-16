@@ -5,7 +5,7 @@ import java.util.Map;
 
 /**
  * Audit payload for provenance tracking.
- * Replaces the removed tech.kayys.gollek.spi.observability.AuditPayload dependency.
+ * Replaces the removed tech.kayys.aqli.spi.observability.AuditPayload dependency.
  */
 public record AuditPayload(
         String eventType,

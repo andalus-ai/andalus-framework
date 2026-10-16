@@ -2,7 +2,7 @@ package tech.kayys.andalus.provider;
 
 /**
  * Defines the invocation strategy for a {@link Provider}.
- * This is particularly useful for providers (like Gollek) that support
+ * This is particularly useful for providers (like Aqli) that support
  * multiple integration models such as running embedded locally or
  * connecting to a remote cluster via HTTP/gRPC.
  */

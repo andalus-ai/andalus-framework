@@ -34,7 +34,7 @@ public class EmbeddingConfigRuntime {
 
     private synchronized void refreshIfChanged() {
         Config config = ConfigProvider.getConfig();
-        String defaultProvider = read(config, "andalus.embedding.default-provider", "gollek");
+        String defaultProvider = read(config, "andalus.embedding.default-provider", "aqli");
         String defaultModel = read(config, "andalus.embedding.default-model", "Qwen/Qwen2.5-0.5B-Instruct");
         String version = read(config, "andalus.embedding.version", "v1");
         String normalize = read(config, "andalus.embedding.normalize", "true");

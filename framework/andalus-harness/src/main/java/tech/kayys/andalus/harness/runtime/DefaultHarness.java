@@ -32,24 +32,39 @@ public class DefaultHarness implements Harness {
     private final HarnessResources resources;
     private final ResourceScope resourceScope;
     private final Executor executor;
+    private final tech.kayys.andalus.harness.context.ContextAssembler contextAssembler;
 
     public DefaultHarness(HarnessCapabilities capabilities) {
-        this(capabilities, new DefaultHarnessResources(), DefaultResourceScope.allowAll(), ForkJoinPool.commonPool());
+        this(capabilities, new DefaultHarnessResources(), DefaultResourceScope.allowAll(), ForkJoinPool.commonPool(), null);
     }
 
     public DefaultHarness(HarnessCapabilities capabilities, HarnessResources resources) {
-        this(capabilities, resources, DefaultResourceScope.allowAll(), ForkJoinPool.commonPool());
+        this(capabilities, resources, DefaultResourceScope.allowAll(), ForkJoinPool.commonPool(), null);
     }
 
     public DefaultHarness(HarnessCapabilities capabilities, HarnessResources resources, Executor executor) {
-        this(capabilities, resources, DefaultResourceScope.allowAll(), executor);
+        this(capabilities, resources, DefaultResourceScope.allowAll(), executor, null);
     }
 
     public DefaultHarness(HarnessCapabilities capabilities, HarnessResources resources, ResourceScope resourceScope, Executor executor) {
+        this(capabilities, resources, resourceScope, executor, null);
+    }
+
+    public DefaultHarness(
+            HarnessCapabilities capabilities,
+            HarnessResources resources,
+            ResourceScope resourceScope,
+            Executor executor,
+            tech.kayys.andalus.harness.context.ContextAssembler contextAssembler) {
         this.capabilities = Objects.requireNonNull(capabilities, "capabilities");
         this.resources = Objects.requireNonNull(resources, "resources");
         this.resourceScope = Objects.requireNonNull(resourceScope, "resourceScope");
         this.executor = Objects.requireNonNull(executor, "executor");
+        this.contextAssembler = contextAssembler;
+    }
+
+    public tech.kayys.andalus.harness.context.ContextAssembler contextAssembler() {
+        return contextAssembler;
     }
 
     @Override
@@ -107,8 +122,22 @@ public class DefaultHarness implements Harness {
                 }
                 lifecycle.transitionTo(HarnessExecutionStatus.RUNNING);
 
-                // Default execution output echoing prompt with execution metadata
-                String output = String.format("Agent [%s] executed prompt: %s", request.targetAgentId(), request.prompt());
+                // Context assembly if assembler is provided
+                tech.kayys.andalus.harness.context.AssembledContext assembledContext = null;
+                if (contextAssembler != null) {
+                    tech.kayys.andalus.harness.context.ContextRequest ctxReq =
+                            tech.kayys.andalus.harness.context.ContextRequest.of(request.prompt(), 8192);
+                    assembledContext = contextAssembler.assemble(ctxReq);
+                }
+
+                // Execution output echoing prompt with execution metadata and context diagnostics if assembled
+                String output;
+                if (assembledContext != null) {
+                    output = String.format("Agent [%s] executed prompt: %s [contextItems=%d, estimatedTokens=%d]",
+                            request.targetAgentId(), request.prompt(), assembledContext.items().size(), assembledContext.estimatedTokens());
+                } else {
+                    output = String.format("Agent [%s] executed prompt: %s", request.targetAgentId(), request.prompt());
+                }
                 execution.completeSuccess(output);
             } catch (Throwable t) {
                 execution.completeFailure(t.getMessage() != null ? t.getMessage() : t.getClass().getSimpleName());

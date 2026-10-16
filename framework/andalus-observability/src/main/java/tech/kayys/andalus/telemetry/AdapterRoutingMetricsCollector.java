@@ -19,7 +19,7 @@ public class AdapterRoutingMetricsCollector {
     @Inject
     public AdapterRoutingMetricsCollector(
             MeterRegistry meterRegistry,
-            @ConfigProperty(name = "gollek.distribution.mode", defaultValue = "standalone") String distributionMode) {
+            @ConfigProperty(name = "aqli.distribution.mode", defaultValue = "standalone") String distributionMode) {
         this.meterRegistry = meterRegistry;
         this.distributionMode = distributionMode;
     }

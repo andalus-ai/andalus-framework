@@ -45,6 +45,12 @@
             <version>${project.version}</version>
         </dependency>
 
+        <dependency>
+            <groupId>tech.kayys.andalus</groupId>
+            <artifactId>andalus-embedding</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+
         <!-- andalus-engine: ExecutionContext -->
         <dependency>
             <groupId>tech.kayys.andalus</groupId>

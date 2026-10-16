@@ -1,0 +1,42 @@
+{
+  "surfaceKinds": [
+    "andalus.run.status",
+    "andalus.run.inspection",
+    "andalus.run.events",
+    "andalus.run.history",
+    "andalus.action.result"
+  ],
+  "descriptorCount": 6,
+  "descriptors": [
+    {
+      "kind": "andalus.run.status",
+      "modelType": "tech.kayys.andalus.aqli.sdk.AgentRunStatus",
+      "modelSimpleName": "AgentRunStatus"
+    },
+    {
+      "kind": "andalus.run.inspection",
+      "modelType": "tech.kayys.andalus.aqli.sdk.AgentRunInspection",
+      "modelSimpleName": "AgentRunInspection"
+    },
+    {
+      "kind": "andalus.run.events",
+      "modelType": "tech.kayys.andalus.aqli.sdk.AgentRunEvents",
+      "modelSimpleName": "AgentRunEvents"
+    },
+    {
+      "kind": "andalus.run.history",
+      "modelType": "tech.kayys.andalus.aqli.sdk.AgentRunHistory",
+      "modelSimpleName": "AgentRunHistory"
+    },
+    {
+      "kind": "andalus.action.result",
+      "modelType": "tech.kayys.andalus.a2ui.andalus.WayangA2uiActionFeedback",
+      "modelSimpleName": "WayangA2uiActionFeedback"
+    },
+    {
+      "kind": "andalus.action.result",
+      "modelType": "tech.kayys.andalus.a2ui.andalus.WayangA2uiActionResult",
+      "modelSimpleName": "WayangA2uiActionResult"
+    }
+  ]
+}

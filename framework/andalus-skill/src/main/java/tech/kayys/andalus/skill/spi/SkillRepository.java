@@ -11,7 +11,7 @@ import java.util.Optional;
  *
  * <p>Implementations can use different storage backends:
  * <ul>
- *   <li>File-based storage (~/.gollek/skills/)</li>
+ *   <li>File-based storage (~/.aqli/skills/)</li>
  *   <li>Database storage (PostgreSQL, etc.)</li>
  *   <li>Hybrid approaches</li>
  * </ul>

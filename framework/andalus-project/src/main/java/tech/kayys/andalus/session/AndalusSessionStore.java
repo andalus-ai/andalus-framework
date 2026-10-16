@@ -1,4 +1,4 @@
-package tech.kayys.andalus.gollek.client.session;
+package tech.kayys.andalus.aqli.client.session;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.DeserializationFeature;

@@ -17,4 +17,12 @@ public interface AgentDecision {
     Optional<String> reason();
 
     Optional<Map<String, Object>> metadata();
+
+    static AgentDecision fail(String reason) {
+        return DefaultAgentDecision.fail(reason);
+    }
+
+    static AgentDecision complete(String summary, Object result) {
+        return DefaultAgentDecision.complete(summary, result);
+    }
 }
