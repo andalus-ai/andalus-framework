@@ -40,11 +40,11 @@ jobs:
           path: _aqli
           ref: main
 
-      - name: Check out Alkhawarizm (Aqli dependency)
+      - name: Check out Aljabr (Aqli dependency)
         uses: actions/checkout@v4
         with:
-          repository: bhangun/alkhawarizm
-          path: alkhawarizm
+          repository: bhangun/aljabr
+          path: aljabr
           ref: main
 
       - name: Install Aqli snapshot dependencies
