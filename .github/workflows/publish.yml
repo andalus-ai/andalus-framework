@@ -37,13 +37,13 @@ jobs:
           server-username: GITHUB_ACTOR
           server-password: GITHUB_TOKEN
 
-      # ── Alkhawarizm & Aqli SPI/SDK Bootstrap ──────────────────────────────
-      # aqli depends on alkhawarizm for low-level tensor & error-code modules.
-      - name: Checkout alkhawarizm (aqli dependency)
+      # ── Aljabr & Aqli SPI/SDK Bootstrap ──────────────────────────────
+      # aqli depends on aljabr for low-level tensor & error-code modules.
+      - name: Checkout aljabr (aqli dependency)
         uses: actions/checkout@v4
         with:
-          repository: bhangun/alkhawarizm
-          path: alkhawarizm
+          repository: bhangun/aljabr
+          path: aljabr
           ref: main
 
       - name: Checkout aqli (SPI/SDK bootstrap)
@@ -69,8 +69,8 @@ jobs:
           GRADLE_OPTS: "-Xmx2G -Dorg.gradle.daemon=false"
         run: |
           sed -i '/includeBuild("\.\.\/tafkir")/d' settings.gradle.kts || true
-          if [ ! -d "../alkhawarizm" ]; then
-            sed -i '/includeBuild("\.\.\/alkhawarizm")/d' settings.gradle.kts || true
+          if [ ! -d "../aljabr" ]; then
+            sed -i '/includeBuild("\.\.\/aljabr")/d' settings.gradle.kts || true
           fi
           TASKS=(
             :spi:aqli-spi:publishToMavenLocal

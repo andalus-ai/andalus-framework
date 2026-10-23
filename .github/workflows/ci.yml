@@ -25,21 +25,21 @@ jobs:
           java-version: "25"
           cache: maven
 
-      # ── Alkhawarizm, Tafkir & Aqli SPI/SDK Bootstrap ───────────────────
-      # aqli depends on alkhawarizm for low-level tensor & error-code modules.
-      # alkhawarizm-safetensor-quantization depends on tech.kayys.tafkir:* SNAPSHOTs.
-      # When tafkir is checked out as a sibling of alkhawarizm (../tafkir relative
-      # to alkhawarizm), settings.gradle.kts uses it as a composite build and
+      # ── Aljabr, Tafkir & Aqli SPI/SDK Bootstrap ───────────────────
+      # aqli depends on aljabr for low-level tensor & error-code modules.
+      # aljabr-safetensor-quantization depends on tech.kayys.tafkir:* SNAPSHOTs.
+      # When tafkir is checked out as a sibling of aljabr (../tafkir relative
+      # to aljabr), settings.gradle.kts uses it as a composite build and
       # Gradle substitutes Maven coordinates with source projects — no remote
       # SNAPSHOT resolution needed.
-      - name: Checkout alkhawarizm (aqli dependency)
+      - name: Checkout aljabr (aqli dependency)
         uses: actions/checkout@v4
         with:
-          repository: bhangun/alkhawarizm
-          path: alkhawarizm
+          repository: bhangun/aljabr
+          path: aljabr
           ref: main
 
-      - name: Checkout tafkir (alkhawarizm composite build)
+      - name: Checkout tafkir (aljabr composite build)
         uses: actions/checkout@v4
         with:
           repository: bhangun/tafkir
@@ -69,8 +69,8 @@ jobs:
           GRADLE_OPTS: "-Xmx2G -Dorg.gradle.daemon=false"
         run: |
           # Publish only the modules that andalus-framework depends on.
-          # tafkir is checked out as a sibling of alkhawarizm so the composite
-          # build in alkhawarizm/settings.gradle.kts finds it automatically.
+          # tafkir is checked out as a sibling of aljabr so the composite
+          # build in aljabr/settings.gradle.kts finds it automatically.
           TASKS=(
             :spi:aqli-spi:publishToMavenLocal
             :spi:aqli-spi-audio:publishToMavenLocal
