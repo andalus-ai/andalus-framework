@@ -163,4 +163,4 @@ class ExecutionPipelineTest {
         invocation.context().transition(ExecutionLifecycle.AUTHORIZING);
         invocation.context().transition(ExecutionLifecycle.AUTHORIZED);
     }
-}\n
+}
