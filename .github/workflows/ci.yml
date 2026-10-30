@@ -55,11 +55,11 @@ jobs:
           settings = Path("settings.gradle.kts")
           content = settings.read_text(encoding="utf-8")
           old = 'if (rootPart in listOf("core", "spi", "sdk", "plugin", "observability", "tokenizer")) {'
-          new = "\\n".join([
-              "if (rootPart == \\"tokenizer\\") {",
+          new = "\n".join([
+              "if (rootPart == \"tokenizer\") {",
               "            // The tokenizer module lives under framework/core.",
-              "            mappedDir = \\"framework/core\\"",
-              "        } else if (rootPart in listOf(\\"core\\", \\"spi\\", \\"sdk\\", \\"plugin\\", \\"observability\\")) {",
+              "            mappedDir = \"framework/core\"",
+              "        } else if (rootPart in listOf(\"core\", \"spi\", \"sdk\", \"plugin\", \"observability\")) {",
           ])
           if content.count(old) != 1:
               raise SystemExit("Unexpected AQLI settings.gradle.kts layout; refusing to patch")
