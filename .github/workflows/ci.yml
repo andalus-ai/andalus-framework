@@ -58,8 +58,8 @@ jobs:
         env:
           GRADLE_OPTS: "-Xmx2G -Dorg.gradle.daemon=false"
         run: |
+          # Publish the exact AQLI coordinates consumed by Andalus modules.
           # Aljabr is included as a composite build from ./aljabr by AQLI settings.
-          # AQLI source and dependencies already use the canonical Aljabr namespace.
           TASKS=(
             :spi:aqli-spi:publishToMavenLocal
             :spi:aqli-spi-audio:publishToMavenLocal
@@ -68,9 +68,13 @@ jobs:
             :spi:aqli-spi-multimodal:publishToMavenLocal
             :spi:aqli-spi-plugin:publishToMavenLocal
             :spi:aqli-spi-runtime:publishToMavenLocal
+            :sdk:aqli-sdk-api:publishToMavenLocal
+            :sdk:aqli-sdk-protobuf:publishToMavenLocal
             :sdk:aqli-sdk-core:publishToMavenLocal
             :sdk:aqli-sdk:publishToMavenLocal
             :sdk:aqli-sdk-local:publishToMavenLocal
+            :core:aqli-core:publishToMavenLocal
+            :plugin:aqli-plugin-kernel-core:publishToMavenLocal
           )
           ./gradlew "${TASKS[@]}" --no-daemon -x test --parallel
       # ─────────────────────────────────────────────────────────────────────
