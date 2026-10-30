@@ -77,12 +77,12 @@ Not yet confirmed:
 
 ## 6. ExecutionContext ownership decision record
 
-A proposed decision record now captures the recommended separation of invocation and graph execution scopes, rejected alternatives, required migration checks and compatibility risks: [ADR-0001 — Separate Invocation and Graph Execution Contexts](ADR-0001-execution-context-ownership.md). The ADR does not authorize a source rename; the repository-wide reference map and compatibility checks remain prerequisites.
+A proposed decision record captures the separation of invocation and graph execution scopes: [ADR-0001 — Separate Invocation and Graph Execution Contexts](ADR-0001-execution-context-ownership.md). A second proposed record defines ownership boundaries for engine snapshots, execution checkpoint envelopes, state checkpoints and runtime AgentContext snapshots: [ADR-0002 — Establish Checkpoint Contract Ownership](ADR-0002-checkpoint-contract-ownership.md). Neither ADR authorizes an immediate source migration; the required reference maps, payload analysis and compatibility checks remain prerequisites.
 
 ## 7. Recommended decisions before source migration
 
 1. Name the graph context distinctly, e.g. `GraphExecutionContext`, and reserve `ExecutionContext` for invocation-level context only if that ownership decision is approved.
-2. Decide the canonical durable execution checkpoint envelope and document the role of state snapshots.
+2. Resolve checkpoint ownership and recovery semantics using ADR-0002; do not conflate engine snapshots, execution checkpoint envelopes, state checkpoints and AgentContext snapshots.
 3. Deprecate old contracts only after adapters and compatibility tests exist.
 4. Enforce lifecycle transitions in `DefaultExecutionContext`.
 5. Make checkpoint sequence writes atomic per execution and define duplicate/idempotency behavior.
