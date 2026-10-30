@@ -59,7 +59,11 @@ Not yet confirmed:
 - All serialization/deserialization paths and persisted checkpoint compatibility.
 - All tests and fixtures using legacy contracts.
 
-## 5. Recommended decisions before source migration
+## 5. ExecutionContext ownership decision record
+
+A proposed decision record now captures the recommended separation of invocation and graph execution scopes, rejected alternatives, required migration checks and compatibility risks: [ADR-0001 — Separate Invocation and Graph Execution Contexts](ADR-0001-execution-context-ownership.md). The ADR does not authorize a source rename; the repository-wide reference map and compatibility checks remain prerequisites.
+
+## 6. Recommended decisions before source migration
 
 1. Name the graph context distinctly, e.g. `GraphExecutionContext`, and reserve `ExecutionContext` for invocation-level context only if that ownership decision is approved.
 2. Decide the canonical durable execution checkpoint envelope and document the role of state snapshots.
