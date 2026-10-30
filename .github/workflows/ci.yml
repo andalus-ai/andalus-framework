@@ -46,6 +46,30 @@ jobs:
           path: tafkir
           ref: main
 
+      # Gradle creates :quantizer as the implicit parent of legacy :quantizer:* aliases.
+      # Its real modules live under inference/quantization, not ./quantizer.
+      - name: Fix Tafkir quantizer Gradle parent directory
+        working-directory: tafkir
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+
+          settings = Path("settings.gradle.kts")
+          content = settings.read_text(encoding="utf-8")
+          marker = '// Compatibility aliases kept for legacy names that still show up in tooling or scripts.'
+          replacement = '''// Gradle creates :quantizer as the implicit parent of the legacy :quantizer:* aliases.
+          // Point that parent at the real quantization module directory.
+          project(":quantizer").projectDir = file("inference/quantization")
+
+          // Compatibility aliases kept for legacy names that still show up in tooling or scripts.'''
+          if content.count(marker) != 1:
+              raise SystemExit("Unexpected Tafkir settings.gradle.kts layout; refusing to patch")
+          if not Path("inference/quantization").is_dir():
+              raise SystemExit("Tafkir inference/quantization directory is missing")
+          settings.write_text(content.replace(marker, replacement), encoding="utf-8")
+          PY
+
       - name: Checkout aqli (SPI/SDK bootstrap)
         uses: actions/checkout@v4
         with:
