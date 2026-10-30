@@ -25,15 +25,15 @@ jobs:
           java-version: "25"
           cache: maven
 
-      # ── Alkhawarizm & AQLI SPI/SDK Bootstrap ───────────────────────
-      # AQLI's settings.gradle.kts includes ../alkhawarizm as a composite
-      # build when present. This supplies its error-code, tensor and SPI model
-      # SNAPSHOT dependencies from source instead of looking for remote SNAPSHOTs.
-      # Tafkir is intentionally absent; it is unrelated to this bootstrap.
-      - name: Checkout alkhawarizm (AQLI source dependency)
+      # ── Aljabr & AQLI SPI/SDK Bootstrap ────────────────────────────
+      # AQLI still uses the former Alkhawarizm sibling directory and Maven
+      # coordinates. Check out the current Aljabr repository at that legacy
+      # path, then align AQLI's external module coordinates with Aljabr.
+      # Aljabr's default settings keep Tafkir-only quantization opt-in.
+      - name: Checkout aljabr (AQLI source dependency)
         uses: actions/checkout@v4
         with:
-          repository: bhangun/alkhawarizm
+          repository: bhangun/aljabr
           path: alkhawarizm
           ref: main
 
@@ -43,6 +43,38 @@ jobs:
           repository: bhangun/aqli
           path: _aqli
           ref: main
+
+      # AQLI's settings still look for ../alkhawarizm. Keep that directory
+      # contract, but migrate old dependency coordinates to current Aljabr GAVs.
+      - name: Align AQLI dependency coordinates with Aljabr
+        working-directory: _aqli
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+
+          roots = [Path("framework"), Path("runtime")]
+          changed = []
+          for root in roots:
+              if not root.exists():
+                  continue
+              for path in root.rglob("*"):
+                  if path.suffix not in {".gradle", ".gradle.kts"} or not path.is_file():
+                      continue
+                  content = path.read_text(encoding="utf-8")
+                  updated = content.replace(
+                      "tech.kayys.alkhawarizm:alkhawarizm-",
+                      "tech.kayys.aljabr:aljabr-",
+                  )
+                  if updated != content:
+                      path.write_text(updated, encoding="utf-8")
+                      changed.append(str(path))
+
+          if not changed:
+              raise SystemExit("No legacy Alkhawarizm dependency coordinates found; refusing silent no-op")
+          print("Migrated legacy dependency coordinates in:")
+          print("\\n".join(changed))
+          PY
 
       # Correct the synthetic :tokenizer parent project until the upstream settings fix lands.
       - name: Fix AQLI tokenizer Gradle project directory
@@ -55,11 +87,11 @@ jobs:
           settings = Path("settings.gradle.kts")
           content = settings.read_text(encoding="utf-8")
           old = 'if (rootPart in listOf("core", "spi", "sdk", "plugin", "observability", "tokenizer")) {'
-          new = "\n".join([
-              "if (rootPart == \"tokenizer\") {",
+          new = "\\n".join([
+              "if (rootPart == \\"tokenizer\\") {",
               "            // The tokenizer module lives under framework/core.",
-              "            mappedDir = \"framework/core\"",
-              "        } else if (rootPart in listOf(\"core\", \"spi\", \"sdk\", \"plugin\", \"observability\")) {",
+              "            mappedDir = \\"framework/core\\"",
+              "        } else if (rootPart in listOf(\\"core\\", \\"spi\\", \\"sdk\\", \\"plugin\\", \\"observability\\")) {",
           ])
           if content.count(old) != 1:
               raise SystemExit("Unexpected AQLI settings.gradle.kts layout; refusing to patch")
@@ -76,25 +108,13 @@ jobs:
           restore-keys: |
             aqli-gradle-
 
-      - name: Publish Alkhawarizm dependencies to Maven Local
-        working-directory: alkhawarizm
-        env:
-          GRADLE_OPTS: "-Xmx2G -Dorg.gradle.daemon=false"
-        run: |
-          TASKS=(
-            :core:alkhawarizm-error-code:publishToMavenLocal
-            :core:alkhawarizm-tensor:publishToMavenLocal
-            :core:alkhawarizm-spi-model:publishToMavenLocal
-          )
-          ./gradlew "${TASKS[@]}" --no-daemon -x test --parallel
-
       - name: Publish AQLI SPI & SDK to Maven Local
         working-directory: _aqli
         env:
           GRADLE_OPTS: "-Xmx2G -Dorg.gradle.daemon=false"
         run: |
-          # Publish only the AQLI SPI/SDK modules consumed by andalus-framework.
-          # The Alkhawarizm composite build supplies their source dependencies.
+          # Aljabr is included as a composite build at ../alkhawarizm.
+          # Its current tech.kayys.aljabr coordinates are substituted from source.
           TASKS=(
             :spi:aqli-spi:publishToMavenLocal
             :spi:aqli-spi-audio:publishToMavenLocal
