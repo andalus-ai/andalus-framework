@@ -44,7 +44,23 @@ The ADR should decide whether one is the canonical durable execution envelope an
 
 A resolved Maven dependency tree and clean build are required to establish the actual compiler/classloader behavior.
 
-## 4. Consumer map status
+## 4. Runtime integration evidence (2026-10-30)
+
+The runtime repository was inspected at the same branch name. The following integration points are confirmed:
+
+| Runtime path | Confirmed use | Migration implication |
+|---|---|---|
+| `runtime/andalus-runtime-core/.../DefaultExecutionEngine.java` | Implements the engine `ExecutionEngine`; agent, workflow and skill methods accept graph `ExecutionContext`; reads execution ID and variables | Migrate with the engine API signature; preserve variable extraction and execution identity |
+| `runtime/andalus-runtime-core/.../SimpleExecutionContext.java` | Implements graph context and is created from `AgentRequest`; supplies variables/resources and child context; returns `null` for graph and current node | Replace with an explicit linear/request context or define safe graph absence semantics |
+| `runtime/andalus-runtime-core/.../DefaultAndalusRuntime` | Creates `SimpleExecutionContext.fromRequest(request)` and passes it to `ExecutionEngine` (confirmed in prior source inspection) | Migrate request-to-execution boundary and define invocation-context attachment |
+| `runtime/andalus-runtime-core/pom.xml` | Directly depends on both `andalus-execution-api` and `andalus-engine` | Confirms both artifacts are in the same runtime module's compile dependency set |
+| `runtime/andalus-runtime-core/.../DefaultExecutionEngineTest.java` | Constructs `SimpleExecutionContext` and passes it to workflow/skill delegation methods | Update fixtures and add tests for explicit linear-context behavior |
+
+The runtime's `DefaultExecutionEngine` uses graph context mainly as a carrier for execution ID and variable values on the agent path. Workflow and skill paths also extract variables. The request adapter deliberately returns `null` for graph and current-node access because the linear agent path does not use them. This is a concrete reason not to force every invocation into a graph-shaped context.
+
+The runtime-core POM directly declares both framework artifacts. This confirms dependency-level exposure to the duplicate FQN, but does not by itself prove a specific compiler or class-loading failure. A clean dependency resolution and build remain necessary.
+
+## 5. Consumer map status
 
 Confirmed:
 - `ExecutionEngine` uses the graph context.
@@ -59,11 +75,11 @@ Not yet confirmed:
 - All serialization/deserialization paths and persisted checkpoint compatibility.
 - All tests and fixtures using legacy contracts.
 
-## 5. ExecutionContext ownership decision record
+## 6. ExecutionContext ownership decision record
 
 A proposed decision record now captures the recommended separation of invocation and graph execution scopes, rejected alternatives, required migration checks and compatibility risks: [ADR-0001 — Separate Invocation and Graph Execution Contexts](ADR-0001-execution-context-ownership.md). The ADR does not authorize a source rename; the repository-wide reference map and compatibility checks remain prerequisites.
 
-## 6. Recommended decisions before source migration
+## 7. Recommended decisions before source migration
 
 1. Name the graph context distinctly, e.g. `GraphExecutionContext`, and reserve `ExecutionContext` for invocation-level context only if that ownership decision is approved.
 2. Decide the canonical durable execution checkpoint envelope and document the role of state snapshots.
@@ -72,6 +88,6 @@ A proposed decision record now captures the recommended separation of invocation
 5. Make checkpoint sequence writes atomic per execution and define duplicate/idempotency behavior.
 6. Add cross-module contract tests and build checks that detect duplicate public FQNs across Maven artifacts.
 
-## Scope and limitations
+## 8. Scope and limitations
 
 This is a targeted source map, not a complete static-analysis report. The repository search connector did not provide a reliable complete code-reference index for these queries. All "not yet confirmed" items must be resolved by local grep/IDE indexing or a full source checkout before destructive API changes.
