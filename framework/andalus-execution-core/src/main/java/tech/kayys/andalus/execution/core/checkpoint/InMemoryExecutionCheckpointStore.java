@@ -16,17 +16,30 @@ public class InMemoryExecutionCheckpointStore implements CheckpointStore {
     public void save(ExecutionCheckpoint checkpoint) {
         Objects.requireNonNull(checkpoint, "checkpoint cannot be null");
 
-        // Sequence monotonicity check
-        List<ExecutionCheckpoint> history = byExecution.computeIfAbsent(checkpoint.executionId(), k -> new CopyOnWriteArrayList<>());
-        if (!history.isEmpty()) {
-            ExecutionCheckpoint latest = history.get(history.size() - 1);
-            if (checkpoint.sequence() <= latest.sequence()) {
-                throw new IllegalArgumentException("Checkpoint sequence " + checkpoint.sequence() + " must be greater than previous " + latest.sequence());
-            }
-        }
+        List<ExecutionCheckpoint> history = byExecution.computeIfAbsent(
+                checkpoint.executionId(), ignored -> new CopyOnWriteArrayList<>());
 
-        byId.put(checkpoint.checkpointId(), checkpoint);
-        history.add(checkpoint);
+        // Sequence validation and insertion must be one atomic operation per execution.
+        // Synchronizing on the per-execution history allows unrelated executions to progress
+        // concurrently while preventing two writers from accepting the same next sequence.
+        synchronized (history) {
+            if (!history.isEmpty()) {
+                ExecutionCheckpoint latest = history.get(history.size() - 1);
+                if (checkpoint.sequence() <= latest.sequence()) {
+                    throw new IllegalArgumentException(
+                            "Checkpoint sequence " + checkpoint.sequence()
+                                    + " must be greater than previous " + latest.sequence());
+                }
+            }
+
+            ExecutionCheckpoint existing = byId.putIfAbsent(checkpoint.checkpointId(), checkpoint);
+            if (existing != null) {
+                throw new IllegalArgumentException(
+                        "Checkpoint ID already exists: " + checkpoint.checkpointId());
+            }
+
+            history.add(checkpoint);
+        }
     }
 
     @Override
