@@ -60,6 +60,7 @@ class ExecutionPipelineTest {
                 MessagePayload.text("hello")
         );
         AgentInvocation invocation = factory.root(request, security);
+        authorize(invocation);
 
         AgentResult result = pipeline.execute(invocation).toCompletableFuture().get();
 
@@ -108,6 +109,7 @@ class ExecutionPipelineTest {
                 MessagePayload.text("hello")
         );
         AgentInvocation invocation = factory.root(request, security);
+        authorize(invocation);
         pipeline.execute(invocation).toCompletableFuture().get();
 
         assertEquals(2, callOrder.get());
@@ -126,6 +128,7 @@ class ExecutionPipelineTest {
                 MessagePayload.text("hello")
         );
         AgentInvocation invocation = factory.root(request, security);
+        authorize(invocation);
 
         assertThrows(Exception.class,
                 () -> pipeline.execute(invocation).toCompletableFuture().get()
