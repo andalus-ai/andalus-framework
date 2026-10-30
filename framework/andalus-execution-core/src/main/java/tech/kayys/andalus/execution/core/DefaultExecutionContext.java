@@ -52,9 +52,28 @@ public final class DefaultExecutionContext implements ExecutionContext {
         return lifecycle.get();
     }
 
+    /**
+     * Applies a lifecycle transition only when it is legal from the currently observed state.
+     * The compare-and-set loop makes validation and mutation atomic under concurrent callers.
+     *
+     * @throws IllegalStateException if the requested transition is not allowed
+     */
     @Override
     public void transition(ExecutionLifecycle next) {
         Objects.requireNonNull(next, "next lifecycle state must not be null");
-        lifecycle.set(next);
+
+        while (true) {
+            ExecutionLifecycle current = lifecycle.get();
+            if (current == next) {
+                return; // idempotent transition
+            }
+            if (!ExecutionLifecycleTransitions.isAllowed(current, next)) {
+                throw new IllegalStateException(
+                        "Illegal execution lifecycle transition: " + current + " -> " + next);
+            }
+            if (lifecycle.compareAndSet(current, next)) {
+                return;
+            }
+        }
     }
 }
