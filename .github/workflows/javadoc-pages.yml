@@ -40,6 +40,28 @@ jobs:
           path: _aqli
           ref: main
 
+      # Correct the synthetic :tokenizer parent project until the upstream settings fix lands.
+      - name: Fix AQLI tokenizer Gradle project directory
+        working-directory: _aqli
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+
+          settings = Path("settings.gradle.kts")
+          content = settings.read_text(encoding="utf-8")
+          old = 'if (rootPart in listOf("core", "spi", "sdk", "plugin", "observability", "tokenizer")) {'
+          new = "\n".join([
+              "if (rootPart == \"tokenizer\") {",
+              "            // The tokenizer module lives under framework/core.",
+              "            mappedDir = \"framework/core\"",
+              "        } else if (rootPart in listOf(\"core\", \"spi\", \"sdk\", \"plugin\", \"observability\")) {",
+          ])
+          if content.count(old) != 1:
+              raise SystemExit("Unexpected AQLI settings.gradle.kts layout; refusing to patch")
+          settings.write_text(content.replace(old, new), encoding="utf-8")
+          PY
+
       - name: Check out Aljabr (Aqli dependency)
         uses: actions/checkout@v4
         with:
