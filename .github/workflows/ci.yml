@@ -82,9 +82,14 @@ jobs:
       - name: Checkout gamelan (workflow engine dependency)
         uses: actions/checkout@v4
         with:
-          repository: bhangun/gamelan
+          repository: andalus-ai/gamelan
           path: gamelan
           ref: main
+
+      - name: Setup Gradle for Gamelan (wrapper JAR is not committed)
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: "9.4.0"
 
       - name: Publish Gamelan SPI & Executor SDK to Maven Local
         working-directory: gamelan
@@ -94,7 +99,7 @@ jobs:
           # Andalus currently consumes these Gamelan artifacts at 1.0.0-SNAPSHOT.
           # Override the repository's Gradle default so the published coordinates
           # match the Maven dependencies exactly.
-          ./gradlew \
+          gradle \
             :gamelan-engine-spi:publishToMavenLocal \
             :gamelan-plugin-spi:publishToMavenLocal \
             :gamelan-sdk-executor-core:publishToMavenLocal \
