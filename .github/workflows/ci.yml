@@ -25,51 +25,17 @@ jobs:
           java-version: "25"
           cache: maven
 
-      # ── Aljabr, Tafkir & Aqli SPI/SDK Bootstrap ───────────────────
-      # aqli depends on aljabr for low-level tensor & error-code modules.
-      # aljabr-safetensor-quantization depends on tech.kayys.tafkir:* SNAPSHOTs.
-      # When tafkir is checked out as a sibling of aljabr (../tafkir relative
-      # to aljabr), settings.gradle.kts uses it as a composite build and
-      # Gradle substitutes Maven coordinates with source projects — no remote
-      # SNAPSHOT resolution needed.
+      # ── Aljabr & Aqli SPI/SDK Bootstrap ────────────────────────────
+      # AQLI depends on Aljabr for low-level tensor & error-code modules.
+      # Tafkir is intentionally not checked out: AQLI auto-includes ../tafkir
+      # when that sibling directory exists, which pulls unrelated training
+      # projects into this SPI/SDK bootstrap.
       - name: Checkout aljabr (aqli dependency)
         uses: actions/checkout@v4
         with:
           repository: bhangun/aljabr
           path: aljabr
           ref: main
-
-      - name: Checkout tafkir (aljabr composite build)
-        uses: actions/checkout@v4
-        with:
-          repository: bhangun/tafkir
-          path: tafkir
-          ref: main
-
-      # Gradle creates :quantizer as the implicit parent of legacy :quantizer:* aliases.
-      # Its real modules live under inference/quantization, not ./quantizer.
-      - name: Fix Tafkir quantizer Gradle parent directory
-        working-directory: tafkir
-        shell: bash
-        run: |
-          python3 - <<'PY'
-          from pathlib import Path
-
-          settings = Path("settings.gradle.kts")
-          content = settings.read_text(encoding="utf-8")
-          marker = '// Compatibility aliases kept for legacy names that still show up in tooling or scripts.'
-          replacement = '''// Gradle creates :quantizer as the implicit parent of the legacy :quantizer:* aliases.
-          // Point that parent at the real quantization module directory.
-          include(":quantizer")
-          project(":quantizer").projectDir = file("inference/quantization")
-
-          // Compatibility aliases kept for legacy names that still show up in tooling or scripts.'''
-          if content.count(marker) != 1:
-              raise SystemExit("Unexpected Tafkir settings.gradle.kts layout; refusing to patch")
-          if not Path("inference/quantization").is_dir():
-              raise SystemExit("Tafkir inference/quantization directory is missing")
-          settings.write_text(content.replace(marker, replacement), encoding="utf-8")
-          PY
 
       - name: Checkout aqli (SPI/SDK bootstrap)
         uses: actions/checkout@v4
@@ -115,9 +81,9 @@ jobs:
         env:
           GRADLE_OPTS: "-Xmx2G -Dorg.gradle.daemon=false"
         run: |
-          # Publish only the modules that andalus-framework depends on.
-          # tafkir is checked out as a sibling of aljabr so the composite
-          # build in aljabr/settings.gradle.kts finds it automatically.
+          # Publish only the AQLI SPI/SDK modules consumed by andalus-framework.
+          # No Tafkir checkout is present, so AQLI does not auto-include that
+          # optional composite build during this bootstrap.
           TASKS=(
             :spi:aqli-spi:publishToMavenLocal
             :spi:aqli-spi-audio:publishToMavenLocal
