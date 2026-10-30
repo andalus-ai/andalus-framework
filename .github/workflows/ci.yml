@@ -79,6 +79,29 @@ jobs:
           ./gradlew "${TASKS[@]}" --no-daemon -x test --parallel
       # ─────────────────────────────────────────────────────────────────────
 
+      - name: Checkout gamelan (workflow engine dependency)
+        uses: actions/checkout@v4
+        with:
+          repository: bhangun/gamelan
+          path: gamelan
+          ref: main
+
+      - name: Publish Gamelan SPI & Executor SDK to Maven Local
+        working-directory: gamelan
+        env:
+          GRADLE_OPTS: "-Xmx2G -Dorg.gradle.daemon=false"
+        run: |
+          # Andalus currently consumes these Gamelan artifacts at 1.0.0-SNAPSHOT.
+          # Override the repository's Gradle default so the published coordinates
+          # match the Maven dependencies exactly.
+          ./gradlew \
+            :gamelan-engine-spi:publishToMavenLocal \
+            :gamelan-plugin-spi:publishToMavenLocal \
+            :gamelan-sdk-executor-core:publishToMavenLocal \
+            --no-daemon -x test --parallel \
+            -Pgamelan.publish.enabled=true \
+            -Pgamelan.version=1.0.0-SNAPSHOT
+
       - name: Build and Test (all modules)
         run: ./mvnw clean verify -DskipTests=false -Pci -q
 
