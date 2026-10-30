@@ -59,21 +59,33 @@ jobs:
               if not root.exists():
                   continue
               for path in root.rglob("*"):
-                  if path.suffix not in {".gradle", ".gradle.kts"} or not path.is_file():
-                      continue
-                  content = path.read_text(encoding="utf-8")
-                  updated = content.replace(
-                      "tech.kayys.alkhawarizm:alkhawarizm-",
-                      "tech.kayys.aljabr:aljabr-",
-                  )
-                  if updated != content:
-                      path.write_text(updated, encoding="utf-8")
-                      changed.append(str(path))
+              if not path.is_file() or not path.name.endswith((".gradle", ".gradle.kts")):
+                  continue
+              content = path.read_text(encoding="utf-8")
+              updated = content.replace(
+                  "tech.kayys.alkhawarizm:alkhawarizm-",
+                  "tech.kayys.aljabr:aljabr-",
+              )
+              if updated != content:
+                  path.write_text(updated, encoding="utf-8")
+                  changed.append(str(path))
 
           if not changed:
-              raise SystemExit("No legacy Alkhawarizm dependency coordinates found; refusing silent no-op")
+              raise SystemExit("Expected legacy Alkhawarizm coordinates in AQLI Gradle modules, but found none")
+
+          # AQLI's root build contains a stale reverse substitution from the new
+          # Aljabr coordinates back to the retired Alkhawarizm artifact. Remove it
+          # so the Aljabr composite build can substitute its current source projects.
+          root_build = Path("build.gradle.kts")
+          root_content = root_build.read_text(encoding="utf-8")
+          stale_substitution = '            substitute(module("tech.kayys.aljabr:aljabr-tensor")).using(module("tech.kayys.alkhawarizm:alkhawarizm-tensor:0.1.1"))'
+          if root_content.count(stale_substitution) != 1:
+              raise SystemExit("Expected exactly one stale Aljabr-to-Alkhawarizm substitution in AQLI root build")
+          root_build.write_text(root_content.replace(stale_substitution + "\\n", ""), encoding="utf-8")
+
           print("Migrated legacy dependency coordinates in:")
           print("\\n".join(changed))
+          print("Removed stale reverse substitution from build.gradle.kts")
           PY
 
       # Correct the synthetic :tokenizer parent project until the upstream settings fix lands.
