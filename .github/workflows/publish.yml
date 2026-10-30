@@ -53,7 +53,7 @@ jobs:
           path: _aqli
           ref: main
 
-      # Keep this workaround aligned with ci.yml until AQLI fixes its project mapping.
+      # Correct the synthetic :tokenizer parent project until the upstream settings fix lands.
       - name: Fix AQLI tokenizer Gradle project directory
         working-directory: _aqli
         shell: bash
@@ -64,12 +64,12 @@ jobs:
           settings = Path("settings.gradle.kts")
           content = settings.read_text(encoding="utf-8")
           old = 'if (rootPart in listOf("core", "spi", "sdk", "plugin", "observability", "tokenizer")) {'
-          new = '''if (rootPart == "tokenizer") {
-            // The tokenizer module lives under framework/core; mapping its
-            // synthetic parent project to framework/tokenizer breaks Gradle
-            // configuration because that directory does not exist.
-            mappedDir = "framework/core"
-        } else if (rootPart in listOf("core", "spi", "sdk", "plugin", "observability")) {'''
+          new = "\n".join([
+              "if (rootPart == \"tokenizer\") {",
+              "            // The tokenizer module lives under framework/core.",
+              "            mappedDir = \"framework/core\"",
+              "        } else if (rootPart in listOf(\"core\", \"spi\", \"sdk\", \"plugin\", \"observability\")) {",
+          ])
           if content.count(old) != 1:
               raise SystemExit("Unexpected AQLI settings.gradle.kts layout; refusing to patch")
           settings.write_text(content.replace(old, new), encoding="utf-8")
