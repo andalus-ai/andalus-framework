@@ -25,16 +25,16 @@ jobs:
           java-version: "25"
           cache: maven
 
-      # ── Aljabr & Aqli SPI/SDK Bootstrap ────────────────────────────
-      # AQLI depends on Aljabr for low-level tensor & error-code modules.
-      # Tafkir is intentionally not checked out: AQLI auto-includes ../tafkir
-      # when that sibling directory exists, which pulls unrelated training
-      # projects into this SPI/SDK bootstrap.
-      - name: Checkout aljabr (aqli dependency)
+      # ── Alkhawarizm & AQLI SPI/SDK Bootstrap ───────────────────────
+      # AQLI's settings.gradle.kts includes ../alkhawarizm as a composite
+      # build when present. This supplies its error-code, tensor and SPI model
+      # SNAPSHOT dependencies from source instead of looking for remote SNAPSHOTs.
+      # Tafkir is intentionally absent; it is unrelated to this bootstrap.
+      - name: Checkout alkhawarizm (AQLI source dependency)
         uses: actions/checkout@v4
         with:
-          repository: bhangun/aljabr
-          path: aljabr
+          repository: bhangun/alkhawarizm
+          path: alkhawarizm
           ref: main
 
       - name: Checkout aqli (SPI/SDK bootstrap)
@@ -55,11 +55,11 @@ jobs:
           settings = Path("settings.gradle.kts")
           content = settings.read_text(encoding="utf-8")
           old = 'if (rootPart in listOf("core", "spi", "sdk", "plugin", "observability", "tokenizer")) {'
-          new = "\n".join([
-              "if (rootPart == \"tokenizer\") {",
+          new = "\\n".join([
+              "if (rootPart == \\"tokenizer\\") {",
               "            // The tokenizer module lives under framework/core.",
-              "            mappedDir = \"framework/core\"",
-              "        } else if (rootPart in listOf(\"core\", \"spi\", \"sdk\", \"plugin\", \"observability\")) {",
+              "            mappedDir = \\"framework/core\\"",
+              "        } else if (rootPart in listOf(\\"core\\", \\"spi\\", \\"sdk\\", \\"plugin\\", \\"observability\\")) {",
           ])
           if content.count(old) != 1:
               raise SystemExit("Unexpected AQLI settings.gradle.kts layout; refusing to patch")
@@ -76,14 +76,25 @@ jobs:
           restore-keys: |
             aqli-gradle-
 
-      - name: Publish aqli SPI & SDK to Maven Local
+      - name: Publish Alkhawarizm dependencies to Maven Local
+        working-directory: alkhawarizm
+        env:
+          GRADLE_OPTS: "-Xmx2G -Dorg.gradle.daemon=false"
+        run: |
+          TASKS=(
+            :core:alkhawarizm-error-code:publishToMavenLocal
+            :core:alkhawarizm-tensor:publishToMavenLocal
+            :core:alkhawarizm-spi-model:publishToMavenLocal
+          )
+          ./gradlew "${TASKS[@]}" --no-daemon -x test --parallel
+
+      - name: Publish AQLI SPI & SDK to Maven Local
         working-directory: _aqli
         env:
           GRADLE_OPTS: "-Xmx2G -Dorg.gradle.daemon=false"
         run: |
           # Publish only the AQLI SPI/SDK modules consumed by andalus-framework.
-          # No Tafkir checkout is present, so AQLI does not auto-include that
-          # optional composite build during this bootstrap.
+          # The Alkhawarizm composite build supplies their source dependencies.
           TASKS=(
             :spi:aqli-spi:publishToMavenLocal
             :spi:aqli-spi-audio:publishToMavenLocal
