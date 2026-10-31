@@ -25,55 +25,23 @@ jobs:
           java-version: "25"
           cache: maven
 
-      # ── Aljabr, Tafkir & Aqli SPI/SDK Bootstrap ───────────────────
-      # aqli depends on aljabr for low-level tensor & error-code modules.
-      # aljabr-safetensor-quantization depends on tech.kayys.tafkir:* SNAPSHOTs.
-      # When tafkir is checked out as a sibling of aljabr (../tafkir relative
-      # to aljabr), settings.gradle.kts uses it as a composite build and
-      # Gradle substitutes Maven coordinates with source projects — no remote
-      # SNAPSHOT resolution needed.
-      - name: Checkout aljabr (aqli dependency)
+      # ── Aljabr & AQLI SPI/SDK Bootstrap ────────────────────────────
+      # The canonical AQLI repository has completed the Alkhawarizm -> Aljabr
+      # source/package migration. Check out both current repositories using the
+      # sibling path expected by AQLI's composite-build settings.
+      - name: Checkout aljabr (AQLI source dependency)
         uses: actions/checkout@v4
         with:
-          repository: bhangun/aljabr
+          repository: andalus-ai/aljabr
           path: aljabr
-          ref: main
-
-      - name: Checkout tafkir (aljabr composite build)
-        uses: actions/checkout@v4
-        with:
-          repository: bhangun/tafkir
-          path: tafkir
           ref: main
 
       - name: Checkout aqli (SPI/SDK bootstrap)
         uses: actions/checkout@v4
         with:
-          repository: bhangun/aqli
+          repository: andalus-ai/aqli
           path: _aqli
           ref: main
-
-      # Correct the synthetic :tokenizer parent project until the upstream settings fix lands.
-      - name: Fix AQLI tokenizer Gradle project directory
-        working-directory: _aqli
-        shell: bash
-        run: |
-          python3 - <<'PY'
-          from pathlib import Path
-
-          settings = Path("settings.gradle.kts")
-          content = settings.read_text(encoding="utf-8")
-          old = 'if (rootPart in listOf("core", "spi", "sdk", "plugin", "observability", "tokenizer")) {'
-          new = "\n".join([
-              "if (rootPart == \"tokenizer\") {",
-              "            // The tokenizer module lives under framework/core.",
-              "            mappedDir = \"framework/core\"",
-              "        } else if (rootPart in listOf(\"core\", \"spi\", \"sdk\", \"plugin\", \"observability\")) {",
-          ])
-          if content.count(old) != 1:
-              raise SystemExit("Unexpected AQLI settings.gradle.kts layout; refusing to patch")
-          settings.write_text(content.replace(old, new), encoding="utf-8")
-          PY
 
       - name: Cache Gradle packages (aqli)
         uses: actions/cache@v4
@@ -85,14 +53,13 @@ jobs:
           restore-keys: |
             aqli-gradle-
 
-      - name: Publish aqli SPI & SDK to Maven Local
+      - name: Publish AQLI SPI & SDK to Maven Local
         working-directory: _aqli
         env:
           GRADLE_OPTS: "-Xmx2G -Dorg.gradle.daemon=false"
         run: |
-          # Publish only the modules that andalus-framework depends on.
-          # tafkir is checked out as a sibling of aljabr so the composite
-          # build in aljabr/settings.gradle.kts finds it automatically.
+          # Publish the exact AQLI coordinates consumed by Andalus modules.
+          # Aljabr is included as a composite build from ./aljabr by AQLI settings.
           TASKS=(
             :spi:aqli-spi:publishToMavenLocal
             :spi:aqli-spi-audio:publishToMavenLocal
@@ -101,12 +68,44 @@ jobs:
             :spi:aqli-spi-multimodal:publishToMavenLocal
             :spi:aqli-spi-plugin:publishToMavenLocal
             :spi:aqli-spi-runtime:publishToMavenLocal
+            :sdk:aqli-sdk-api:publishToMavenLocal
+            :sdk:aqli-sdk-protobuf:publishToMavenLocal
             :sdk:aqli-sdk-core:publishToMavenLocal
             :sdk:aqli-sdk:publishToMavenLocal
             :sdk:aqli-sdk-local:publishToMavenLocal
+            :core:aqli-core:publishToMavenLocal
+            :plugin:aqli-plugin-kernel-core:publishToMavenLocal
           )
           ./gradlew "${TASKS[@]}" --no-daemon -x test --parallel
       # ─────────────────────────────────────────────────────────────────────
+
+      - name: Checkout gamelan (workflow engine dependency)
+        uses: actions/checkout@v4
+        with:
+          repository: andalus-ai/gamelan
+          path: gamelan
+          ref: main
+
+      - name: Setup Gradle for Gamelan (wrapper JAR is not committed)
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: "9.4.0"
+
+      - name: Publish Gamelan SPI & Executor SDK to Maven Local
+        working-directory: gamelan
+        env:
+          GRADLE_OPTS: "-Xmx2G -Dorg.gradle.daemon=false"
+        run: |
+          # Andalus currently consumes these Gamelan artifacts at 1.0.0-SNAPSHOT.
+          # Override the repository's Gradle default so the published coordinates
+          # match the Maven dependencies exactly.
+          gradle \
+            :gamelan-engine-spi:publishToMavenLocal \
+            :gamelan-plugin-spi:publishToMavenLocal \
+            :gamelan-sdk-executor-core:publishToMavenLocal \
+            --no-daemon -x test --parallel \
+            -Pgamelan.publish.enabled=true \
+            -Pgamelan.version=1.0.0-SNAPSHOT
 
       - name: Build and Test (all modules)
         run: ./mvnw clean verify -DskipTests=false -Pci -q
