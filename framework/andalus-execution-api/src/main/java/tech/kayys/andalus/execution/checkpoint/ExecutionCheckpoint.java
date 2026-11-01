@@ -8,6 +8,9 @@ import java.util.Objects;
 
 /**
  * First-class durable execution checkpoint.
+ *
+ * <p>The payload is defensively copied on construction and access so callers
+ * cannot mutate persisted checkpoint contents after integrity validation.</p>
  */
 public record ExecutionCheckpoint(
         String checkpointId,
@@ -20,11 +23,37 @@ public record ExecutionCheckpoint(
         Map<String, Object> metadata
 ) {
     public ExecutionCheckpoint {
-        Objects.requireNonNull(checkpointId, "checkpointId cannot be null");
-        Objects.requireNonNull(executionId, "executionId cannot be null");
+        requireText(checkpointId, "checkpointId");
+        requireText(executionId, "executionId");
         Objects.requireNonNull(attemptId, "attemptId cannot be null");
         Objects.requireNonNull(payload, "payload cannot be null");
         Objects.requireNonNull(manifest, "manifest cannot be null");
+        Objects.requireNonNull(timestamp, "timestamp cannot be null");
+        if (sequence < 1) {
+            throw new IllegalArgumentException("sequence must be greater than zero");
+        }
+        if (!checkpointId.equals(manifest.checkpointId())) {
+            throw new IllegalArgumentException("checkpointId must match manifest checkpointId");
+        }
+        if (sequence != manifest.sequence()) {
+            throw new IllegalArgumentException("sequence must match manifest sequence");
+        }
+
+        payload = payload.clone();
+        if (!manifest.integrity().verify(payload)) {
+            throw new IllegalArgumentException("checkpoint payload does not match manifest integrity checksum");
+        }
         metadata = metadata == null ? Map.of() : Map.copyOf(metadata);
+    }
+
+    @Override
+    public byte[] payload() {
+        return payload.clone();
+    }
+
+    private static void requireText(String value, String name) {
+        if (value == null || value.isBlank()) {
+            throw new IllegalArgumentException(name + " must not be blank");
+        }
     }
 }
