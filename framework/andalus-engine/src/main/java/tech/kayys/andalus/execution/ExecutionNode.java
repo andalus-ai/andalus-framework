@@ -62,7 +62,7 @@ public interface ExecutionNode {
      * @param context The execution context
      * @return A CompletableFuture that completes with the node result
      */
-    CompletableFuture<NodeResult> execute(GraphGraphExecutionContext context);
+    CompletableFuture<NodeResult> execute(GraphExecutionContext context);
 
     /**
      * Returns the configuration for this node.
