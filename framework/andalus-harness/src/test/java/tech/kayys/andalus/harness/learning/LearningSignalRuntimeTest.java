@@ -1,6 +1,7 @@
 package tech.kayys.andalus.harness.learning;
 
 import org.junit.jupiter.api.BeforeEach;
+import tech.kayys.andalus.harness.evaluation.Evaluator;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
