@@ -182,4 +182,50 @@ class LearningSignalRuntimeTest {
         LearningSignalQueryResult result = runtime.query(query).toCompletableFuture().join();
         assertThat(result.totalCount()).isEqualTo(4);
     }
+    @Test
+    void evaluationRuntime_aggregatesMetricsAndPreservesProvenance() {
+        Evaluator evaluator = item -> java.util.concurrent.CompletableFuture.completedFuture(
+                new Evaluator.CaseResult(item.id(), Map.of("quality", item.id().equals("case-1") ? 0.8 : 1.0,
+                        "latency_ms", item.id().equals("case-1") ? 100.0 : 200.0), true, "ok"));
+        Evaluator.Dataset dataset = new Evaluator.Dataset("smoke", "v1", List.of(
+                new Evaluator.EvaluationCase("case-1", "input-1", "expected-1", Map.of()),
+                new Evaluator.EvaluationCase("case-2", "input-2", "expected-2", Map.of())));
+        Evaluator.Request request = new Evaluator.Request("eval-1", "model-a", "v2", dataset);
+        Evaluator.Report report = new Evaluator.DefaultRuntime(evaluator).evaluate(request).toCompletableFuture().join();
+
+        assertThat(report.candidateVersion()).isEqualTo("v2");
+        assertThat(report.datasetVersion()).isEqualTo("v1");
+        assertThat(report.passRate()).isEqualTo(1.0);
+        assertThat(report.aggregateMetrics()).containsEntry("quality", 0.9).containsEntry("latency_ms", 150.0);
+    }
+
+    @Test
+    void promotionGate_rejectsMissingOrOutOfBoundsMetrics() {
+        Evaluator evaluator = item -> java.util.concurrent.CompletableFuture.completedFuture(
+                new Evaluator.CaseResult(item.id(), Map.of("quality", 0.6), false, "below target"));
+        Evaluator.Dataset dataset = new Evaluator.Dataset("smoke", "v1",
+                List.of(new Evaluator.EvaluationCase("case-1", "input", "expected", Map.of())));
+        Evaluator.Report report = new Evaluator.DefaultRuntime(evaluator).evaluate(
+                new Evaluator.Request("eval-2", "model-a", "v3", dataset)).toCompletableFuture().join();
+        Evaluator.PromotionGate gate = new Evaluator.PromotionGate(0.9, List.of(
+                new Evaluator.MetricThreshold("quality", Evaluator.Direction.AT_LEAST, 0.8),
+                new Evaluator.MetricThreshold("safety", Evaluator.Direction.AT_LEAST, 1.0)));
+        Evaluator.PromotionDecision decision = gate.assess(report);
+
+        assertThat(decision.approved()).isFalse();
+        assertThat(decision.reasons()).hasSize(3);
+    }
+
+    @Test
+    void evaluationRuntime_rejectsMismatchedCaseResultIdentity() {
+        Evaluator evaluator = item -> java.util.concurrent.CompletableFuture.completedFuture(
+                new Evaluator.CaseResult("wrong-id", Map.of(), true, null));
+        Evaluator.Dataset dataset = new Evaluator.Dataset("smoke", "v1",
+                List.of(new Evaluator.EvaluationCase("case-1", "input", "expected", Map.of())));
+        org.assertj.core.api.Assertions.assertThatThrownBy(() ->
+                new Evaluator.DefaultRuntime(evaluator).evaluate(
+                        new Evaluator.Request("eval-3", "model-a", "v1", dataset)).toCompletableFuture().join())
+                .isInstanceOf(java.util.concurrent.CompletionException.class);
+    }
+
 }
