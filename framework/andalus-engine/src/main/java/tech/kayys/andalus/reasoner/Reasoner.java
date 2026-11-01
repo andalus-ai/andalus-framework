@@ -16,7 +16,7 @@ import java.util.concurrent.CompletableFuture;
 import tech.kayys.andalus.extension.Extension;
 import tech.kayys.andalus.context.ContextData;
 import tech.kayys.andalus.planner.Plan;
-import tech.kayys.andalus.execution.ExecutionContext;
+import tech.kayys.andalus.execution.GraphExecutionContext;
 
 
 /**
@@ -27,19 +27,19 @@ public interface Reasoner extends Extension {
     /**
      * Reason on a plan
      */
-    ReasoningResult reason(Plan plan, ExecutionContext context) throws Exception;
+    ReasoningResult reason(Plan plan, GraphExecutionContext context) throws Exception;
     
     /**
      * Reason on a plan with context data
      */
-    default ReasoningResult reason(Plan plan, ExecutionContext context, ContextData contextData) throws Exception {
+    default ReasoningResult reason(Plan plan, GraphExecutionContext context, ContextData contextData) throws Exception {
         return reason(plan, context);
     }
     
     /**
      * Reason asynchronously
      */
-    default CompletableFuture<ReasoningResult> reasonAsync(Plan plan, ExecutionContext context) {
+    default CompletableFuture<ReasoningResult> reasonAsync(Plan plan, GraphExecutionContext context) {
         return CompletableFuture.supplyAsync(() -> {
             try {
                 return reason(plan, context);
