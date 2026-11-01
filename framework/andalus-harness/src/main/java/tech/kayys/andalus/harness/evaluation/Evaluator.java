@@ -1,6 +1,9 @@
 package tech.kayys.andalus.harness.evaluation;
 
 import java.time.Instant;
+import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.util.*;
 import java.util.concurrent.*;
 
@@ -24,10 +27,37 @@ public interface Evaluator {
             for (EvaluationCase item : cases) if (item == null || !ids.add(item.id())) throw new IllegalArgumentException("null or duplicate evaluation case");
         }
     }
-    record Request(String evaluationId, String candidateId, String candidateVersion, Dataset dataset) {
+    record EvaluatorDescriptor(String id, String version, Map<String,String> configuration) {
+        public EvaluatorDescriptor {
+            if (id == null || id.isBlank() || version == null || version.isBlank())
+                throw new IllegalArgumentException("evaluator id and version are required");
+            configuration = configuration == null ? Map.of() : Map.copyOf(configuration);
+        }
+        /** Stable SHA-256 over sorted key/value pairs; independent of map iteration order. */
+        public String configurationFingerprint() {
+            try {
+                MessageDigest digest = MessageDigest.getInstance("SHA-256");
+                new TreeMap<>(configuration).forEach((key,value) -> {
+                    digest.update(key.getBytes(StandardCharsets.UTF_8));
+                    digest.update((byte) 0);
+                    digest.update(value.getBytes(StandardCharsets.UTF_8));
+                    digest.update((byte) 0xff);
+                });
+                return HexFormat.of().formatHex(digest.digest());
+            } catch (NoSuchAlgorithmException impossible) {
+                throw new IllegalStateException("SHA-256 is unavailable", impossible);
+            }
+        }
+    }
+    record Request(String evaluationId, String candidateId, String candidateVersion, Dataset dataset,
+                   EvaluatorDescriptor evaluator) {
+        public Request(String evaluationId, String candidateId, String candidateVersion, Dataset dataset) {
+            this(evaluationId, candidateId, candidateVersion, dataset,
+                    new EvaluatorDescriptor("unspecified", "unspecified", Map.of()));
+        }
         public Request {
             if (evaluationId == null || evaluationId.isBlank() || candidateId == null || candidateId.isBlank()
-                    || candidateVersion == null || candidateVersion.isBlank() || dataset == null)
+                    || candidateVersion == null || candidateVersion.isBlank() || dataset == null || evaluator == null)
                 throw new IllegalArgumentException("evaluation identity, candidate version and dataset are required");
         }
     }
@@ -40,9 +70,16 @@ public interface Evaluator {
     }
     record Report(String evaluationId, String candidateId, String candidateVersion, String datasetId,
                   String datasetVersion, Instant startedAt, Instant completedAt,
-                  List<CaseResult> results, Map<String,Double> aggregateMetrics) {
+                  List<CaseResult> results, Map<String,Double> aggregateMetrics,
+                  String evaluatorId, String evaluatorVersion, String evaluatorConfigFingerprint) {
+        public Report(String evaluationId, String candidateId, String candidateVersion, String datasetId,
+                      String datasetVersion, Instant startedAt, Instant completedAt,
+                      List<CaseResult> results, Map<String,Double> aggregateMetrics) {
+            this(evaluationId, candidateId, candidateVersion, datasetId, datasetVersion, startedAt, completedAt,
+                    results, aggregateMetrics, "unspecified", "unspecified", "unspecified");
+        }
         public Report {
-            if (evaluationId == null || candidateId == null || candidateVersion == null || datasetId == null || datasetVersion == null)
+            if (evaluationId == null || candidateId == null || candidateVersion == null || datasetId == null || datasetVersion == null\n                    || evaluatorId == null || evaluatorId.isBlank() || evaluatorVersion == null || evaluatorVersion.isBlank()\n                    || evaluatorConfigFingerprint == null || evaluatorConfigFingerprint.isBlank())
                 throw new IllegalArgumentException("evaluation provenance is required");
             if (startedAt == null || completedAt == null || completedAt.isBefore(startedAt)) throw new IllegalArgumentException("invalid timestamps");
             results = results == null ? List.of() : List.copyOf(results);
@@ -84,7 +121,7 @@ public interface Evaluator {
                 Map<String,Double> means = new LinkedHashMap<>();
                 totals.forEach((name,a) -> means.put(name, a[0] / a[1]));
                 return new Report(request.evaluationId(), request.candidateId(), request.candidateVersion(),
-                        request.dataset().id(), request.dataset().version(), started, Instant.now(), results, means);
+                        request.dataset().id(), request.dataset().version(), started, Instant.now(), results, means,\n                        request.evaluator().id(), request.evaluator().version(), request.evaluator().configurationFingerprint());
             });
         }
     }
