@@ -57,4 +57,65 @@ public class ExecutionRecoveryTest {
         assertEquals(RecoveryMode.RESUME, result.modeUsed());
         assertTrue(result.newAttemptId().isPresent());
     }
+
+    @Test
+    void rejectsAssessmentForAnotherExecution() {
+        InMemoryExecutionCheckpointStore checkpointStore = new InMemoryExecutionCheckpointStore();
+        DefaultRecoveryManager manager = new DefaultRecoveryManager(checkpointStore);
+        RecoveryAssessment assessment = manager.assess("execution-a");
+
+        assertThrows(IllegalArgumentException.class, () -> manager.plan("execution-b", assessment));
+    }
+
+    @Test
+    void rejectsStaleRestartPlanWhenCheckpointAppearsBeforeRecovery() {
+        InMemoryExecutionCheckpointStore checkpointStore = new InMemoryExecutionCheckpointStore();
+        DefaultRecoveryManager manager = new DefaultRecoveryManager(checkpointStore);
+        RecoveryPlan stalePlan = manager.plan("execution-race", manager.assess("execution-race"));
+
+        byte[] payload = "progress".getBytes(StandardCharsets.UTF_8);
+        CheckpointManifest manifest = new CheckpointManifest(
+                "cp-race", 1L, List.of(), List.of(), List.of(), CheckpointIntegrity.sha256(payload),
+                Instant.now(), Map.of());
+        checkpointStore.save(new ExecutionCheckpoint("cp-race", "execution-race", AttemptId.random(),
+                1L, payload, manifest, Instant.now(), Map.of()));
+
+        RecoveryResult result = manager.recover(stalePlan);
+        assertFalse(result.success());
+        assertTrue(result.errorMessage().orElseThrow().contains("checkpoint now exists"));
+    }
+
+    @Test
+    void rejectsStaleResumePlanWhenNewerCheckpointAppears() {
+        InMemoryExecutionCheckpointStore checkpointStore = new InMemoryExecutionCheckpointStore();
+        DefaultRecoveryManager manager = new DefaultRecoveryManager(checkpointStore);
+        saveCheckpoint(checkpointStore, "execution-resume-race", "cp-first", 1L);
+        RecoveryPlan stalePlan = manager.plan("execution-resume-race",
+                manager.assess("execution-resume-race"));
+        saveCheckpoint(checkpointStore, "execution-resume-race", "cp-second", 2L);
+
+        RecoveryResult result = manager.recover(stalePlan);
+        assertFalse(result.success());
+        assertTrue(result.errorMessage().orElseThrow().contains("missing or stale"));
+    }
+
+    @Test
+    void rejectsStaleAssessmentDuringPlanning() {
+        InMemoryExecutionCheckpointStore checkpointStore = new InMemoryExecutionCheckpointStore();
+        DefaultRecoveryManager manager = new DefaultRecoveryManager(checkpointStore);
+        RecoveryAssessment staleAssessment = manager.assess("execution-plan-race");
+        saveCheckpoint(checkpointStore, "execution-plan-race", "cp-new", 1L);
+
+        assertThrows(IllegalStateException.class,
+                () -> manager.plan("execution-plan-race", staleAssessment));
+    }
+
+    private static void saveCheckpoint(InMemoryExecutionCheckpointStore store, String executionId,
+            String checkpointId, long sequence) {
+        byte[] payload = ("payload-" + sequence).getBytes(StandardCharsets.UTF_8);
+        CheckpointManifest manifest = new CheckpointManifest(checkpointId, sequence, List.of(), List.of(),
+                List.of(), CheckpointIntegrity.sha256(payload), Instant.now(), Map.of());
+        store.save(new ExecutionCheckpoint(checkpointId, executionId, AttemptId.random(), sequence,
+                payload, manifest, Instant.now(), Map.of()));
+    }
 }
