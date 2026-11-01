@@ -142,6 +142,44 @@ class AdaptiveModelRouterTest {
         assertTrue(plan.rejectedCandidates().containsKey("gpt-4o"));
     }
 
+
+    @Test
+    void testTelemetryAverageLatencyIncludesFailedAttempts() {
+        telemetry.recordSuccess("latency-model", 100, 100);
+        telemetry.recordFailure("latency-model", 300);
+        telemetry.recordSuccess("latency-model", 200, 100);
+
+        ModelRoutingTelemetry.ModelStats stats = telemetry.getStats("latency-model");
+        assertNotNull(stats);
+        assertEquals(3, stats.totalCalls.get());
+        assertEquals(2, stats.successCalls.get());
+        assertEquals(1, stats.errorCalls.get());
+        assertEquals(200, stats.averageLatencyMs());
+    }
+
+    @Test
+    void testScorerUsesObservedLatencyOnlyAfterMinimumSamples() {
+        ModelSpec spec = new ModelSpec(
+                "latency-model", "test-prov", 32_000, 4096,
+                false, false, Set.of(Modality.TEXT),
+                0.01, 0.01, 500, 0.8, false
+        );
+        DefaultModelScorer scorer = new DefaultModelScorer();
+
+        telemetry.recordSuccess("latency-model", 100, 10);
+        telemetry.recordFailure("latency-model", 300);
+        InferencePlan.ScoredCandidate beforeMinimum = scorer.score(
+                spec, InferenceRequirements.defaults(), InferencePolicy.balanced(), telemetry
+        );
+        assertEquals(1000.0 / 1500.0, beforeMinimum.latencyComponent(), 0.000001);
+
+        telemetry.recordSuccess("latency-model", 200, 10);
+        InferencePlan.ScoredCandidate afterMinimum = scorer.score(
+                spec, InferenceRequirements.defaults(), InferencePolicy.balanced(), telemetry
+        );
+        assertEquals(1000.0 / 1200.0, afterMinimum.latencyComponent(), 0.000001);
+    }
+
     @Test
     void testTelemetryHealthPenaltyAdaptsRouting() {
         // Under BALANCED objective, gpt-4o or claude is usually top tier.

@@ -4,7 +4,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.Callable;
 
-import tech.kayys.andalus.execution.ExecutionContext;
+import tech.kayys.andalus.execution.GraphExecutionContext;
 
 /**
  * Tracing Helper - Convenience methods
@@ -17,7 +17,7 @@ public class TracingHelper {
         this.tracing = tracing;
     }
 
-    public <T> T traceExecution(String name, ExecutionContext context, Callable<T> callable) throws Exception {
+    public <T> T traceExecution(String name, GraphExecutionContext context, Callable<T> callable) throws Exception {
         Map<String, Object> attributes = new HashMap<>();
         attributes.put("execution.id", context.executionId().toString());
         attributes.put("execution.graph", context.graph() != null ? context.graph().toString() : "none");
@@ -33,7 +33,7 @@ public class TracingHelper {
         });
     }
 
-    public void traceAgentExecution(String agentId, ExecutionContext context, Runnable runnable) {
+    public void traceAgentExecution(String agentId, GraphExecutionContext context, Runnable runnable) {
         Map<String, Object> attributes = new HashMap<>();
         attributes.put("agent.id", agentId);
         attributes.put("execution.id", context.executionId().toString());
