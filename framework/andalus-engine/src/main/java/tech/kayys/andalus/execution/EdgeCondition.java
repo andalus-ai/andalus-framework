@@ -35,7 +35,7 @@ public interface EdgeCondition {
      * @param sourceResult The result from the source node
      * @return true if the condition is satisfied
      */
-    boolean evaluate(GraphGraphExecutionContext context, NodeResult sourceResult);
+    boolean evaluate(GraphExecutionContext context, NodeResult sourceResult);
 
     /**
      * Returns the expression (if applicable).
