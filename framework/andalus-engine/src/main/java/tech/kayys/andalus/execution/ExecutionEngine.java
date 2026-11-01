@@ -27,12 +27,12 @@ public interface ExecutionEngine extends Extension {
     /**
      * Execute an agent
      */
-    ExecutionResult executeAgent(AgentDefinition agent, GraphGraphExecutionContext context) throws Exception;
+    ExecutionResult executeAgent(AgentDefinition agent, GraphExecutionContext context) throws Exception;
     
     /**
      * Execute an agent with inputs
      */
-    default ExecutionResult executeAgent(AgentDefinition agent, GraphGraphExecutionContext context, 
+    default ExecutionResult executeAgent(AgentDefinition agent, GraphExecutionContext context, 
             Map<String, Object> inputs) throws Exception {
         return executeAgent(agent, context);
     }
@@ -40,18 +40,18 @@ public interface ExecutionEngine extends Extension {
     /**
      * Execute a workflow
      */
-    ExecutionResult executeWorkflow(WorkflowDefinition workflow, GraphGraphExecutionContext context) throws Exception;
+    ExecutionResult executeWorkflow(WorkflowDefinition workflow, GraphExecutionContext context) throws Exception;
     
     /**
      * Execute a skill
      */
-    ExecutionResult executeSkill(SkillDefinition skill, GraphGraphExecutionContext context) throws Exception;
+    ExecutionResult executeSkill(SkillDefinition skill, GraphExecutionContext context) throws Exception;
     
     /**
      * Execute asynchronously
      */
     default CompletableFuture<ExecutionResult> executeAsync(AgentDefinition agent, 
-            GraphGraphExecutionContext context) {
+            GraphExecutionContext context) {
         return CompletableFuture.supplyAsync(() -> {
             try {
                 return executeAgent(agent, context);
