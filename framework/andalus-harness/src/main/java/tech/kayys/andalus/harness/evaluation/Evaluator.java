@@ -119,4 +119,74 @@ public interface Evaluator {
             return new PromotionDecision(reasons.isEmpty(), reasons);
         }
     }
+
+    /** Persistence boundary for durable evaluation provenance. Implementations may use SQL, files, or remote stores. */
+    interface ReportStore {
+        CompletionStage<Void> save(Report report);
+        CompletionStage<Optional<Report>> findByEvaluationId(String evaluationId);
+    }
+
+    /** Small process-local implementation for tests and embedded deployments; not durable across restarts. */
+    final class InMemoryReportStore implements ReportStore {
+        private final ConcurrentMap<String, Report> reports = new ConcurrentHashMap<>();
+        public CompletionStage<Void> save(Report report) {
+            if (report == null) return CompletableFuture.failedFuture(new IllegalArgumentException("report is required"));
+            Report existing = reports.putIfAbsent(report.evaluationId(), report);
+            if (existing != null && !existing.equals(report))
+                return CompletableFuture.failedFuture(new IllegalStateException("evaluation id already stores a different report: " + report.evaluationId()));
+            return CompletableFuture.completedFuture(null);
+        }
+        public CompletionStage<Optional<Report>> findByEvaluationId(String evaluationId) {
+            if (evaluationId == null || evaluationId.isBlank())
+                return CompletableFuture.failedFuture(new IllegalArgumentException("evaluationId is required"));
+            return CompletableFuture.completedFuture(Optional.ofNullable(reports.get(evaluationId)));
+        }
+    }
+
+    record RegressionThreshold(String metric, double maximumRegression) {
+        public RegressionThreshold {
+            if (metric == null || metric.isBlank() || !Double.isFinite(maximumRegression) || maximumRegression < 0)
+                throw new IllegalArgumentException("metric and non-negative finite regression tolerance are required");
+        }
+    }
+    record Comparison(Report baseline, Report candidate, Map<String,Double> metricDeltas,
+                      double passRateDelta, boolean regressed, List<String> reasons) {
+        public Comparison {
+            metricDeltas = metricDeltas == null ? Map.of() : Map.copyOf(metricDeltas);
+            reasons = reasons == null ? List.of() : List.copyOf(reasons);
+        }
+    }
+
+    /** Compares only reports evaluated against the exact same dataset revision. */
+    final class RegressionAnalyzer {
+        private final double maximumPassRateRegression;
+        private final List<RegressionThreshold> thresholds;
+        public RegressionAnalyzer(double maximumPassRateRegression, List<RegressionThreshold> thresholds) {
+            if (!Double.isFinite(maximumPassRateRegression) || maximumPassRateRegression < 0 || maximumPassRateRegression > 1)
+                throw new IllegalArgumentException("maximumPassRateRegression must be within [0,1]");
+            this.maximumPassRateRegression = maximumPassRateRegression;
+            this.thresholds = thresholds == null ? List.of() : List.copyOf(thresholds);
+        }
+        public Comparison compare(Report baseline, Report candidate) {
+            if (baseline == null || candidate == null) throw new IllegalArgumentException("baseline and candidate reports are required");
+            if (!baseline.datasetId().equals(candidate.datasetId()) || !baseline.datasetVersion().equals(candidate.datasetVersion()))
+                throw new IllegalArgumentException("reports must use the same dataset id and version");
+            Map<String,Double> deltas = new LinkedHashMap<>();
+            candidate.aggregateMetrics().forEach((name,value) -> {
+                Double old = baseline.aggregateMetrics().get(name);
+                if (old != null) deltas.put(name, value - old);
+            });
+            double passDelta = candidate.passRate() - baseline.passRate();
+            List<String> reasons = new ArrayList<>();
+            if (passDelta < -maximumPassRateRegression)
+                reasons.add("pass rate regression exceeds tolerance: " + passDelta);
+            for (RegressionThreshold threshold : thresholds) {
+                Double delta = deltas.get(threshold.metric());
+                if (delta == null) reasons.add("comparison metric missing from baseline or candidate: " + threshold.metric());
+                else if (delta < -threshold.maximumRegression())
+                    reasons.add(threshold.metric() + " regression exceeds tolerance: " + delta);
+            }
+            return new Comparison(baseline, candidate, deltas, passDelta, !reasons.isEmpty(), reasons);
+        }
+    }
 }
