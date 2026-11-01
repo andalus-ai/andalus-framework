@@ -8,7 +8,6 @@ import tech.kayys.andalus.security.authz.AuthorizationService;
 import tech.kayys.andalus.security.context.SecurityContext;
 import tech.kayys.andalus.security.delegation.DelegationContext;
 import tech.kayys.andalus.security.exception.AuthorizationException;
-import tech.kayys.andalus.security.identity.IdentityType;
 
 import java.util.Objects;
 import java.util.Optional;
