@@ -22,7 +22,7 @@ public final class ProbabilityCondition implements EdgeCondition {
     }
 
     @Override
-    public boolean evaluate(GraphGraphExecutionContext context, NodeResult sourceResult) {
+    public boolean evaluate(GraphExecutionContext context, NodeResult sourceResult) {
         return ThreadLocalRandom.current().nextDouble() < probability;
     }
 
