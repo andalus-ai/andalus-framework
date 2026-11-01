@@ -5,7 +5,6 @@ import tech.kayys.andalus.security.delegation.DelegationAudience;
 import tech.kayys.andalus.security.delegation.DelegationConstraints;
 import tech.kayys.andalus.security.delegation.DelegationContext;
 import tech.kayys.andalus.security.delegation.DelegationId;
-import tech.kayys.andalus.security.identity.Principal;
 
 import java.time.Instant;
 import java.util.HashMap;
@@ -18,6 +17,9 @@ public final class DefaultSecurityContextPropagator implements SecurityContextPr
     private final long defaultTtlSeconds;
 
     public DefaultSecurityContextPropagator(long defaultTtlSeconds) {
+        if (defaultTtlSeconds <= 0) {
+            throw new IllegalArgumentException("defaultTtlSeconds must be positive");
+        }
         this.defaultTtlSeconds = defaultTtlSeconds;
     }
 
@@ -31,7 +33,11 @@ public final class DefaultSecurityContextPropagator implements SecurityContextPr
 
         DelegationConstraints constraints = request.constraints() != null
                 ? request.constraints()
-                : DelegationConstraints.unrestricted();
+                : DelegationConstraints.empty();
+
+        if (!constraints.canDelegate()) {
+            throw new SecurityException("Delegation denied: no remaining hops or delegated capabilities");
+        }
 
         DelegationAudience audience = DelegationAudience.of(request.targetAgentId());
 
