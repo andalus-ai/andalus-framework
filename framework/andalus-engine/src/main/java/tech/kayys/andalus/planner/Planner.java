@@ -14,7 +14,7 @@ import java.util.*;
 
 import tech.kayys.andalus.extension.Extension;
 import tech.kayys.andalus.context.ContextData;
-import tech.kayys.andalus.execution.GraphExecutionContext;
+import tech.kayys.andalus.execution.GraphGraphExecutionContext;
 
 
 /**
@@ -25,19 +25,19 @@ public interface Planner extends Extension {
     /**
      * Create a plan
      */
-    Plan createPlan(GraphExecutionContext context) throws Exception;
+    Plan createPlan(GraphGraphExecutionContext context) throws Exception;
     
     /**
      * Create a plan with context data
      */
-    default Plan createPlan(GraphExecutionContext context, ContextData contextData) throws Exception {
+    default Plan createPlan(GraphGraphExecutionContext context, ContextData contextData) throws Exception {
         return createPlan(context);
     }
     
     /**
      * Create a plan asynchronously
      */
-    default CompletableFuture<Plan> createPlanAsync(GraphExecutionContext context) {
+    default CompletableFuture<Plan> createPlanAsync(GraphGraphExecutionContext context) {
         return CompletableFuture.supplyAsync(() -> {
             try {
                 return createPlan(context);
