@@ -51,10 +51,10 @@
             <version>${project.version}</version>
         </dependency>
 
-        <!-- andalus-engine: ExecutionContext -->
+        <!-- KnowledgeProvider consumes the invocation-scoped execution contract. -->
         <dependency>
             <groupId>tech.kayys.andalus</groupId>
-            <artifactId>andalus-engine</artifactId>
+            <artifactId>andalus-execution-api</artifactId>
             <version>${project.version}</version>
         </dependency>
 
