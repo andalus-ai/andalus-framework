@@ -267,7 +267,7 @@ class LearningSignalRuntimeTest {
     private Evaluator.Report sampleReport(String evaluationId, String datasetVersion,
                                           double passRate, Map<String,Double> metrics) {
         List<Evaluator.CaseResult> results = List.of(
-                new Evaluator.CaseResult("case-1", metrics, passRate >= 1.0, null),
+                new Evaluator.CaseResult("case-1", metrics, passRate >= 0.5, null),
                 new Evaluator.CaseResult("case-2", metrics, passRate >= 1.0, null));
         return new Evaluator.Report(evaluationId, "model-a", "candidate-v1", "regression-suite",
                 datasetVersion, java.time.Instant.parse("2026-01-01T00:00:00Z"),
