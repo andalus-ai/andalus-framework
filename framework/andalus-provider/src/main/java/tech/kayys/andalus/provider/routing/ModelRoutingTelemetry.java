@@ -25,23 +25,31 @@ public class ModelRoutingTelemetry {
 
         public double errorRate() {
             long total = totalCalls.get();
-            if (total == 0) return 0.0;
+            if (total <= 0) return 0.0;
             return (double) errorCalls.get() / total;
         }
 
+        /**
+         * Average end-to-end latency across all recorded attempts, including failures.
+         * Both success and failure paths contribute to totalLatencyMs.
+         */
         public long averageLatencyMs() {
-            long successes = successCalls.get();
-            if (successes == 0) return 0;
-            return totalLatencyMs.get() / successes;
+            long total = totalCalls.get();
+            if (total <= 0) return 0;
+            return totalLatencyMs.get() / total;
+        }
+
+        public boolean hasSufficientLatencySamples() {
+            return totalCalls.get() >= 3;
         }
 
         public double computeHealthMultiplier() {
             long total = totalCalls.get();
-            if (total < 3) return 1.0; // insufficient data
+            if (total < 3) return 1.0; // insufficient data; do not overreact
 
             double errRate = errorRate();
-            if (errRate >= 0.50) return 0.1; // severely degraded
-            if (errRate >= 0.20) return 0.5; // degraded
+            if (errRate >= 0.50) return 0.1;
+            if (errRate >= 0.20) return 0.5;
             if (errRate >= 0.05) return 0.85;
 
             return 1.0;
@@ -51,20 +59,20 @@ public class ModelRoutingTelemetry {
     private final Map<String, ModelStats> statsMap = new ConcurrentHashMap<>();
 
     public void recordSuccess(String modelId, long latencyMs, long tokens) {
-        if (modelId == null) return;
+        if (modelId == null || modelId.isBlank()) return;
         ModelStats stats = statsMap.computeIfAbsent(modelId.toLowerCase(), k -> new ModelStats());
         stats.totalCalls.incrementAndGet();
         stats.successCalls.incrementAndGet();
-        stats.totalLatencyMs.addAndGet(latencyMs);
-        stats.totalTokens.addAndGet(tokens);
+        stats.totalLatencyMs.addAndGet(Math.max(0, latencyMs));
+        stats.totalTokens.addAndGet(Math.max(0, tokens));
     }
 
     public void recordFailure(String modelId, long latencyMs) {
-        if (modelId == null) return;
+        if (modelId == null || modelId.isBlank()) return;
         ModelStats stats = statsMap.computeIfAbsent(modelId.toLowerCase(), k -> new ModelStats());
         stats.totalCalls.incrementAndGet();
         stats.errorCalls.incrementAndGet();
-        stats.totalLatencyMs.addAndGet(latencyMs);
+        stats.totalLatencyMs.addAndGet(Math.max(0, latencyMs));
     }
 
     public double getHealthMultiplier(String modelId) {
