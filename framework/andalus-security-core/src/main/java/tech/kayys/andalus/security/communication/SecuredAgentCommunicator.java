@@ -6,9 +6,11 @@ import tech.kayys.andalus.security.authz.AuthorizationRequest;
 import tech.kayys.andalus.security.authz.AuthorizationDecision;
 import tech.kayys.andalus.security.authz.AuthorizationService;
 import tech.kayys.andalus.security.context.SecurityContext;
+import tech.kayys.andalus.security.delegation.DelegationContext;
 import tech.kayys.andalus.security.exception.AuthorizationException;
 
 import java.util.Objects;
+import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.Flow;
@@ -17,21 +19,13 @@ import java.util.concurrent.Flow;
  * A decorator around {@link AgentCommunicator} that enforces authorization
  * before delegating to the underlying communicator.
  *
- * <pre>
- * A2A ───────┐
- *            │
- * ANP ───────┼──► SecuredAgentCommunicator ──► AgentCommunicator ──► Agent
- *            │
- * Local ─────┘
- * </pre>
- *
- * The {@link SecurityContext} is extracted from the {@link ProtocolContext} attributes.
- * If absent, {@link SecurityContext#anonymous()} is used.
+ * <p>The security context and optional delegation are read from trusted
+ * protocol attributes. Missing identity is treated as anonymous.</p>
  */
 public final class SecuredAgentCommunicator implements AgentCommunicator {
 
-    /** Key used to store/retrieve {@link SecurityContext} inside {@link ProtocolContext} attributes. */
     public static final String SECURITY_CONTEXT_KEY = "andalus.security.context";
+    public static final String DELEGATION_CONTEXT_KEY = "andalus.security.delegation";
 
     private final AgentCommunicator delegate;
     private final AuthorizationService authorizationService;
@@ -40,7 +34,7 @@ public final class SecuredAgentCommunicator implements AgentCommunicator {
             AgentCommunicator delegate,
             AuthorizationService authorizationService
     ) {
-        this.delegate             = Objects.requireNonNull(delegate,             "delegate");
+        this.delegate = Objects.requireNonNull(delegate, "delegate");
         this.authorizationService = Objects.requireNonNull(authorizationService, "authorizationService");
     }
 
@@ -49,8 +43,7 @@ public final class SecuredAgentCommunicator implements AgentCommunicator {
         return authorize(request, context).thenCompose(decision -> {
             if (!decision.allowed()) {
                 return CompletableFuture.failedFuture(
-                        new AuthorizationException("Request denied: " + decision.reason())
-                );
+                        new AuthorizationException("Request denied: " + decision.reason()));
             }
             return delegate.send(request, context);
         });
@@ -74,13 +67,14 @@ public final class SecuredAgentCommunicator implements AgentCommunicator {
         return delegate.stream(request, context);
     }
 
-    // ── helpers ────────────────────────────────────────────────────────────────
-
     private CompletionStage<AuthorizationDecision> authorize(AgentRequest request, ProtocolContext context) {
         SecurityContext secCtx = extractSecurityContext(context);
+        Optional<DelegationContext> delegation = extractDelegationContext(context);
         AuthorizationRequest authRequest = AuthorizationRequest.execute(
                 secCtx,
-                request.capability() != null ? request.capability().value() : null
+                request.capability().value(),
+                request.target().id(),
+                delegation
         );
         return authorizationService.authorize(authRequest);
     }
@@ -99,9 +93,18 @@ public final class SecuredAgentCommunicator implements AgentCommunicator {
             return SecurityContext.anonymous();
         }
         Object value = context.attributes().get(SECURITY_CONTEXT_KEY);
-        if (value instanceof SecurityContext sc) {
-            return sc;
+        return value instanceof SecurityContext securityContext
+                ? securityContext
+                : SecurityContext.anonymous();
+    }
+
+    private Optional<DelegationContext> extractDelegationContext(ProtocolContext context) {
+        if (context == null) {
+            return Optional.empty();
         }
-        return SecurityContext.anonymous();
+        Object value = context.attributes().get(DELEGATION_CONTEXT_KEY);
+        return value instanceof DelegationContext delegation
+                ? Optional.of(delegation)
+                : Optional.empty();
     }
 }
