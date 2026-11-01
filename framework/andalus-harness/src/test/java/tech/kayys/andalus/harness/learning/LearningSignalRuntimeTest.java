@@ -228,4 +228,49 @@ class LearningSignalRuntimeTest {
                 .isInstanceOf(java.util.concurrent.CompletionException.class);
     }
 
+
+    @Test
+    void reportStore_persistsAndRetrievesEvaluationProvenance() {
+        Evaluator.Report report = sampleReport("eval-store", "v1", 1.0, Map.of("quality", 0.9));
+        Evaluator.InMemoryReportStore store = new Evaluator.InMemoryReportStore();
+        store.save(report).toCompletableFuture().join();
+
+        assertThat(store.findByEvaluationId("eval-store").toCompletableFuture().join()).contains(report);
+        assertThat(store.findByEvaluationId("missing").toCompletableFuture().join()).isEmpty();
+    }
+
+    @Test
+    void regressionAnalyzer_detectsMetricAndPassRateRegression() {
+        Evaluator.Report baseline = sampleReport("baseline", "v1", 1.0, Map.of("quality", 0.9));
+        Evaluator.Report candidate = sampleReport("candidate", "v1", 0.5, Map.of("quality", 0.7));
+        Evaluator.RegressionAnalyzer analyzer = new Evaluator.RegressionAnalyzer(0.1, List.of(
+                new Evaluator.RegressionThreshold("quality", 0.05)));
+
+        Evaluator.Comparison comparison = analyzer.compare(baseline, candidate);
+
+        assertThat(comparison.regressed()).isTrue();
+        assertThat(comparison.passRateDelta()).isEqualTo(-0.5);
+        assertThat(comparison.metricDeltas()).containsEntry("quality", -0.2);
+        assertThat(comparison.reasons()).hasSize(2);
+    }
+
+    @Test
+    void regressionAnalyzer_requiresIdenticalDatasetRevision() {
+        Evaluator.Report baseline = sampleReport("baseline", "v1", 1.0, Map.of());
+        Evaluator.Report candidate = sampleReport("candidate", "v2", 1.0, Map.of());
+
+        org.assertj.core.api.Assertions.assertThatThrownBy(() ->
+                new Evaluator.RegressionAnalyzer(0.0, List.of()).compare(baseline, candidate))
+                .isInstanceOf(IllegalArgumentException.class);
+    }
+
+    private Evaluator.Report sampleReport(String evaluationId, String datasetVersion,
+                                          double passRate, Map<String,Double> metrics) {
+        List<Evaluator.CaseResult> results = List.of(
+                new Evaluator.CaseResult("case-1", metrics, passRate >= 1.0, null),
+                new Evaluator.CaseResult("case-2", metrics, passRate >= 1.0, null));
+        return new Evaluator.Report(evaluationId, "model-a", "candidate-v1", "regression-suite",
+                datasetVersion, java.time.Instant.parse("2026-01-01T00:00:00Z"),
+                java.time.Instant.parse("2026-01-01T00:00:01Z"), results, metrics);
+    }
 }
