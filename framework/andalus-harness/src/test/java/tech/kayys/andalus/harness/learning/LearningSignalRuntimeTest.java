@@ -273,4 +273,34 @@ class LearningSignalRuntimeTest {
                 datasetVersion, java.time.Instant.parse("2026-01-01T00:00:00Z"),
                 java.time.Instant.parse("2026-01-01T00:00:01Z"), results, metrics);
     }
+
+    @Test
+    void evaluatorDescriptor_fingerprintIsStableAcrossMapOrder() {
+        Evaluator.EvaluatorDescriptor first = new Evaluator.EvaluatorDescriptor("judge", "2.1",
+                new java.util.LinkedHashMap<>(Map.of("temperature", "0", "rubric", "strict")));
+        java.util.Map<String,String> reverse = new java.util.LinkedHashMap<>();
+        reverse.put("rubric", "strict");
+        reverse.put("temperature", "0");
+        Evaluator.EvaluatorDescriptor second = new Evaluator.EvaluatorDescriptor("judge", "2.1", reverse);
+
+        assertThat(first.configurationFingerprint()).isEqualTo(second.configurationFingerprint());
+        assertThat(first.configurationFingerprint()).hasSize(64);
+    }
+
+    @Test
+    void evaluationReport_recordsEvaluatorIdentityAndConfigurationFingerprint() {
+        Evaluator evaluator = item -> java.util.concurrent.CompletableFuture.completedFuture(
+                new Evaluator.CaseResult(item.id(), Map.of("quality", 1.0), true, null));
+        Evaluator.Dataset dataset = new Evaluator.Dataset("repro", "v4",
+                List.of(new Evaluator.EvaluationCase("case-1", "input", "expected", Map.of())));
+        Evaluator.EvaluatorDescriptor descriptor = new Evaluator.EvaluatorDescriptor("llm-judge", "3.2",
+                Map.of("temperature", "0", "rubric", "safety-v2"));
+        Evaluator.Report report = new Evaluator.DefaultRuntime(evaluator).evaluate(
+                new Evaluator.Request("eval-repro", "model-x", "sha-123", dataset, descriptor))
+                .toCompletableFuture().join();
+
+        assertThat(report.evaluatorId()).isEqualTo("llm-judge");
+        assertThat(report.evaluatorVersion()).isEqualTo("3.2");
+        assertThat(report.evaluatorConfigFingerprint()).isEqualTo(descriptor.configurationFingerprint());
+    }
 }
