@@ -32,7 +32,7 @@ public final class ExpressionCondition implements EdgeCondition {
     }
 
     @Override
-    public boolean evaluate(ExecutionContext context, NodeResult sourceResult) {
+    public boolean evaluate(GraphExecutionContext context, NodeResult sourceResult) {
         // Simple expression evaluation - can be extended with a proper expression
         // engine
         if (expression == null || expression.isEmpty()) {
