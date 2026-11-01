@@ -1,6 +1,5 @@
 package tech.kayys.andalus.provider.routing;
 
-import org.jboss.logging.Logger;
 import tech.kayys.andalus.agent.AgentRequest;
 import tech.kayys.andalus.core.AgentDefinition;
 import tech.kayys.andalus.core.ContextRequirements;
@@ -9,7 +8,6 @@ import tech.kayys.andalus.provider.Provider;
 
 import java.time.Instant;
 import java.util.*;
-import java.util.stream.Collectors;
 
 /**
  * Adaptive / Advanced ModelRouter implementation.
@@ -21,8 +19,6 @@ import java.util.stream.Collectors;
  * 5. FallbackPlanner (Multi-strategy Fallback Target Assembly)
  */
 public class AdaptiveModelRouter implements ModelRouter {
-
-    private static final Logger LOG = Logger.getLogger(AdaptiveModelRouter.class);
 
     private final ModelRegistry modelRegistry;
     private final ModelDeploymentRegistry deploymentRegistry;
@@ -86,20 +82,28 @@ public class AdaptiveModelRouter implements ModelRouter {
         Map<String, String> rejected = new LinkedHashMap<>();
         List<ModelSpec> candidateModels = new ArrayList<>();
 
-        // 2. Hard Constraint Evaluation
+        // 2. Hard Constraint Evaluation and provider eligibility.
+        // A candidate is usable only when both policy constraints and provider resolution succeed.
         for (ModelSpec model : allModels) {
             ConstraintEvaluator.EvaluationResult eval = constraintEvaluator.evaluate(model, reqs, pol);
-            if (eval.isAllowed()) {
-                candidateModels.add(model);
-            } else {
+            if (!eval.isAllowed()) {
                 rejected.put(model.modelId(), eval.rejectionReason());
+                continue;
+            }
+
+            try {
+                resolveProvider(model, availableProviders);
+                candidateModels.add(model);
+            } catch (IllegalStateException ex) {
+                rejected.put(model.modelId(), ex.getMessage());
             }
         }
 
-        // If all candidates rejected, relax constraints to ensure continuity
+        // Never relax hard constraints: doing so could violate explicit policy or request requirements.
         if (candidateModels.isEmpty()) {
-            LOG.warnf("All models rejected for request %s. Relaxing constraints to standard catalog.", requestId);
-            candidateModels.addAll(allModels);
+            throw new IllegalStateException(
+                    "No eligible model for request " + requestId + ". Rejections: " + rejected
+            );
         }
 
         // 3. Soft Preference Multi-Criteria Scoring
@@ -117,7 +121,7 @@ public class AdaptiveModelRouter implements ModelRouter {
         long inputTokens = Math.max(reqs.requiredContextTokens(), 2048);
         double totalEstimatedCost = selectedModelSpec.estimateCost(inputTokens, 1024);
 
-        // 5. Fallback Planning
+        // 5. Fallback Planning. Every scored candidate has already passed provider resolution.
         List<InferencePlan.FallbackTarget> fallbackTargets = fallbackPlanner.planFallbacks(
                 topScored,
                 scored,
@@ -175,7 +179,7 @@ public class AdaptiveModelRouter implements ModelRouter {
     }
 
     private Provider resolveProvider(ModelSpec modelSpec, List<Provider> availableProviders) {
-        // Check active deployments in registry first
+        // Check active deployments in registry first.
         List<ModelDeployment> deployments = deploymentRegistry.findAvailable(modelSpec.modelId());
         for (ModelDeployment dep : deployments) {
             if (dep.providerInstance() != null) {
@@ -183,25 +187,21 @@ public class AdaptiveModelRouter implements ModelRouter {
             }
         }
 
-        String providerId = modelSpec.providerId().toLowerCase();
-        String modelId = modelSpec.modelId().toLowerCase();
+        String providerId = modelSpec.providerId();
+        String modelId = modelSpec.modelId();
 
-        // Exact ID match
-        for (Provider p : availableProviders) {
-            if (p.id() != null && (p.id().equalsIgnoreCase(providerId) || p.id().equalsIgnoreCase(modelId))) {
-                return p;
+        // Resolve only explicit provider/model identifiers. A positional or fuzzy fallback can
+        // silently route a model through an unrelated provider.
+        for (Provider provider : availableProviders) {
+            String availableId = provider.id();
+            if (availableId != null
+                    && (availableId.equalsIgnoreCase(providerId) || availableId.equalsIgnoreCase(modelId))) {
+                return provider;
             }
         }
 
-        // Class name substring match
-        for (Provider p : availableProviders) {
-            String className = p.getClass().getSimpleName().toLowerCase();
-            if (className.contains(providerId) || className.contains(modelId)) {
-                return p;
-            }
-        }
-
-        // Fallback
-        return availableProviders.get(0);
+        throw new IllegalStateException(
+                "No available provider matches model '" + modelId + "' (providerId='" + providerId + "')"
+        );
     }
 }
