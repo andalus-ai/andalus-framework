@@ -89,7 +89,8 @@ class ExecutionMobilityTest {
         boolean renewed = leaseManager.renewLease(execId, "worker-A", Duration.ofMinutes(10));
         assertTrue(renewed);
 
-        // Acquire lease for new holder (simulating migration/handoff)
+        // Explicitly release the current holder before handing ownership to another worker.
+        leaseManager.releaseLease(execId, "worker-A");
         ExecutionLease lease2 = leaseManager.acquireLease(execId, "worker-B", Duration.ofMinutes(5));
         assertEquals(2L, lease2.fencingToken().generation());
         assertEquals("worker-B", lease2.holderId());
