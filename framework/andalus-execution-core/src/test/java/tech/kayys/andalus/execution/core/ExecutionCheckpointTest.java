@@ -70,7 +70,11 @@ public class ExecutionCheckpointTest {
         ExecutionCheckpoint cp2 = new ExecutionCheckpoint("cp-2", execId, attId, 2L, payload2, manifest2, Instant.now(), Map.of());
         store.save(cp2);
 
-        ExecutionCheckpoint badCp = new ExecutionCheckpoint("cp-bad", execId, attId, 1L, payload2, manifest2, Instant.now(), Map.of());
+        CheckpointManifest staleManifest = new CheckpointManifest(
+                "cp-bad", 1L, List.of(), List.of(), List.of(),
+                CheckpointIntegrity.sha256(payload2), Instant.now(), Map.of());
+        ExecutionCheckpoint badCp = new ExecutionCheckpoint(
+                "cp-bad", execId, attId, 1L, payload2, staleManifest, Instant.now(), Map.of());
         assertThrows(IllegalArgumentException.class, () -> store.save(badCp));
 
         Optional<ExecutionCheckpoint> latest = store.getLatest(execId);
@@ -110,6 +114,70 @@ public class ExecutionCheckpointTest {
                 () -> store.save(checkpoint("shared-id", "exec-two", 1L)));
         assertTrue(store.list("exec-two").isEmpty());
         assertEquals("exec-one", store.get("shared-id").orElseThrow().executionId());
+    }
+
+
+    @Test
+    void checkpointPayloadIsDefensivelyCopiedOnConstructionAndAccess() {
+        ExecutionCheckpoint checkpoint = checkpoint("immutable", "exec-immutable", 1L);
+        byte[] exposed = checkpoint.payload();
+        exposed[0] = 0;
+        assertArrayEquals("payload-immutable".getBytes(StandardCharsets.UTF_8), checkpoint.payload());
+
+        byte[] constructorPayload = "constructor-copy".getBytes(StandardCharsets.UTF_8);
+        CheckpointManifest manifest = new CheckpointManifest(
+                "constructor-copy", 1L, List.of(), List.of(), List.of(),
+                CheckpointIntegrity.sha256(constructorPayload), Instant.now(), Map.of());
+        ExecutionCheckpoint copied = new ExecutionCheckpoint(
+                "constructor-copy", "exec-copy", AttemptId.random(), 1L,
+                constructorPayload, manifest, Instant.now(), Map.of());
+        constructorPayload[0] = 0;
+        assertArrayEquals("constructor-copy".getBytes(StandardCharsets.UTF_8), copied.payload());
+    }
+
+    @Test
+    void rejectsCheckpointWhenManifestIdentityOrIntegrityDoesNotMatch() {
+        byte[] payload = "payload".getBytes(StandardCharsets.UTF_8);
+        CheckpointManifest wrongId = new CheckpointManifest(
+                "other-id", 1L, List.of(), List.of(), List.of(),
+                CheckpointIntegrity.sha256(payload), Instant.now(), Map.of());
+        assertThrows(IllegalArgumentException.class, () -> new ExecutionCheckpoint(
+                "checkpoint-id", "execution-id", AttemptId.random(), 1L,
+                payload, wrongId, Instant.now(), Map.of()));
+
+        CheckpointManifest wrongSequence = new CheckpointManifest(
+                "checkpoint-id", 2L, List.of(), List.of(), List.of(),
+                CheckpointIntegrity.sha256(payload), Instant.now(), Map.of());
+        assertThrows(IllegalArgumentException.class, () -> new ExecutionCheckpoint(
+                "checkpoint-id", "execution-id", AttemptId.random(), 1L,
+                payload, wrongSequence, Instant.now(), Map.of()));
+
+        CheckpointManifest wrongChecksum = new CheckpointManifest(
+                "checkpoint-id", 1L, List.of(), List.of(), List.of(),
+                CheckpointIntegrity.sha256("different".getBytes(StandardCharsets.UTF_8)),
+                Instant.now(), Map.of());
+        assertThrows(IllegalArgumentException.class, () -> new ExecutionCheckpoint(
+                "checkpoint-id", "execution-id", AttemptId.random(), 1L,
+                payload, wrongChecksum, Instant.now(), Map.of()));
+    }
+
+    @Test
+    void checkpointIntegrityRejectsUnsupportedAlgorithmAndMalformedChecksum() {
+        assertThrows(IllegalArgumentException.class,
+                () -> new CheckpointIntegrity("MD5", "00000000000000000000000000000000"));
+        assertThrows(IllegalArgumentException.class,
+                () -> new CheckpointIntegrity("SHA-256", "not-a-checksum"));
+    }
+
+    @Test
+    void checkpointSequenceMustBePositive() {
+        byte[] payload = "payload".getBytes(StandardCharsets.UTF_8);
+        CheckpointManifest manifest = new CheckpointManifest(
+                "zero", 0L, List.of(), List.of(), List.of(),
+                CheckpointIntegrity.sha256(payload), Instant.now(), Map.of());
+        assertThrows(IllegalArgumentException.class, () -> new ExecutionCheckpoint(
+                "zero", "execution-id", AttemptId.random(), 0L,
+                payload, manifest, Instant.now(), Map.of()));
     }
 
     private static boolean saveAfterBarrier(
