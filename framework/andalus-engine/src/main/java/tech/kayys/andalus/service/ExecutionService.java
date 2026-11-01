@@ -19,29 +19,29 @@ import tech.kayys.andalus.core.AgentDefinition;
 import tech.kayys.andalus.skill.spi.SkillDefinition;
 import tech.kayys.andalus.workflow.WorkflowDefinition;
 import tech.kayys.andalus.identity.ResourceId.CorrelationId;
-import tech.kayys.andalus.execution.ExecutionContext;
+import tech.kayys.andalus.execution.GraphExecutionContext;
 import tech.kayys.andalus.execution.ExecutionState;
 
 /**
  * Execution Service - executes definitions
  */
 public interface ExecutionService {
-    ExecutionContext startAgent(String agentId, Map<String, Object> inputs);
-    ExecutionContext startSkill(String skillId, Map<String, Object> inputs);
-    ExecutionContext startWorkflow(String workflowId, Map<String, Object> inputs);
+    GraphExecutionContext startAgent(String agentId, Map<String, Object> inputs);
+    GraphExecutionContext startSkill(String skillId, Map<String, Object> inputs);
+    GraphExecutionContext startWorkflow(String workflowId, Map<String, Object> inputs);
     
-    ExecutionContext startAgent(AgentDefinition agent, Map<String, Object> inputs);
-    ExecutionContext startSkill(SkillDefinition skill, Map<String, Object> inputs);
-    ExecutionContext startWorkflow(WorkflowDefinition workflow, Map<String, Object> inputs);
+    GraphExecutionContext startAgent(AgentDefinition agent, Map<String, Object> inputs);
+    GraphExecutionContext startSkill(SkillDefinition skill, Map<String, Object> inputs);
+    GraphExecutionContext startWorkflow(WorkflowDefinition workflow, Map<String, Object> inputs);
     
-    CompletableFuture<ExecutionContext> startAgentAsync(String agentId, Map<String, Object> inputs);
-    CompletableFuture<ExecutionContext> startSkillAsync(String skillId, Map<String, Object> inputs);
-    CompletableFuture<ExecutionContext> startWorkflowAsync(String workflowId, Map<String, Object> inputs);
+    CompletableFuture<GraphExecutionContext> startAgentAsync(String agentId, Map<String, Object> inputs);
+    CompletableFuture<GraphExecutionContext> startSkillAsync(String skillId, Map<String, Object> inputs);
+    CompletableFuture<GraphExecutionContext> startWorkflowAsync(String workflowId, Map<String, Object> inputs);
     
-    Optional<ExecutionContext> getExecution(CorrelationId correlationId);
-    Optional<ExecutionContext> getExecution(String correlationId);
-    List<ExecutionContext> listExecutions();
-    List<ExecutionContext> listExecutions(ExecutionState state);
+    Optional<GraphExecutionContext> getExecution(CorrelationId correlationId);
+    Optional<GraphExecutionContext> getExecution(String correlationId);
+    List<GraphExecutionContext> listExecutions();
+    List<GraphExecutionContext> listExecutions(ExecutionState state);
     
     void pauseExecution(CorrelationId correlationId);
     void resumeExecution(CorrelationId correlationId);

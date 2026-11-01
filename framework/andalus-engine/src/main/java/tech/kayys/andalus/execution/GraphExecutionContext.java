@@ -17,7 +17,7 @@ import java.util.UUID;
  * <li>Runtime services</li>
  * </ul>
  */
-public interface ExecutionContext {
+public interface GraphExecutionContext {
 
     /**
      * Returns the execution graph.
@@ -42,7 +42,7 @@ public interface ExecutionContext {
     /**
      * Returns the parent execution context (if any).
      */
-    Optional<ExecutionContext> parent();
+    Optional<GraphExecutionContext> parent();
 
     /**
      * Returns the execution ID.
@@ -57,5 +57,5 @@ public interface ExecutionContext {
     /**
      * Creates a child context for sub-execution.
      */
-    ExecutionContext createChild(Map<String, Object> variables);
+    GraphExecutionContext createChild(Map<String, Object> variables);
 }
