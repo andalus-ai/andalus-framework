@@ -4,7 +4,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.Callable;
 
-import tech.kayys.andalus.execution.GraphGraphExecutionContext;
+import tech.kayys.andalus.execution.GraphExecutionContext;
 
 /**
  * Tracing Helper - Convenience methods
