@@ -8,6 +8,7 @@ import tech.kayys.andalus.security.authz.AuthorizationService;
 import tech.kayys.andalus.security.context.SecurityContext;
 import tech.kayys.andalus.security.delegation.DelegationContext;
 import tech.kayys.andalus.security.exception.AuthorizationException;
+import tech.kayys.andalus.security.identity.IdentityType;
 
 import java.util.Objects;
 import java.util.Optional;
@@ -16,11 +17,12 @@ import java.util.concurrent.CompletionStage;
 import java.util.concurrent.Flow;
 
 /**
- * A decorator around {@link AgentCommunicator} that enforces authorization
- * before delegating to the underlying communicator.
+ * A decorator around {@link AgentCommunicator} that enforces tenant isolation
+ * and authorization before delegating to the underlying communicator.
  *
- * <p>The security context and optional delegation are read from trusted
- * protocol attributes. Missing identity is treated as anonymous.</p>
+ * <p>Tenant identity is taken only from the authenticated SecurityContext.
+ * ProtocolContext.tenantId is treated as an assertion and must agree with it;
+ * it can never establish or override the authenticated tenant.</p>
  */
 public final class SecuredAgentCommunicator implements AgentCommunicator {
 
@@ -69,6 +71,8 @@ public final class SecuredAgentCommunicator implements AgentCommunicator {
 
     private CompletionStage<AuthorizationDecision> authorize(AgentRequest request, ProtocolContext context) {
         SecurityContext secCtx = extractSecurityContext(context);
+        validateTenantBoundary(secCtx, context);
+
         Optional<DelegationContext> delegation = extractDelegationContext(context);
         AuthorizationRequest authRequest = AuthorizationRequest.execute(
                 secCtx,
@@ -79,11 +83,36 @@ public final class SecuredAgentCommunicator implements AgentCommunicator {
         return authorizationService.authorize(authRequest);
     }
 
+    private void validateTenantBoundary(SecurityContext securityContext, ProtocolContext protocolContext) {
+        boolean tenantScopedPrincipal = switch (securityContext.principal().type()) {
+            case USER, SERVICE, AGENT -> true;
+            case SYSTEM, ANONYMOUS -> false;
+        };
+
+        boolean authenticatedTenantPresent = securityContext.tenant().hasTenant();
+        if (tenantScopedPrincipal && !authenticatedTenantPresent) {
+            throw new AuthorizationException(
+                    "Tenant-scoped identity is missing an authenticated tenant context");
+        }
+
+        String assertedTenant = protocolContext == null ? null : protocolContext.tenantId();
+        if (assertedTenant != null && !assertedTenant.isBlank()) {
+            if (!authenticatedTenantPresent
+                    || !assertedTenant.equals(securityContext.tenant().tenantId())) {
+                throw new AuthorizationException(
+                        "Protocol tenant does not match the authenticated security context");
+            }
+        }
+    }
+
     private AuthorizationDecision authorizeSync(AgentRequest request, ProtocolContext context) {
         try {
             return authorize(request, context).toCompletableFuture().join();
         } catch (java.util.concurrent.CompletionException ex) {
             Throwable cause = ex.getCause() != null ? ex.getCause() : ex;
+            if (cause instanceof AuthorizationException authorizationException) {
+                throw authorizationException;
+            }
             throw new AuthorizationException("Authorization failed: " + cause.getMessage(), cause);
         }
     }
