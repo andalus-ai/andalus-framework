@@ -18,7 +18,7 @@ public final class FailureCondition implements EdgeCondition {
     }
 
     @Override
-    public boolean evaluate(GraphGraphExecutionContext context, NodeResult sourceResult) {
+    public boolean evaluate(GraphExecutionContext context, NodeResult sourceResult) {
         return sourceResult != null && !sourceResult.isSuccess();
     }
 
