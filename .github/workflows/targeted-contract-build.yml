@@ -1,0 +1,37 @@
+name: Targeted Contract Build
+
+on:
+  push:
+    branches: ["main"]
+  pull_request:
+    branches: ["main"]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  contract-build:
+    name: Execution API and Engine
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Framework
+        uses: actions/checkout@v4
+
+      - name: Setup GraalVM (Java 25)
+        uses: actions/setup-java@v4
+        with:
+          distribution: graalvm
+          java-version: "25"
+          cache: maven
+
+      # Build only the execution contract and graph engine plus their
+      # transitive reactor dependencies. This gives fast, focused feedback
+      # without being blocked by unrelated modules in the full reactor.
+      - name: Build execution contracts and engine
+        run: >-
+          ./mvnw -B -ntp
+          -f framework/pom.xml
+          -pl andalus-execution-api,andalus-engine
+          -am verify
+          -Pci
