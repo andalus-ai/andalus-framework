@@ -172,12 +172,9 @@ public class ExecutionCheckpointTest {
     @Test
     void checkpointSequenceMustBePositive() {
         byte[] payload = "payload".getBytes(StandardCharsets.UTF_8);
-        CheckpointManifest manifest = new CheckpointManifest(
+        assertThrows(IllegalArgumentException.class, () -> new CheckpointManifest(
                 "zero", 0L, List.of(), List.of(), List.of(),
-                CheckpointIntegrity.sha256(payload), Instant.now(), Map.of());
-        assertThrows(IllegalArgumentException.class, () -> new ExecutionCheckpoint(
-                "zero", "execution-id", AttemptId.random(), 0L,
-                payload, manifest, Instant.now(), Map.of()));
+                CheckpointIntegrity.sha256(payload), Instant.now(), Map.of()));
     }
 
     private static boolean saveAfterBarrier(
