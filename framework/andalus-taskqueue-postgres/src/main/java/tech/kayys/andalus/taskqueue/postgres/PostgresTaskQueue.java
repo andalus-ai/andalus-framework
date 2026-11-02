@@ -21,8 +21,6 @@ import java.util.Objects;
  * transactional with queue acknowledgement.</p>
  */
 public final class PostgresTaskQueue implements TaskQueue {
-    private static final String TABLE = "andalus_execution_task";
-
     private final DataSource dataSource;
 
     public PostgresTaskQueue(DataSource dataSource) {
@@ -126,8 +124,8 @@ public final class PostgresTaskQueue implements TaskQueue {
                   AND available_at <= CURRENT_TIMESTAMP
                   AND (claim_owner IS NULL OR claim_until <= CURRENT_TIMESTAMP)
                 ORDER BY available_at, assignment_id
-                FOR UPDATE SKIP LOCKED
                 LIMIT ?
+                FOR UPDATE SKIP LOCKED
                 """;
         String update = """
                 UPDATE andalus_execution_task
