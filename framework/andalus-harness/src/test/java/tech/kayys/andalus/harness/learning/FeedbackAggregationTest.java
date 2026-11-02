@@ -16,8 +16,9 @@ class FeedbackAggregationTest {
         LearningSignal signal = new LearningSignal("id-" + source, LearningSignalType.HUMAN_FEEDBACK,
                 source, "execution-" + source, Optional.empty(), Optional.empty(), Optional.empty(),
                 polarity, List.of(evidence), Optional.empty(), null, Map.of());
-        return new FeedbackAggregation.AdmittedFeedback(signal,
-                new FeedbackTrustPolicy.Decision(true, trust, List.of()));
+        return FeedbackAggregation.admit(signal,
+                new FeedbackTrustPolicy.Policy(Map.of(source, trust), 0.0, 1, 1),
+                java.util.Set.of(), java.util.Set.of()).orElseThrow();
     }
 
     private FeedbackAggregation.Policy policy() {
@@ -89,12 +90,14 @@ class FeedbackAggregationTest {
         LearningSignal automated = new LearningSignal("evaluation", LearningSignalType.EVALUATION,
                 "judge", "execution", Optional.empty(), Optional.empty(), Optional.empty(),
                 LearningSignalPolarity.POSITIVE, List.of("trace"), Optional.empty(), null, Map.of());
-        assertThatThrownBy(() -> new FeedbackAggregation.AdmittedFeedback(automated,
-                new FeedbackTrustPolicy.Decision(true, 1.0, List.of())))
-                .isInstanceOf(IllegalArgumentException.class);
-        assertThatThrownBy(() -> new FeedbackAggregation.AdmittedFeedback(
-                admitted("reviewer-a", "trace", LearningSignalPolarity.POSITIVE, 0.9).signal(),
-                new FeedbackTrustPolicy.Decision(false, 0.0, List.of("rejected"))))
-                .isInstanceOf(IllegalArgumentException.class);
+        var policy = new FeedbackTrustPolicy.Policy(Map.of("reviewer-a", 0.4), 0.8, 1, 1);
+
+        assertThat(FeedbackAggregation.admit(automated, policy, java.util.Set.of(), java.util.Set.of()))
+                .isEmpty();
+        LearningSignal human = new LearningSignal("human", LearningSignalType.HUMAN_FEEDBACK,
+                "reviewer-a", "execution", Optional.empty(), Optional.empty(), Optional.empty(),
+                LearningSignalPolarity.POSITIVE, List.of("trace"), Optional.empty(), null, Map.of());
+        assertThat(FeedbackAggregation.admit(human, policy, java.util.Set.of(), java.util.Set.of()))
+                .isEmpty();
     }
 }
