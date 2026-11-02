@@ -303,4 +303,60 @@ class LearningSignalRuntimeTest {
         assertThat(report.evaluatorVersion()).isEqualTo("3.2");
         assertThat(report.evaluatorConfigFingerprint()).isEqualTo(descriptor.configurationFingerprint());
     }
+
+    @Test
+    void evaluationAdapter_preservesProvenanceAndClassifiesCompletedEvaluation() {
+        Evaluator.Report report = sampleReport("eval-adapter", "v7", 0.5, Map.of("quality", 0.82));
+        Evaluator.Report attributed = new Evaluator.Report(report.evaluationId(), report.candidateId(),
+                report.candidateVersion(), report.datasetId(), report.datasetVersion(), report.startedAt(),
+                report.completedAt(), List.of(
+                        new Evaluator.CaseResult("case-1", Map.of("quality", 0.82), true, "private detail"),
+                        new Evaluator.CaseResult("case-2", Map.of("quality", 0.82), false, "private detail")),
+                report.aggregateMetrics(), "judge-v2", "4.1", "abc123");
+
+        LearningSignal signal = EvaluationLearningSignalAdapter.adapt(attributed,
+                new EvaluationLearningSignalAdapter.Policy(2, 2.0, 0.5)).orElseThrow();
+
+        assertThat(signal.type()).isEqualTo(LearningSignalType.EVALUATION);
+        assertThat(signal.polarity()).isEqualTo(LearningSignalPolarity.MIXED);
+        assertThat(signal.executionId()).isEqualTo("eval-adapter");
+        assertThat(signal.evaluationReference()).contains("eval-adapter");
+        assertThat(signal.metadata())
+                .containsEntry("candidateId", "model-a")
+                .containsEntry("candidateVersion", "candidate-v1")
+                .containsEntry("datasetVersion", "v7")
+                .containsEntry("evaluatorId", "judge-v2")
+                .containsEntry("evaluatorVersion", "4.1")
+                .containsEntry("evaluatorConfigFingerprint", "abc123")
+                .containsEntry("caseCount", 2)
+                .containsEntry("confidence", 0.5);
+        assertThat(signal.metadata()).doesNotContainKey("input").doesNotContainKey("expectedOutput");
+        assertThat(signal.metadata().toString()).doesNotContain("private detail");
+    }
+
+    @Test
+    void evaluationAdapter_requiresMinimumEvidenceBeforeEmittingSignal() {
+        Evaluator.Report report = sampleReport("eval-small", "v1", 1.0, Map.of("quality", 1.0));
+
+        assertThat(EvaluationLearningSignalAdapter.adapt(report,
+                new EvaluationLearningSignalAdapter.Policy(3, 2.0, 0.5))).isEmpty();
+        assertThat(EvaluationLearningSignalAdapter.adapt(report,
+                new EvaluationLearningSignalAdapter.Policy(2, 10.0, 0.5))).isEmpty();
+    }
+
+    @Test
+    void evaluationAdapter_doesNotConflateHumanFeedbackWithAutomatedEvaluation() {
+        Evaluator.Report report = sampleReport("eval-human-distinct", "v1", 1.0, Map.of("quality", 1.0));
+        LearningSignal automated = EvaluationLearningSignalAdapter.adapt(report,
+                new EvaluationLearningSignalAdapter.Policy(2, 1.0, 0.5)).orElseThrow();
+        LearningSignal human = new LearningSignal("human-1", LearningSignalType.HUMAN_FEEDBACK,
+                "reviewer", "exec-human", Optional.empty(), Optional.empty(), Optional.empty(),
+                LearningSignalPolarity.NEGATIVE, List.of("review:1"), Optional.empty(), null,
+                Map.of("reason", "reviewer correction"));
+
+        assertThat(automated.type()).isEqualTo(LearningSignalType.EVALUATION);
+        assertThat(human.type()).isEqualTo(LearningSignalType.HUMAN_FEEDBACK);
+        assertThat(automated.source()).startsWith("evaluation:");
+    }
+
 }

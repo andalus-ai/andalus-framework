@@ -68,6 +68,9 @@ public class DefaultRecoveryManager implements RecoveryManager {
             String recoveryWorkerId, Duration leaseDuration) {
         this(checkpointStore, leaseManager, stateStore, recoveryWorkerId, leaseDuration);
         this.attemptStore = Objects.requireNonNull(attemptStore, "attemptStore cannot be null");
+        if (leaseDuration.isZero() || leaseDuration.isNegative()) {
+            throw new IllegalArgumentException("leaseDuration must be positive");
+        }
     }
 
     @Override
@@ -193,6 +196,14 @@ public class DefaultRecoveryManager implements RecoveryManager {
             }
             return RecoveryResult.failure(plan.executionId(), plan.mode(),
                     "Failed to claim recovery ownership or persist attempt lineage");
+            String newAttemptId = AttemptId.random().value();
+            return RecoveryResult.success(plan.executionId(), plan.mode(), newAttemptId);
+        } catch (RuntimeException failure) {
+            if (lease != null) {
+                leaseManager.releaseLease(plan.executionId(), recoveryWorkerId);
+            }
+            return RecoveryResult.failure(plan.executionId(), plan.mode(),
+                    "Failed to claim fenced recovery ownership: " + failure.getMessage());
         }
     }
 
