@@ -45,6 +45,19 @@ class AgentProfileTest {
     }
 
     @Test
+    void rejectsDuplicateCapabilityIdentifiersEvenWhenDescriptionsDiffer() {
+        Set<AgentCapability> capabilities = Set.of(
+                new AgentCapability("research.search", "Search public sources"),
+                new AgentCapability("research.search", "Search internal sources"));
+
+        IllegalArgumentException error = assertThrows(IllegalArgumentException.class,
+                () -> new AgentProfile(
+                        "researcher", "Researcher", "Research agent", capabilities, Map.of()));
+
+        assertTrue(error.getMessage().contains("research.search"));
+    }
+
+    @Test
     void treatsNullAndBlankCapabilityQueriesAsUnsupported() {
         AgentProfile profile = new AgentProfile(
                 "researcher", "Researcher", "Research agent", Set.of(), Map.of());

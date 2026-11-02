@@ -27,11 +27,18 @@ public class DefaultLeaseManager implements LeaseManager {
         requireText(executionId, "executionId");
         requireText(holderId, "holderId");
         requireDuration(duration);
+        Objects.requireNonNull(executionId, "executionId cannot be null");
+        Objects.requireNonNull(holderId, "holderId cannot be null");
+        Objects.requireNonNull(duration, "duration cannot be null");
 
         ExecutionLease existing = leases.get(executionId);
         if (existing != null && !existing.isExpired() && !existing.holderId().equals(holderId)) {
             throw new IllegalStateException("Execution lease is still held by " + existing.holderId());
         }
+
+        AtomicLong genCounter = generations.computeIfAbsent(executionId, k -> new AtomicLong(0L));
+        long newGen = genCounter.incrementAndGet();
+        FencingToken token = FencingToken.of(newGen);
 
         long generation = generations.getOrDefault(executionId, 0L) + 1L;
         generations.put(executionId, generation);
