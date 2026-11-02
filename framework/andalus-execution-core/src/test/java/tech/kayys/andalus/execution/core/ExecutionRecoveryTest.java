@@ -2,6 +2,8 @@ package tech.kayys.andalus.execution.core;
 
 import org.junit.jupiter.api.Test;
 import tech.kayys.andalus.execution.attempt.AttemptId;
+import tech.kayys.andalus.execution.attempt.AttemptState;
+import tech.kayys.andalus.execution.core.attempt.InMemoryExecutionAttemptStore;
 import tech.kayys.andalus.execution.checkpoint.CheckpointIntegrity;
 import tech.kayys.andalus.execution.checkpoint.CheckpointManifest;
 import tech.kayys.andalus.execution.checkpoint.ExecutionCheckpoint;
