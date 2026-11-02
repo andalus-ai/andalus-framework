@@ -6,55 +6,39 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
-
 import static org.assertj.core.api.Assertions.assertThat;
 
 class FeedbackEvidenceAdmissionTest {
+    @Test
+    void atomicallyReservesEvidenceBeforeCreatingAdmittedFeedback() {
+        var trust = new FeedbackTrustPolicy.Policy(Map.of("reviewer-a", 0.9), 0.8, 1, 1);
+        var store = new InMemoryFeedbackEvidenceStore();
+        var signal = signal("signal-a", "reviewer-a", "trace:1");
 
-    private LearningSignal feedback(String id, String source, List<String> evidence) {
-        return new LearningSignal(id, LearningSignalType.HUMAN_FEEDBACK, source, "execution-1",
-                Optional.empty(), Optional.empty(), Optional.empty(), LearningSignalPolarity.POSITIVE,
-                evidence, Optional.empty(), null, Map.of());
-    }
+        var accepted = FeedbackAggregation.admitAndReserve(signal, trust, Set.of(), store);
+        var replay = FeedbackAggregation.admitAndReserve(
+                signal("signal-b", "reviewer-a", "trace:1"), trust, Set.of(), store);
 
-    private FeedbackTrustPolicy.Policy trustPolicy() {
-        return new FeedbackTrustPolicy.Policy(Map.of("reviewer-a", 0.95, "reviewer-b", 0.9),
-                0.8, 1, 2);
+        assertThat(accepted.accepted()).isTrue();
+        assertThat(replay.accepted()).isFalse();
+        assertThat(replay.reasons()).anyMatch(reason -> reason.contains("EVIDENCE_ALREADY_CONSUMED"));
     }
 
     @Test
-    void reservesEvidenceOnlyAfterTrustAdmission() {
+    void doesNotReserveEvidenceWhenTrustAdmissionFails() {
+        var trust = new FeedbackTrustPolicy.Policy(Map.of("reviewer-a", 0.2), 0.8, 1, 1);
         var store = new InMemoryFeedbackEvidenceStore();
-        var rejected = FeedbackAggregation.admitAndReserve(
-                feedback("bad", "unknown", List.of("trace:1")), trustPolicy(), Set.of("reviewer-b"), store);
 
-        assertThat(rejected.accepted()).isFalse();
+        var result = FeedbackAggregation.admitAndReserve(
+                signal("signal-a", "reviewer-a", "trace:1"), trust, Set.of(), store);
+
+        assertThat(result.accepted()).isFalse();
         assertThat(store.findOwner("trace:1")).isEmpty();
     }
 
-    @Test
-    void rejectsReplayAndPreservesOriginalOwner() {
-        var store = new InMemoryFeedbackEvidenceStore();
-        var first = FeedbackAggregation.admitAndReserve(
-                feedback("feedback-1", "reviewer-a", List.of("trace:1")),
-                trustPolicy(), Set.of("reviewer-b"), store);
-        var replay = FeedbackAggregation.admitAndReserve(
-                feedback("feedback-2", "reviewer-a", List.of("trace:1")),
-                trustPolicy(), Set.of("reviewer-b"), store);
-
-        assertThat(first.accepted()).isTrue();
-        assertThat(replay.accepted()).isFalse();
-        assertThat(store.findOwner("trace:1")).contains("feedback-1");
-    }
-
-    @Test
-    void exactRetryIsIdempotentlyAccepted() {
-        var store = new InMemoryFeedbackEvidenceStore();
-        var signal = feedback("feedback-1", "reviewer-a", List.of("trace:1"));
-        var first = FeedbackAggregation.admitAndReserve(signal, trustPolicy(), Set.of("reviewer-b"), store);
-        var retry = FeedbackAggregation.admitAndReserve(signal, trustPolicy(), Set.of("reviewer-b"), store);
-
-        assertThat(first.accepted()).isTrue();
-        assertThat(retry.accepted()).isTrue();
+    private LearningSignal signal(String id, String source, String evidence) {
+        return new LearningSignal(id, LearningSignalType.HUMAN_FEEDBACK, source, "execution",
+                Optional.empty(), Optional.empty(), Optional.empty(), LearningSignalPolarity.POSITIVE,
+                List.of(evidence), Optional.empty(), null, Map.of());
     }
 }

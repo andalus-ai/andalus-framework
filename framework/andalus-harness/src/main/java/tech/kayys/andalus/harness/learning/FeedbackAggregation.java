@@ -89,6 +89,10 @@ public final class FeedbackAggregation {
         }
     }
 
+    /**
+     * Trust-checks and atomically reserves evidence before creating an aggregation input.
+     * The evidence store must be shared and durable when multiple processes ingest feedback.
+     */
     public static AdmissionResult admitAndReserve(
             LearningSignal signal,
             FeedbackTrustPolicy.Policy trustPolicy,

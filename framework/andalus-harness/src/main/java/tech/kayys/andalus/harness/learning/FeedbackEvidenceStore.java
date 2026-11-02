@@ -3,6 +3,10 @@ package tech.kayys.andalus.harness.learning;
 import java.util.List;
 import java.util.Optional;
 
+/** Atomic reservation boundary for evidence consumed by admitted human feedback. */
+public interface FeedbackEvidenceStore {
+    enum ReservationStatus {
+        RESERVED, ALREADY_RESERVED_BY_SAME_SIGNAL, EVIDENCE_ALREADY_CONSUMED, INVALID_REQUEST
 /**
  * Atomic reservation boundary for evidence consumed by admitted human feedback.
  *
@@ -27,10 +31,10 @@ public interface FeedbackEvidenceStore {
 
     record Reservation(String signalId, List<String> evidenceReferences, ReservationStatus status) {
         public Reservation {
-            evidenceReferences = evidenceReferences == null ? List.of() : List.copyOf(evidenceReferences);
-            if (status == null) {
-                throw new IllegalArgumentException("status is required");
+            if (signalId == null || signalId.isBlank() || status == null) {
+                throw new IllegalArgumentException("signalId and status are required");
             }
+            evidenceReferences = evidenceReferences == null ? List.of() : List.copyOf(evidenceReferences);
         }
 
         public boolean accepted() {
@@ -39,13 +43,8 @@ public interface FeedbackEvidenceStore {
         }
     }
 
-    /**
-     * Atomically reserves every evidence reference for a signal or reserves none.
-     * Implementations must be safe across threads and, for durable adapters,
-     * across processes and application restarts.
-     */
+    /** Atomically reserves all references or none; exact retries for the same signal are idempotent. */
     Reservation reserve(String signalId, List<String> evidenceReferences);
 
-    /** Returns the signal ID that owns a reference, when known. */
     Optional<String> findOwner(String evidenceReference);
 }
