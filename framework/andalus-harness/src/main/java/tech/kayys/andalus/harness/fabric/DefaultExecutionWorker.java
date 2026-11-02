@@ -46,4 +46,8 @@ public record DefaultExecutionWorker(
     public DefaultExecutionWorker withLease(WorkerLease newLease) {
         return new DefaultExecutionWorker(id, capabilities, status, resources, health, newLease);
     }
+
+    public DefaultExecutionWorker withResources(WorkerResources newResources) {
+        return new DefaultExecutionWorker(id, capabilities, status, newResources, health, lease);
+    }
 }
