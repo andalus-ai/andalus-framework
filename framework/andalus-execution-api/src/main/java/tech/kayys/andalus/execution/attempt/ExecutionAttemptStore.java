@@ -1,0 +1,24 @@
+package tech.kayys.andalus.execution.attempt;
+
+import tech.kayys.andalus.execution.mobility.FencingToken;
+
+import java.util.List;
+import java.util.Optional;
+
+/**
+ * Durable persistence port for physical execution attempts and their lineage.
+ * Implementations must reject stale fencing generations and duplicate attempt IDs.
+ */
+public interface ExecutionAttemptStore {
+
+    /** Persist a newly claimed attempt and its immutable lineage under the active fencing token. */
+    void save(ExecutionAttempt attempt, AttemptLineage lineage, FencingToken fencingToken);
+
+    Optional<ExecutionAttempt> get(AttemptId attemptId);
+
+    Optional<ExecutionAttempt> getLatest(String executionId);
+
+    Optional<AttemptLineage> getLineage(AttemptId attemptId);
+
+    List<ExecutionAttempt> list(String executionId);
+}
