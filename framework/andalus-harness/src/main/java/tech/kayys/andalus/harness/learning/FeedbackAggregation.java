@@ -3,6 +3,7 @@ package tech.kayys.andalus.harness.learning;
 import java.util.ArrayList;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 
 /**
@@ -37,18 +38,38 @@ public final class FeedbackAggregation {
      * A feedback item paired with the result of FeedbackTrustPolicy.assess.
      * Unaccepted feedback cannot be represented as admitted evidence.
      */
-    public record AdmittedFeedback(LearningSignal signal, FeedbackTrustPolicy.Decision admission) {
-        public AdmittedFeedback {
-            if (signal == null || admission == null) {
-                throw new IllegalArgumentException("signal and admission decision are required");
-            }
-            if (signal.type() != LearningSignalType.HUMAN_FEEDBACK) {
-                throw new IllegalArgumentException("only HUMAN_FEEDBACK signals can be aggregated");
-            }
-            if (!admission.accepted()) {
-                throw new IllegalArgumentException("feedback must pass trust admission before aggregation");
-            }
+    public static final class AdmittedFeedback {
+        private final LearningSignal signal;
+        private final FeedbackTrustPolicy.Decision admission;
+
+        private AdmittedFeedback(LearningSignal signal, FeedbackTrustPolicy.Decision admission) {
+            this.signal = signal;
+            this.admission = admission;
         }
+
+        public LearningSignal signal() {
+            return signal;
+        }
+
+        public FeedbackTrustPolicy.Decision admission() {
+            return admission;
+        }
+    }
+
+    /**
+     * Creates an aggregation input only after the configured trust policy accepts it.
+     * The caller remains responsible for atomically persisting consumed evidence references.
+     */
+    public static Optional<AdmittedFeedback> admit(
+            LearningSignal signal,
+            FeedbackTrustPolicy.Policy trustPolicy,
+            Set<String> previouslyUsedEvidenceReferences,
+            Set<String> corroboratingSources) {
+        FeedbackTrustPolicy.Decision decision = FeedbackTrustPolicy.assess(
+                signal, trustPolicy, previouslyUsedEvidenceReferences, corroboratingSources);
+        return decision.accepted()
+                ? Optional.of(new AdmittedFeedback(signal, decision))
+                : Optional.empty();
     }
 
     public record Result(String subject, Outcome outcome, double positiveWeight,
