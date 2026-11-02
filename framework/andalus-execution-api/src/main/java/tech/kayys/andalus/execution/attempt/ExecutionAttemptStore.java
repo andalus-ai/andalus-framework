@@ -14,6 +14,12 @@ public interface ExecutionAttemptStore {
     /** Persist a newly claimed attempt and its immutable lineage under the active fencing token. */
     void save(ExecutionAttempt attempt, AttemptLineage lineage, FencingToken fencingToken);
 
+    /**
+     * Update an existing attempt state under the same active fencing generation.
+     * Implementations must enforce legal state transitions and reject stale tokens.
+     */
+    void updateState(AttemptId attemptId, AttemptState newState, FencingToken fencingToken);
+
     Optional<ExecutionAttempt> get(AttemptId attemptId);
 
     Optional<ExecutionAttempt> getLatest(String executionId);
