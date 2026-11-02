@@ -2,6 +2,8 @@ package tech.kayys.andalus.execution.core;
 
 import org.junit.jupiter.api.Test;
 import tech.kayys.andalus.execution.attempt.AttemptId;
+import tech.kayys.andalus.execution.attempt.AttemptState;
+import tech.kayys.andalus.execution.core.attempt.InMemoryExecutionAttemptStore;
 import tech.kayys.andalus.execution.checkpoint.CheckpointIntegrity;
 import tech.kayys.andalus.execution.checkpoint.CheckpointManifest;
 import tech.kayys.andalus.execution.checkpoint.ExecutionCheckpoint;
@@ -115,6 +117,39 @@ public class ExecutionRecoveryTest {
 
         assertThrows(IllegalStateException.class,
                 () -> manager.plan("execution-plan-race", staleAssessment));
+    }
+
+
+    @Test
+    void persistsRecoveryAttemptAndCheckpointLineageWithoutMarkingItRunning() {
+        InMemoryExecutionCheckpointStore checkpoints = new InMemoryExecutionCheckpointStore();
+        DefaultLeaseManager leases = new DefaultLeaseManager();
+        InMemoryExecutionStateStore states = new InMemoryExecutionStateStore(leases);
+        InMemoryExecutionAttemptStore attempts = new InMemoryExecutionAttemptStore(leases);
+        String executionId = "execution-attempt-lineage";
+        ExecutionIdentity identity = ExecutionIdentity.of(executionId, "workflow", "agent");
+        ExecutionDurableState initial = ExecutionDurableState.of(identity, ExecutionCursor.initial("workflow"));
+        var initialLease = leases.acquireLease(executionId, "initial-worker", Duration.ofMinutes(1));
+        states.save(initial, initialLease.fencingToken());
+        leases.releaseLease(executionId, "initial-worker");
+        saveCheckpoint(checkpoints, executionId, "cp-lineage", 1L);
+
+        DefaultRecoveryManager manager = new DefaultRecoveryManager(checkpoints, leases, states, attempts,
+                "recovery-worker", Duration.ofMinutes(2));
+        RecoveryPlan plan = manager.plan(executionId, manager.assess(executionId));
+
+        RecoveryResult result = manager.recover(plan);
+
+        assertTrue(result.success());
+        var attempt = attempts.get(AttemptId.of(result.newAttemptId().orElseThrow())).orElseThrow();
+        assertEquals(1, attempt.number());
+        assertEquals(AttemptState.INITIALIZING, attempt.state());
+        assertEquals("recovery-worker", attempt.targetWorkerId());
+        var lineage = attempts.getLineage(attempt.attemptId()).orElseThrow();
+        assertEquals("cp-lineage", lineage.restoredFromCheckpointId().orElseThrow());
+        assertEquals(checkpoints.getLatest(executionId).orElseThrow().attemptId(),
+                lineage.parentAttemptId().orElseThrow());
+        assertEquals(ExecutionStatus.RECOVERING, states.load(executionId).orElseThrow().status());
     }
 
     private static void saveCheckpoint(InMemoryExecutionCheckpointStore store, String executionId,
