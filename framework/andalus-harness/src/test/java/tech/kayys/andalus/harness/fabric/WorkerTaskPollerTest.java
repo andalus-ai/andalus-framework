@@ -27,7 +27,7 @@ class WorkerTaskPollerTest {
         AtomicInteger executions = new AtomicInteger();
         WorkerTaskPoller poller = new WorkerTaskPoller(queue, WorkerId.of("worker"),
                 (claim, visibility) -> executions.incrementAndGet(),
-                (task, failure) -> Duration.ZERO, 2, Duration.ofSeconds(30));
+                (task, failure) -> TaskFailureDecision.retry(Duration.ZERO, "TRANSIENT", failure.getMessage()), 2, Duration.ofSeconds(30));
 
         TaskPollResult first = poller.pollOnce();
         assertEquals(2, first.claimed());
@@ -50,6 +50,7 @@ class WorkerTaskPollerTest {
         TaskPollResult result = poller.pollOnce();
         assertEquals(1, result.claimed());
         assertEquals(1, result.requeued());
+        assertEquals(0, result.deadLettered());
         assertEquals(0, result.completed());
         assertEquals(1, queue.claim(WorkerId.of("retry-worker"), 1, Duration.ofSeconds(30)).size());
     }
