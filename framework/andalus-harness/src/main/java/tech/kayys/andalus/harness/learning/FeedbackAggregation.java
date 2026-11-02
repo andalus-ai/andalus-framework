@@ -72,6 +72,47 @@ public final class FeedbackAggregation {
                 : Optional.empty();
     }
 
+    /**
+     * Admits feedback only after trust checks pass and the evidence store
+     * atomically reserves every evidence reference. The store is the replay
+     * protection authority; callers must use a durable shared implementation
+     * when multiple processes or restarts are involved.
+     */
+    public record AdmissionResult(Optional<AdmittedFeedback> feedback, List<String> reasons) {
+        public AdmissionResult {
+            feedback = feedback == null ? Optional.empty() : feedback;
+            reasons = reasons == null ? List.of() : List.copyOf(reasons);
+        }
+
+        public boolean accepted() {
+            return feedback.isPresent();
+        }
+    }
+
+    public static AdmissionResult admitAndReserve(
+            LearningSignal signal,
+            FeedbackTrustPolicy.Policy trustPolicy,
+            Set<String> corroboratingSources,
+            FeedbackEvidenceStore evidenceStore) {
+        if (signal == null || trustPolicy == null || evidenceStore == null) {
+            throw new IllegalArgumentException("signal, trustPolicy, and evidenceStore are required");
+        }
+
+        FeedbackTrustPolicy.Decision decision = FeedbackTrustPolicy.assess(
+                signal, trustPolicy, Set.of(), corroboratingSources);
+        if (!decision.accepted()) {
+            return new AdmissionResult(Optional.empty(), decision.reasons());
+        }
+
+        FeedbackEvidenceStore.Reservation reservation = evidenceStore.reserve(
+                signal.id(), signal.evidenceReferences());
+        if (!reservation.accepted()) {
+            return new AdmissionResult(Optional.empty(),
+                    List.of("evidence reservation rejected: " + reservation.status()));
+        }
+        return new AdmissionResult(Optional.of(new AdmittedFeedback(signal, decision)), List.of());
+    }
+
     public record Result(String subject, Outcome outcome, double positiveWeight,
                          double negativeWeight, double ambiguousWeight,
                          double positiveRatio, double negativeRatio,
