@@ -30,6 +30,39 @@ class InMemoryAgentDirectoryTest {
     }
 
     @Test
+    void findsAgentsThatSupportEveryRequestedCapabilityInStableOrder() {
+        AgentDirectory directory = new InMemoryAgentDirectory();
+        AgentCapability search = new AgentCapability("research.search", "Search sources");
+        AgentCapability summarize = new AgentCapability("research.summarize", "Summarize sources");
+        AgentCapability translate = new AgentCapability("language.translate", "Translate text");
+
+        directory.register(new AgentProfile("zeta", "Zeta", "Search and summarize",
+                Set.of(search, summarize), Map.of()));
+        directory.register(new AgentProfile("alpha", "Alpha", "Search, summarize and translate",
+                Set.of(search, summarize, translate), Map.of()));
+        directory.register(new AgentProfile("beta", "Beta", "Search only",
+                Set.of(search), Map.of()));
+
+        assertEquals(
+                java.util.List.of("alpha", "zeta"),
+                directory.findByCapabilities(Set.of(" research.search ", "research.summarize"))
+                        .stream()
+                        .map(AgentProfile::id)
+                        .toList());
+    }
+
+    @Test
+    void multiCapabilityLookupDoesNotTreatInvalidQueriesAsMatchAll() {
+        AgentDirectory directory = new InMemoryAgentDirectory();
+        directory.register(new AgentProfile("agent", "Agent", "Example agent", Set.of(), Map.of()));
+
+        assertTrue(directory.findByCapabilities(null).isEmpty());
+        assertTrue(directory.findByCapabilities(Set.of()).isEmpty());
+        assertTrue(directory.findByCapabilities(java.util.Collections.singleton(null)).isEmpty());
+        assertTrue(directory.findByCapabilities(Set.of(" ")).isEmpty());
+    }
+
+    @Test
     void replacesProfilesAndUnregistersById() {
         AgentDirectory directory = new InMemoryAgentDirectory();
         directory.register(new AgentProfile("agent", "Old", "Old profile", Set.of(), Map.of()));
