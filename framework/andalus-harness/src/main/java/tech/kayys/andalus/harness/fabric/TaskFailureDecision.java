@@ -4,7 +4,7 @@ import java.time.Duration;
 import java.util.Objects;
 import java.util.Optional;
 
-/** Retry or dead-letter disposition selected for a failed task execution. */
+/** Retry or dead-letter disposition selected for a failed task execution. Message content should be redacted before persistence. */
 public record TaskFailureDecision(Optional<Duration> retryDelay, String category, String message) {
     public TaskFailureDecision {
         retryDelay = Objects.requireNonNull(retryDelay, "retryDelay cannot be null");
