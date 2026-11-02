@@ -24,7 +24,7 @@ public interface LeaseManager {
     void releaseLease(String executionId, String holderId);
 
     /**
-     * Validate that a fencing token is current for an execution.
+     * Validate that a fencing token belongs to the currently active, unexpired lease.\n     * A token becomes invalid immediately when its lease is released or expires.
      */
     boolean validateToken(String executionId, FencingToken token);
 
