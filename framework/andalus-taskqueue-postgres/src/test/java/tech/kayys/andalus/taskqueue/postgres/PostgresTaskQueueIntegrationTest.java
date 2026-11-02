@@ -110,4 +110,77 @@ class PostgresTaskQueueIntegrationTest {
             }
         }
     }
-}
+
+    @Test
+    void failureDispositionAtomicallyRetriesThenDeadLettersAfterRetryLimit() throws SQLException {
+        DataSource source = configuredDataSource();
+        PostgresTaskQueue queue = new PostgresTaskQueue(source);
+        queue.ensureSchema();
+        String suffix = UUID.randomUUID().toString();
+        AssignmentId id = AssignmentId.of("pg-fail-" + suffix);
+        ExecutionAssignment assignment = new DefaultExecutionAssignment(
+                id, ExecutionId.of("exec-fail-" + suffix), NodeId.of("node-fail-" + suffix),
+                AttemptId.initial(), WorkerId.of("scheduler-" + suffix), AssignmentFence.of(id, 1),
+                AssignmentStatus.PENDING, AssignmentConstraints.defaults());
+        try {
+            queue.enqueue("idem-fail-" + suffix, assignment);
+            WorkerId worker = WorkerId.of("worker-" + suffix);
+            TaskClaim first = queue.claim(worker, 1, Duration.ofMinutes(1)).stream()
+                    .filter(c -> c.assignment().id().equals(id)).findFirst().orElseThrow();
+            assertEquals(TaskFailureResult.RETRY_SCHEDULED, queue.fail(first.token(),
+                    TaskFailureDecision.retry(Duration.ZERO, "TRANSIENT", "first")));
+            TaskClaim second = queue.claim(worker, 1, Duration.ofMinutes(1)).stream()
+                    .filter(c -> c.assignment().id().equals(id)).findFirst().orElseThrow();
+            assertEquals(TaskFailureResult.RETRY_SCHEDULED, queue.fail(second.token(),
+                    TaskFailureDecision.retry(Duration.ZERO, "TRANSIENT", "second")));
+            TaskClaim third = queue.claim(worker, 1, Duration.ofMinutes(1)).stream()
+                    .filter(c -> c.assignment().id().equals(id)).findFirst().orElseThrow();
+            assertEquals(TaskFailureResult.DEAD_LETTERED, queue.fail(third.token(),
+                    TaskFailureDecision.retry(Duration.ZERO, "TRANSIENT", "exhausted")));
+            DeadLetterTask dead = queue.listDeadLetters(100).stream()
+                    .filter(task -> task.assignment().id().equals(id)).findFirst().orElseThrow();
+            assertEquals(3, dead.failureCount());
+            assertEquals("exhausted", dead.failureMessage());
+            assertTrue(queue.claim(WorkerId.of("other-" + suffix), 1, Duration.ofMinutes(1)).stream()
+                    .noneMatch(task -> task.assignment().id().equals(id)));
+        } finally {
+            try (Connection connection = source.getConnection();
+                 PreparedStatement statement = connection.prepareStatement(
+                         "DELETE FROM andalus_execution_task WHERE assignment_id = ?")) {
+                statement.setString(1, id.value());
+                statement.executeUpdate();
+            }
+        }
+    }
+
+    @Test
+    void staleClaimCannotRecordFailureOrDeadLetter() throws SQLException {
+        DataSource source = configuredDataSource();
+        PostgresTaskQueue queue = new PostgresTaskQueue(source);
+        queue.ensureSchema();
+        String suffix = UUID.randomUUID().toString();
+        AssignmentId id = AssignmentId.of("pg-stale-" + suffix);
+        ExecutionAssignment assignment = new DefaultExecutionAssignment(
+                id, ExecutionId.of("exec-stale-" + suffix), NodeId.of("node-stale-" + suffix),
+                AttemptId.initial(), WorkerId.of("scheduler-" + suffix), AssignmentFence.of(id, 1),
+                AssignmentStatus.PENDING, AssignmentConstraints.defaults());
+        try {
+            queue.enqueue("idem-stale-" + suffix, assignment);
+            TaskClaim first = queue.claim(WorkerId.of("worker-a-" + suffix), 1,
+                    Duration.ofMinutes(1)).stream().filter(c -> c.assignment().id().equals(id))
+                    .findFirst().orElseThrow();
+            assertTrue(queue.negativeAcknowledge(first.token(), Duration.ZERO));
+            assertEquals(TaskFailureResult.LOST_CLAIM, queue.fail(first.token(),
+                    TaskFailureDecision.deadLetter("PERMANENT", "late")));
+            assertTrue(queue.listDeadLetters(100).stream()
+                    .noneMatch(task -> task.assignment().id().equals(id)));
+        } finally {
+            try (Connection connection = source.getConnection();
+                 PreparedStatement statement = connection.prepareStatement(
+                         "DELETE FROM andalus_execution_task WHERE assignment_id = ?")) {
+                statement.setString(1, id.value());
+                statement.executeUpdate();
+            }
+        }
+    }
+}\n
