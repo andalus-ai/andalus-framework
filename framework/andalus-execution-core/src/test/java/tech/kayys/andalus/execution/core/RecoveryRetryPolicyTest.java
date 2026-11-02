@@ -30,7 +30,7 @@ class RecoveryRetryPolicyTest {
         assertEquals(RecoveryRetryDecision.Outcome.RETRY, first.outcome());
         assertEquals(now.plusSeconds(2), first.nextAttemptAt().orElseThrow());
         assertEquals(now.plusSeconds(4), second.nextAttemptAt().orElseThrow());
-        assertEquals(now.plusMillis(12_500), capped.nextAttemptAt().orElseThrow());
+        assertEquals(now.plusSeconds(10), capped.nextAttemptAt().orElseThrow());
     }
 
     @Test
