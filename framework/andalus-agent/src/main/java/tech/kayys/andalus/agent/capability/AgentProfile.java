@@ -1,5 +1,6 @@
 package tech.kayys.andalus.agent.capability;
 
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
@@ -30,6 +31,14 @@ public record AgentProfile(
         description = requireText(description, "description");
         capabilities = capabilities == null ? Set.of() : Set.copyOf(capabilities);
         metadata = metadata == null ? Map.of() : Map.copyOf(metadata);
+
+        Set<String> capabilityIds = new HashSet<>();
+        for (AgentCapability capability : capabilities) {
+            if (!capabilityIds.add(capability.id())) {
+                throw new IllegalArgumentException(
+                        "duplicate capability identifier '" + capability.id() + "'");
+            }
+        }
     }
 
     public boolean supports(String capabilityId) {
