@@ -16,49 +16,27 @@ import java.util.stream.Collectors;
  */
 public interface AgentDirectory {
 
-    /**
-     * Adds or replaces the profile for an agent identifier.
-     *
-     * @param profile immutable discovery profile
-     */
+    /** Metadata key used to mark a profile as explicitly public. */
+    String VISIBILITY_METADATA_KEY = "andalus.visibility";
+
+    /** Metadata key containing the tenant that owns a tenant-scoped profile. */
+    String TENANT_ID_METADATA_KEY = "andalus.tenant-id";
+
+    /** Explicit public visibility value for {@link #VISIBILITY_METADATA_KEY}. */
+    String PUBLIC_VISIBILITY = "public";
+
     void register(AgentProfile profile);
 
-    /**
-     * Removes an agent profile.
-     *
-     * @param agentId stable agent identifier
-     * @return {@code true} when a profile was removed
-     */
     boolean unregister(String agentId);
 
-    /**
-     * Finds an agent by its stable identifier.
-     */
     Optional<AgentProfile> findById(String agentId);
 
-    /**
-     * Finds agents that explicitly advertise the given capability identifier.
-     *
-     * <p>Implementations should return deterministic ordering to make
-     * selection reproducible.</p>
-     */
     List<AgentProfile> findByCapability(String capabilityId);
 
     /**
-     * Finds agents that advertise every requested capability.
-     *
-     * <p>This is an AND query: a profile is returned only when it supports
-     * all identifiers in {@code capabilityIds}. Results are sorted by agent
-     * ID so selection remains reproducible across implementations. Null,
-     * empty, or malformed queries return an empty list rather than matching
-     * every registered agent.</p>
-     *
-     * <p>The default implementation preserves compatibility for existing
-     * directory providers. Distributed implementations may override it with
-     * an indexed query.</p>
-     *
-     * @param capabilityIds required capability identifiers
-     * @return matching profiles in deterministic ID order
+     * Finds agents that advertise every requested capability (AND semantics).
+     * Null, empty, or malformed queries return an empty list. Results are
+     * ordered by agent ID.
      */
     default List<AgentProfile> findByCapabilities(Set<String> capabilityIds) {
         if (capabilityIds == null || capabilityIds.isEmpty()
@@ -77,7 +55,35 @@ public interface AgentDirectory {
     }
 
     /**
-     * Returns a snapshot of all currently registered profiles.
+     * Finds profiles visible to the supplied tenant.
+     *
+     * <p>A profile is visible when it is explicitly public using metadata
+     * {@code andalus.visibility=public}, or when its
+     * {@code andalus.tenant-id} metadata exactly matches the non-blank tenant
+     * ID. A missing tenant ID therefore returns public profiles only.
+     * Profiles with neither marker are not exposed by this query.</p>
+     *
+     * <p>This is a discovery boundary, not an authorization decision. The
+     * runtime must still resolve the live agent and enforce invocation policy.</p>
+     *
+     * @param tenantId requesting tenant, or {@code null} for public profiles only
+     * @return visible profiles in deterministic ID order
      */
+    default List<AgentProfile> findVisibleToTenant(String tenantId) {
+        String normalizedTenantId = tenantId == null ? null : tenantId.trim();
+        if (normalizedTenantId != null && normalizedTenantId.isEmpty()) {
+            normalizedTenantId = null;
+        }
+        final String tenant = normalizedTenantId;
+
+        return findAll().stream()
+                .filter(profile -> PUBLIC_VISIBILITY.equals(
+                                profile.metadata().get(VISIBILITY_METADATA_KEY))
+                        || (tenant != null && tenant.equals(
+                                profile.metadata().get(TENANT_ID_METADATA_KEY))))
+                .sorted(Comparator.comparing(AgentProfile::id))
+                .toList();
+    }
+
     List<AgentProfile> findAll();
 }
