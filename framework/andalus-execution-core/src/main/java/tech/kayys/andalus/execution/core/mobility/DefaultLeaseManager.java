@@ -36,10 +36,6 @@ public class DefaultLeaseManager implements LeaseManager {
             throw new IllegalStateException("Execution lease is still held by " + existing.holderId());
         }
 
-        AtomicLong genCounter = generations.computeIfAbsent(executionId, k -> new AtomicLong(0L));
-        long newGen = genCounter.incrementAndGet();
-        FencingToken token = FencingToken.of(newGen);
-
         long generation = generations.getOrDefault(executionId, 0L) + 1L;
         generations.put(executionId, generation);
         Instant now = Instant.now();
