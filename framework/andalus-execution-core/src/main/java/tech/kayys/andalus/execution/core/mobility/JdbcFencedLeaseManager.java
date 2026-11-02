@@ -34,7 +34,7 @@ public final class JdbcFencedLeaseManager implements FencedLeaseManager {
     public ExecutionLease acquireLease(String executionId, String holderId, Duration duration) {
         identity(executionId, "executionId");
         identity(holderId, "holderId");
-        positive(duration);
+        long durationMillis = positiveMillis(duration);
         return tx(c -> {
             Row row = lock(c, executionId);
             Instant now = clock.instant();
@@ -42,8 +42,13 @@ public final class JdbcFencedLeaseManager implements FencedLeaseManager {
                     && !row.holder.equals(holderId)) {
                 throw new IllegalStateException("Execution lease is still held by " + row.holder);
             }
-            long generation = Math.addExact(row.generation, 1L);
-            long expiry = Math.addExact(now.toEpochMilli(), duration.toMillis());
+            long generation;
+            try {
+                generation = Math.addExact(row.generation, 1L);
+            } catch (ArithmeticException exhausted) {
+                throw new IllegalStateException("Fencing generation exhausted for " + executionId, exhausted);
+            }
+            long expiry = expiryMillis(now.toEpochMilli(), durationMillis);
             try (PreparedStatement s = c.prepareStatement("UPDATE " + TABLE
                     + " SET generation=?, holder_id=?, acquired_at_ms=?, expires_at_ms=? WHERE execution_id=?")) {
                 s.setLong(1, generation);
@@ -62,13 +67,13 @@ public final class JdbcFencedLeaseManager implements FencedLeaseManager {
     public boolean renewLease(String executionId, String holderId, Duration duration) {
         identity(executionId, "executionId");
         identity(holderId, "holderId");
-        positive(duration);
+        long durationMillis = positiveMillis(duration);
         return tx(c -> {
             Row row = lock(c, executionId);
             long now = clock.millis();
             if (!active(row, holderId, now)) return false;
             return updateExpiry(c, executionId, holderId, row.generation,
-                    Math.addExact(now, duration.toMillis()));
+                    expiryMillis(now, durationMillis));
         });
     }
 
@@ -77,13 +82,13 @@ public final class JdbcFencedLeaseManager implements FencedLeaseManager {
         identity(executionId, "executionId");
         identity(holderId, "holderId");
         Objects.requireNonNull(token, "token");
-        positive(duration);
+        long durationMillis = positiveMillis(duration);
         return tx(c -> {
             Row row = lock(c, executionId);
             long now = clock.millis();
             if (!active(row, holderId, now) || row.generation != token.generation()) return false;
             return updateExpiry(c, executionId, holderId, token.generation(),
-                    Math.addExact(now, duration.toMillis()));
+                    expiryMillis(now, durationMillis));
         });
     }
 
@@ -236,10 +241,27 @@ public final class JdbcFencedLeaseManager implements FencedLeaseManager {
             throw new IllegalArgumentException(name + " must be non-blank and trimmed");
     }
 
-    private static void positive(Duration duration) {
+    private static long positiveMillis(Duration duration) {
         Objects.requireNonNull(duration, "duration");
-        if (duration.isZero() || duration.isNegative() || duration.toMillis() <= 0)
+        if (duration.isZero() || duration.isNegative())
             throw new IllegalArgumentException("duration must be at least one millisecond");
+        final long millis;
+        try {
+            millis = duration.toMillis();
+        } catch (ArithmeticException overflow) {
+            throw new IllegalArgumentException("duration exceeds the supported millisecond range", overflow);
+        }
+        if (millis <= 0)
+            throw new IllegalArgumentException("duration must be at least one millisecond");
+        return millis;
+    }
+
+    private static long expiryMillis(long nowMillis, long durationMillis) {
+        try {
+            return Math.addExact(nowMillis, durationMillis);
+        } catch (ArithmeticException overflow) {
+            throw new IllegalArgumentException("lease expiry exceeds the supported timestamp range", overflow);
+        }
     }
 
     @FunctionalInterface
