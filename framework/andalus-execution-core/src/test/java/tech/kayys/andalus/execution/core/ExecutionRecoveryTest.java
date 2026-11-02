@@ -9,8 +9,15 @@ import tech.kayys.andalus.execution.core.checkpoint.InMemoryExecutionCheckpointS
 import tech.kayys.andalus.execution.core.recovery.DefaultExecutionRecoveryCoordinator;
 import tech.kayys.andalus.execution.core.recovery.DefaultRecoveryManager;
 import tech.kayys.andalus.execution.recovery.*;
+import tech.kayys.andalus.execution.mobility.ExecutionCursor;
+import tech.kayys.andalus.execution.mobility.ExecutionDurableState;
+import tech.kayys.andalus.execution.mobility.ExecutionIdentity;
+import tech.kayys.andalus.execution.mobility.ExecutionStatus;
+import tech.kayys.andalus.execution.core.mobility.DefaultLeaseManager;
+import tech.kayys.andalus.execution.core.mobility.InMemoryExecutionStateStore;
 
 import java.nio.charset.StandardCharsets;
+import java.time.Duration;
 import java.time.Instant;
 import java.util.List;
 import java.util.Map;
@@ -117,5 +124,54 @@ public class ExecutionRecoveryTest {
                 List.of(), CheckpointIntegrity.sha256(payload), Instant.now(), Map.of());
         store.save(new ExecutionCheckpoint(checkpointId, executionId, AttemptId.random(), sequence,
                 payload, manifest, Instant.now(), Map.of()));
+    }
+
+    @Test
+    void claimsFencedLeaseAndPersistsRecoveringBeforeReturningSuccess() {
+        InMemoryExecutionCheckpointStore checkpoints = new InMemoryExecutionCheckpointStore();
+        DefaultLeaseManager leases = new DefaultLeaseManager();
+        InMemoryExecutionStateStore states = new InMemoryExecutionStateStore(leases);
+        String executionId = "execution-fenced-recovery";
+        ExecutionIdentity identity = ExecutionIdentity.of(executionId, "workflow", "agent");
+        ExecutionDurableState initial = ExecutionDurableState.of(identity,
+                ExecutionCursor.initial("workflow"));
+        var previousLease = leases.acquireLease(executionId, "expired-worker", Duration.ofMillis(1));
+        states.save(initial, previousLease.fencingToken());
+        leases.releaseLease(executionId, "expired-worker");
+
+        DefaultRecoveryManager manager = new DefaultRecoveryManager(checkpoints, leases, states,
+                "recovery-worker", Duration.ofMinutes(2));
+        RecoveryPlan plan = manager.plan(executionId, manager.assess(executionId));
+
+        RecoveryResult result = manager.recover(plan);
+
+        assertTrue(result.success());
+        assertEquals(ExecutionStatus.RECOVERING, states.load(executionId).orElseThrow().status());
+        assertEquals("recovery-worker", leases.getLease(executionId).orElseThrow().holderId());
+        assertTrue(leases.validateToken(executionId,
+                leases.getLease(executionId).orElseThrow().fencingToken()));
+    }
+
+    @Test
+    void refusesRecoveryWhenAnotherWorkerStillOwnsTheLease() {
+        InMemoryExecutionCheckpointStore checkpoints = new InMemoryExecutionCheckpointStore();
+        DefaultLeaseManager leases = new DefaultLeaseManager();
+        InMemoryExecutionStateStore states = new InMemoryExecutionStateStore(leases);
+        String executionId = "execution-active-owner";
+        ExecutionIdentity identity = ExecutionIdentity.of(executionId, "workflow", "agent");
+        ExecutionDurableState initial = ExecutionDurableState.of(identity,
+                ExecutionCursor.initial("workflow"));
+        var activeLease = leases.acquireLease(executionId, "active-worker", Duration.ofMinutes(5));
+        states.save(initial, activeLease.fencingToken());
+
+        DefaultRecoveryManager manager = new DefaultRecoveryManager(checkpoints, leases, states,
+                "recovery-worker", Duration.ofMinutes(2));
+        RecoveryPlan plan = manager.plan(executionId, manager.assess(executionId));
+
+        RecoveryResult result = manager.recover(plan);
+
+        assertFalse(result.success());
+        assertEquals("active-worker", leases.getLease(executionId).orElseThrow().holderId());
+        assertEquals(ExecutionStatus.CREATED, states.load(executionId).orElseThrow().status());
     }
 }
