@@ -303,7 +303,6 @@ class LearningSignalRuntimeTest {
         assertThat(report.evaluatorVersion()).isEqualTo("3.2");
         assertThat(report.evaluatorConfigFingerprint()).isEqualTo(descriptor.configurationFingerprint());
     }
-}
 
     @Test
     void evaluationAdapter_preservesProvenanceAndClassifiesCompletedEvaluation() {
