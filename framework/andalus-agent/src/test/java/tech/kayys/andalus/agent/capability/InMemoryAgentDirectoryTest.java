@@ -63,6 +63,41 @@ class InMemoryAgentDirectoryTest {
     }
 
     @Test
+    void tenantVisibilityIncludesOnlyPublicAndMatchingTenantProfiles() {
+        AgentDirectory directory = new InMemoryAgentDirectory();
+
+        directory.register(new AgentProfile("public-agent", "Public", "Public agent",
+                Set.of(), Map.of(AgentDirectory.VISIBILITY_METADATA_KEY, AgentDirectory.PUBLIC_VISIBILITY)));
+        directory.register(new AgentProfile("tenant-a-agent", "Tenant A", "Tenant A agent",
+                Set.of(), Map.of(AgentDirectory.TENANT_ID_METADATA_KEY, "tenant-a")));
+        directory.register(new AgentProfile("tenant-b-agent", "Tenant B", "Tenant B agent",
+                Set.of(), Map.of(AgentDirectory.TENANT_ID_METADATA_KEY, "tenant-b")));
+        directory.register(new AgentProfile("unscoped-agent", "Unscoped", "No visibility metadata",
+                Set.of(), Map.of()));
+
+        assertEquals(java.util.List.of("public-agent", "tenant-a-agent"),
+                directory.findVisibleToTenant(" tenant-a ").stream()
+                        .map(AgentProfile::id).toList());
+        assertEquals(java.util.List.of("public-agent"),
+                directory.findVisibleToTenant("tenant-c").stream()
+                        .map(AgentProfile::id).toList());
+    }
+
+    @Test
+    void missingOrBlankTenantSeesOnlyExplicitlyPublicProfiles() {
+        AgentDirectory directory = new InMemoryAgentDirectory();
+        directory.register(new AgentProfile("public-agent", "Public", "Public agent",
+                Set.of(), Map.of(AgentDirectory.VISIBILITY_METADATA_KEY, AgentDirectory.PUBLIC_VISIBILITY)));
+        directory.register(new AgentProfile("tenant-agent", "Tenant", "Tenant agent",
+                Set.of(), Map.of(AgentDirectory.TENANT_ID_METADATA_KEY, "tenant-a")));
+
+        assertEquals(java.util.List.of("public-agent"),
+                directory.findVisibleToTenant(null).stream().map(AgentProfile::id).toList());
+        assertEquals(java.util.List.of("public-agent"),
+                directory.findVisibleToTenant(" ").stream().map(AgentProfile::id).toList());
+    }
+
+    @Test
     void replacesProfilesAndUnregistersById() {
         AgentDirectory directory = new InMemoryAgentDirectory();
         directory.register(new AgentProfile("agent", "Old", "Old profile", Set.of(), Map.of()));
