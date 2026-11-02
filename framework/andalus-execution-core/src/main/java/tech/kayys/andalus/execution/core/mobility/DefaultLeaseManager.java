@@ -21,10 +21,15 @@ public class DefaultLeaseManager implements LeaseManager {
     private final Map<String, AtomicLong> generations = new ConcurrentHashMap<>();
 
     @Override
-    public ExecutionLease acquireLease(String executionId, String holderId, Duration duration) {
+    public synchronized ExecutionLease acquireLease(String executionId, String holderId, Duration duration) {
         Objects.requireNonNull(executionId, "executionId cannot be null");
         Objects.requireNonNull(holderId, "holderId cannot be null");
         Objects.requireNonNull(duration, "duration cannot be null");
+
+        ExecutionLease existing = leases.get(executionId);
+        if (existing != null && !existing.isExpired() && !existing.holderId().equals(holderId)) {
+            throw new IllegalStateException("Execution lease is still held by " + existing.holderId());
+        }
 
         AtomicLong genCounter = generations.computeIfAbsent(executionId, k -> new AtomicLong(0L));
         long newGen = genCounter.incrementAndGet();
