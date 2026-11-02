@@ -18,6 +18,10 @@ class WorkerTaskPollerTest {
                 AssignmentConstraints.defaults());
     }
 
+    private TaskFailureDecision retry(Exception failure) {
+        return TaskFailureDecision.retry(Duration.ZERO, "TRANSIENT", failure.getMessage());
+    }
+
     @Test
     void acknowledgesOnlyAfterHandlerReturnsSuccessfullyAndHonorsBatchLimit() {
         TaskQueue queue = new InMemoryTaskQueue();
@@ -26,47 +30,81 @@ class WorkerTaskPollerTest {
         queue.enqueue("k3", assignment("c"));
         AtomicInteger executions = new AtomicInteger();
         WorkerTaskPoller poller = new WorkerTaskPoller(queue, WorkerId.of("worker"),
-                (claim, visibility) -> executions.incrementAndGet(),
-                (task, failure) -> TaskFailureDecision.retry(Duration.ZERO, "TRANSIENT", failure.getMessage()), 2, Duration.ofSeconds(30));
+                (claim, visibility) -> executions.incrementAndGet(), this::retry,
+                2, Duration.ofSeconds(30));
 
         TaskPollResult first = poller.pollOnce();
         assertEquals(2, first.claimed());
         assertEquals(2, first.completed());
         assertEquals(0, first.requeued());
         assertEquals(2, executions.get());
-        TaskPollResult second = poller.pollOnce();
-        assertEquals(1, second.claimed());
-        assertEquals(1, second.completed());
+        assertEquals(1, poller.pollOnce().completed());
     }
 
     @Test
-    void failedHandlerNegativelyAcknowledgesForRedelivery() {
+    void retryableFailureIsRedelivered() {
         TaskQueue queue = new InMemoryTaskQueue();
         queue.enqueue("k1", assignment("a"));
         WorkerTaskPoller poller = new WorkerTaskPoller(queue, WorkerId.of("worker"),
                 (claim, visibility) -> { throw new IllegalStateException("temporary"); },
-                (task, failure) -> Duration.ZERO, 1, Duration.ofSeconds(30));
+                this::retry, 1, Duration.ofSeconds(30));
 
         TaskPollResult result = poller.pollOnce();
-        assertEquals(1, result.claimed());
         assertEquals(1, result.requeued());
         assertEquals(0, result.deadLettered());
-        assertEquals(0, result.completed());
         assertEquals(1, queue.claim(WorkerId.of("retry-worker"), 1, Duration.ofSeconds(30)).size());
     }
 
     @Test
-    void lostClaimIsNotReportedAsCompletedWhenHandlerReturns() {
+    void permanentFailureIsMovedToDeadLetterStore() {
         TaskQueue queue = new InMemoryTaskQueue();
-        queue.enqueue("k1", assignment("a"));
-        WorkerId worker = WorkerId.of("worker");
-        WorkerTaskPoller poller = new WorkerTaskPoller(queue, worker,
-                (claim, visibility) -> assertTrue(queue.negativeAcknowledge(claim.token(), Duration.ZERO)),
-                (task, failure) -> Duration.ZERO, 1, Duration.ofSeconds(30));
+        queue.enqueue("k1", assignment("permanent"));
+        WorkerTaskPoller poller = new WorkerTaskPoller(queue, WorkerId.of("worker"),
+                (claim, visibility) -> { throw new IllegalArgumentException("invalid payload"); },
+                (task, failure) -> TaskFailureDecision.deadLetter("PERMANENT", failure.getMessage()),
+                1, Duration.ofSeconds(30));
+
+        TaskPollResult result = poller.pollOnce();
+        assertEquals(1, result.deadLettered());
+        assertEquals(0, result.requeued());
+        DeadLetterTask dead = queue.listDeadLetters(10).get(0);
+        assertEquals("PERMANENT", dead.failureCategory());
+        assertEquals("invalid payload", dead.failureMessage());
+        assertTrue(queue.claim(WorkerId.of("another-worker"), 1, Duration.ofSeconds(30)).isEmpty());
+    }
+
+    @Test
+    void retryableFailureMovesToDeadLetterAfterConfiguredRetryLimit() {
+        TaskQueue queue = new InMemoryTaskQueue();
+        queue.enqueue("k1", assignment("exhausted"));
+        WorkerTaskPoller poller = new WorkerTaskPoller(queue, WorkerId.of("worker"),
+                (claim, visibility) -> { throw new IllegalStateException("transient"); },
+                this::retry, 1, Duration.ofSeconds(30));
+
+        assertEquals(1, poller.pollOnce().requeued());
+        assertEquals(1, poller.pollOnce().requeued());
+        TaskPollResult exhausted = poller.pollOnce();
+        assertEquals(1, exhausted.deadLettered());
+        DeadLetterTask dead = queue.listDeadLetters(1).get(0);
+        assertEquals(3, dead.failureCount());
+        assertEquals("TRANSIENT", dead.failureCategory());
+    }
+
+    @Test
+    void staleClaimCannotRetryOrDeadLetterTask() {
+        TaskQueue queue = new InMemoryTaskQueue();
+        queue.enqueue("k1", assignment("stale"));
+        WorkerTaskPoller poller = new WorkerTaskPoller(queue, WorkerId.of("worker"),
+                (claim, visibility) -> {
+                    assertTrue(queue.negativeAcknowledge(claim.token(), Duration.ZERO));
+                    throw new IllegalStateException("late failure");
+                },
+                (task, failure) -> TaskFailureDecision.deadLetter("PERMANENT", failure.getMessage()),
+                1, Duration.ofSeconds(30));
 
         TaskPollResult result = poller.pollOnce();
         assertEquals(1, result.lostClaims());
-        assertEquals(0, result.completed());
+        assertTrue(queue.listDeadLetters(10).isEmpty());
     }
 
     @Test
@@ -75,21 +113,18 @@ class WorkerTaskPollerTest {
         queue.enqueue("k1", assignment("a"));
         WorkerTaskPoller poller = new WorkerTaskPoller(queue, WorkerId.of("worker"),
                 (claim, visibility) -> assertTrue(visibility.extend(Duration.ofSeconds(30))),
-                (task, failure) -> Duration.ZERO, 1, Duration.ofSeconds(5));
-
-        TaskPollResult result = poller.pollOnce();
-        assertEquals(1, result.completed());
-        assertEquals(0, result.lostClaims());
+                this::retry, 1, Duration.ofSeconds(5));
+        assertEquals(1, poller.pollOnce().completed());
     }
 
     @Test
     void validatesPollingConfiguration() {
         TaskQueue queue = new InMemoryTaskQueue();
         assertThrows(IllegalArgumentException.class, () -> new WorkerTaskPoller(queue,
-                WorkerId.of("worker"), (claim, visibility) -> {}, (task, failure) -> Duration.ZERO,
+                WorkerId.of("worker"), (claim, visibility) -> {}, this::retry,
                 0, Duration.ofSeconds(1)));
         assertThrows(IllegalArgumentException.class, () -> new WorkerTaskPoller(queue,
-                WorkerId.of("worker"), (claim, visibility) -> {}, (task, failure) -> Duration.ZERO,
+                WorkerId.of("worker"), (claim, visibility) -> {}, this::retry,
                 1, Duration.ZERO));
     }
 }
