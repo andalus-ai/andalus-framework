@@ -96,6 +96,36 @@ class JdbcFencedLeaseManagerTest {
     }
 
     @Test
+    void rejectsDurationsThatOverflowMillisecondConversionOrExpiry() {
+        assertThrows(IllegalArgumentException.class,
+                () -> manager().acquireLease("exec-overflow", "node-a", Duration.ofSeconds(Long.MAX_VALUE)));
+
+        clock.set(Instant.ofEpochMilli(Long.MAX_VALUE - 5));
+        assertThrows(IllegalArgumentException.class,
+                () -> manager().acquireLease("exec-overflow", "node-a", Duration.ofMillis(10)));
+        assertTrue(manager().currentToken("exec-overflow").isEmpty());
+    }
+
+    @Test
+    void generationOverflowFailsWithoutChangingTheCounter() throws Exception {
+        try (Connection connection = dataSource.getConnection(); Statement statement = connection.createStatement()) {
+            statement.executeUpdate("""
+                    INSERT INTO andalus_execution_lease
+                        (execution_id,generation,holder_id,acquired_at_ms,expires_at_ms)
+                    VALUES ('exec-generation-max',9223372036854775807,NULL,0,0)
+                    """);
+        }
+
+        IllegalStateException failure = assertThrows(IllegalStateException.class,
+                () -> manager().acquireLease("exec-generation-max", "node-a", Duration.ofSeconds(10)));
+
+        assertTrue(failure.getMessage().contains("Fencing generation exhausted"));
+        assertEquals(Long.MAX_VALUE,
+                manager().currentToken("exec-generation-max").orElseThrow().generation());
+        assertTrue(manager().getLease("exec-generation-max").isEmpty());
+    }
+
+    @Test
     void concurrentFirstAcquisitionHasSingleWinnerAcrossManagerInstances() throws Exception {
         JdbcFencedLeaseManager firstNode = manager();
         JdbcFencedLeaseManager secondNode = manager();
@@ -137,6 +167,7 @@ class JdbcFencedLeaseManagerTest {
         private Instant now;
         private MutableClock(Instant now) { this.now = now; }
         void advance(Duration duration) { now = now.plus(duration); }
+        void set(Instant instant) { now = instant; }
         @Override public ZoneOffset getZone() { return ZoneOffset.UTC; }
         @Override public Clock withZone(java.time.ZoneId zone) { return this; }
         @Override public Instant instant() { return now; }
