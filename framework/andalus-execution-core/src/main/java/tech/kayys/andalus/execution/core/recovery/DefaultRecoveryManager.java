@@ -28,7 +28,9 @@ public class DefaultRecoveryManager implements RecoveryManager {
     private final String recoveryWorkerId;
     private final Duration leaseDuration;
     private ExecutionAttemptStore attemptStore;
+    private CheckpointRestorer checkpointRestorer;
 
+    /** Compatibility/planning mode. It does not claim a lease or restore a runtime. */
     public DefaultRecoveryManager(CheckpointStore checkpointStore) {
         this.checkpointStore = Objects.requireNonNull(checkpointStore, "checkpointStore cannot be null");
         this.leaseManager = null;
@@ -36,11 +38,12 @@ public class DefaultRecoveryManager implements RecoveryManager {
         this.recoveryWorkerId = null;
         this.leaseDuration = null;
         this.attemptStore = null;
+        this.checkpointRestorer = null;
     }
 
     /**
-     * Creates a recovery manager that claims a fenced execution lease and persists RECOVERING
-     * before reporting that recovery ownership has been established.
+     * Claims a fenced execution lease and persists RECOVERING before reporting
+     * that recovery ownership has been established.
      */
     public DefaultRecoveryManager(CheckpointStore checkpointStore, LeaseManager leaseManager,
             ExecutionStateStore stateStore, String recoveryWorkerId, Duration leaseDuration) {
@@ -52,25 +55,30 @@ public class DefaultRecoveryManager implements RecoveryManager {
         }
         this.recoveryWorkerId = recoveryWorkerId;
         this.leaseDuration = Objects.requireNonNull(leaseDuration, "leaseDuration cannot be null");
-        this.attemptStore = null;
         if (leaseDuration.isZero() || leaseDuration.isNegative()) {
             throw new IllegalArgumentException("leaseDuration must be positive");
         }
+        this.attemptStore = null;
+        this.checkpointRestorer = null;
     }
 
-    /**
-     * Creates a recovery manager that also persists physical attempt identity and lineage.
-     * The attempt is recorded as INITIALIZING; it is not marked RUNNING until a runtime
-     * restoration adapter has completed and acknowledged restoration.
-     */
+    /** Persists physical attempt identity and immutable lineage. */
     public DefaultRecoveryManager(CheckpointStore checkpointStore, LeaseManager leaseManager,
             ExecutionStateStore stateStore, ExecutionAttemptStore attemptStore,
             String recoveryWorkerId, Duration leaseDuration) {
         this(checkpointStore, leaseManager, stateStore, recoveryWorkerId, leaseDuration);
         this.attemptStore = Objects.requireNonNull(attemptStore, "attemptStore cannot be null");
-        if (leaseDuration.isZero() || leaseDuration.isNegative()) {
-            throw new IllegalArgumentException("leaseDuration must be positive");
-        }
+    }
+
+    /**
+     * Enables checkpoint restoration. The adapter must return only after the
+     * target runtime has reconstructed the checkpoint and is ready to execute.
+     */
+    public DefaultRecoveryManager(CheckpointStore checkpointStore, LeaseManager leaseManager,
+            ExecutionStateStore stateStore, ExecutionAttemptStore attemptStore,
+            CheckpointRestorer checkpointRestorer, String recoveryWorkerId, Duration leaseDuration) {
+        this(checkpointStore, leaseManager, stateStore, attemptStore, recoveryWorkerId, leaseDuration);
+        this.checkpointRestorer = Objects.requireNonNull(checkpointRestorer, "checkpointRestorer cannot be null");
     }
 
     @Override
@@ -147,8 +155,7 @@ public class DefaultRecoveryManager implements RecoveryManager {
 
         if (leaseManager == null) {
             // Compatibility mode for callers that only use the recovery planning contract.
-            String newAttemptId = AttemptId.random().value();
-            return RecoveryResult.success(plan.executionId(), plan.mode(), newAttemptId);
+            return RecoveryResult.success(plan.executionId(), plan.mode(), AttemptId.random().value());
         }
 
         ExecutionDurableState currentState = stateStore.load(plan.executionId()).orElse(null);
@@ -162,6 +169,7 @@ public class DefaultRecoveryManager implements RecoveryManager {
         }
 
         ExecutionLease lease = null;
+        AttemptId createdAttemptId = null;
         try {
             lease = leaseManager.acquireLease(plan.executionId(), recoveryWorkerId, leaseDuration);
             ExecutionDurableState recovering = currentState.withStatus(ExecutionStatus.RECOVERING);
@@ -173,37 +181,66 @@ public class DefaultRecoveryManager implements RecoveryManager {
                 Optional<AttemptId> parentAttemptId = previousAttempt.map(ExecutionAttempt::attemptId)
                         .or(() -> currentCheckpoint.map(ExecutionCheckpoint::attemptId));
                 int attemptNumber = previousAttempt.map(attempt -> attempt.number() + 1).orElse(1);
-                AttemptId attemptId = AttemptId.of(newAttemptId);
-                ExecutionAttempt attempt = new ExecutionAttempt(plan.executionId(), attemptId, attemptNumber,
+                createdAttemptId = AttemptId.of(newAttemptId);
+                ExecutionAttempt attempt = new ExecutionAttempt(plan.executionId(), createdAttemptId, attemptNumber,
                         AttemptState.INITIALIZING, recoveryWorkerId, Instant.now(), Optional.empty());
-                AttemptLineage lineage = new AttemptLineage(plan.executionId(), attemptId, parentAttemptId,
+                AttemptLineage lineage = new AttemptLineage(plan.executionId(), createdAttemptId, parentAttemptId,
                         plan.checkpointId());
                 attemptStore.save(attempt, lineage, lease.fencingToken());
             }
+
+            if (checkpointRestorer != null && plan.mode() == RecoveryMode.RESUME) {
+                if (attemptStore == null || createdAttemptId == null) {
+                    throw new IllegalStateException("Checkpoint restoration requires an attempt store");
+                }
+                ExecutionCheckpoint checkpoint = currentCheckpoint.orElseThrow();
+                ExecutionDurableState resuming = stateStore.load(plan.executionId()).orElseThrow()
+                        .withStatus(ExecutionStatus.RESUMING);
+                stateStore.save(resuming, lease.fencingToken());
+
+                CheckpointRestorationResult restored = Objects.requireNonNull(
+                        checkpointRestorer.restore(new CheckpointRestorationRequest(
+                                checkpoint, resuming, createdAttemptId, recoveryWorkerId)),
+                        "checkpointRestorer returned null");
+                ExecutionDurableState restoredState = stateStore.load(plan.executionId()).orElseThrow()
+                        .withCursor(restored.cursor(), restored.stateDigest());
+                stateStore.save(restoredState, lease.fencingToken());
+
+                // Attempt and execution stores are separate persistence boundaries.
+                // Reconciliation is required if a crash occurs between these writes.
+                attemptStore.updateState(createdAttemptId, AttemptState.RUNNING, lease.fencingToken());
+                stateStore.save(restoredState.withStatus(ExecutionStatus.RUNNING), lease.fencingToken());
+            }
+
             return RecoveryResult.success(plan.executionId(), plan.mode(), newAttemptId);
         } catch (RuntimeException failure) {
             if (lease != null) {
+                if (attemptStore != null && createdAttemptId != null) {
+                    try {
+                        attemptStore.updateState(createdAttemptId, AttemptState.FAILED, lease.fencingToken());
+                    } catch (RuntimeException ignored) {
+                        // The state transition below remains the authoritative recovery signal.
+                    }
+                }
                 try {
                     ExecutionDurableState latest = stateStore.load(plan.executionId()).orElse(null);
-                    if (latest != null && latest.status() == ExecutionStatus.RECOVERING
+                    if (latest != null
+                            && (latest.status() == ExecutionStatus.RECOVERING
+                            || latest.status() == ExecutionStatus.RESUMING)
                             && leaseManager.validateToken(plan.executionId(), lease.fencingToken())) {
                         stateStore.save(latest.withStatus(ExecutionStatus.SUSPENDED), lease.fencingToken());
                     }
                 } catch (RuntimeException ignored) {
-                    // Preserve the original recovery failure; the lease is still released below.
+                    // Preserve the original recovery failure; reconciliation can inspect durable state.
                 }
-                leaseManager.releaseLease(plan.executionId(), recoveryWorkerId);
+                try {
+                    leaseManager.releaseLease(plan.executionId(), recoveryWorkerId);
+                } catch (RuntimeException ignored) {
+                    // Lease expiry remains the fallback if release itself fails.
+                }
             }
             return RecoveryResult.failure(plan.executionId(), plan.mode(),
-                    "Failed to claim recovery ownership or persist attempt lineage");
-            String newAttemptId = AttemptId.random().value();
-            return RecoveryResult.success(plan.executionId(), plan.mode(), newAttemptId);
-        } catch (RuntimeException failure) {
-            if (lease != null) {
-                leaseManager.releaseLease(plan.executionId(), recoveryWorkerId);
-            }
-            return RecoveryResult.failure(plan.executionId(), plan.mode(),
-                    "Failed to claim fenced recovery ownership: " + failure.getMessage());
+                    "Failed to claim recovery ownership, persist lineage, or restore checkpoint");
         }
     }
 
