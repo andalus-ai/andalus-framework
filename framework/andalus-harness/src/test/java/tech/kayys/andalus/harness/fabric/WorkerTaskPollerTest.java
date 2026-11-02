@@ -30,7 +30,7 @@ class WorkerTaskPollerTest {
         queue.enqueue("k3", assignment("c"));
         AtomicInteger executions = new AtomicInteger();
         WorkerTaskPoller poller = new WorkerTaskPoller(queue, WorkerId.of("worker"),
-                (claim, visibility) -> executions.incrementAndGet(), this::retry,
+                (claim, visibility) -> executions.incrementAndGet(), (task, failure) -> retry(failure),
                 2, Duration.ofSeconds(30));
 
         TaskPollResult first = poller.pollOnce();
