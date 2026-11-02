@@ -72,6 +72,12 @@ public final class FeedbackAggregation {
                 : Optional.empty();
     }
 
+    /**
+     * Admits feedback only after trust checks pass and the evidence store
+     * atomically reserves every evidence reference. The store is the replay
+     * protection authority; callers must use a durable shared implementation
+     * when multiple processes or restarts are involved.
+     */
     public record AdmissionResult(Optional<AdmittedFeedback> feedback, List<String> reasons) {
         public AdmissionResult {
             feedback = feedback == null ? Optional.empty() : feedback;
@@ -95,11 +101,13 @@ public final class FeedbackAggregation {
         if (signal == null || trustPolicy == null || evidenceStore == null) {
             throw new IllegalArgumentException("signal, trustPolicy, and evidenceStore are required");
         }
+
         FeedbackTrustPolicy.Decision decision = FeedbackTrustPolicy.assess(
                 signal, trustPolicy, Set.of(), corroboratingSources);
         if (!decision.accepted()) {
             return new AdmissionResult(Optional.empty(), decision.reasons());
         }
+
         FeedbackEvidenceStore.Reservation reservation = evidenceStore.reserve(
                 signal.id(), signal.evidenceReferences());
         if (!reservation.accepted()) {

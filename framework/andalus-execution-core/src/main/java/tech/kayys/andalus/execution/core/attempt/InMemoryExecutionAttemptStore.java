@@ -50,6 +50,59 @@ public class InMemoryExecutionAttemptStore implements ExecutionAttemptStore {
         lineages.put(attempt.attemptId(), lineage);
     }
 
+
+    @Override
+    public synchronized void updateState(AttemptId attemptId,
+            tech.kayys.andalus.execution.attempt.AttemptState newState, FencingToken fencingToken) {
+        Objects.requireNonNull(attemptId, "attemptId cannot be null");
+        Objects.requireNonNull(newState, "newState cannot be null");
+        Objects.requireNonNull(fencingToken, "fencingToken cannot be null");
+        ExecutionAttempt current = attempts.get(attemptId);
+        if (current == null) {
+            throw new IllegalArgumentException("Unknown attempt: " + attemptId.value());
+        }
+        if (!leaseManager.validateToken(current.executionId(), fencingToken)) {
+            throw new IllegalStateException("Fenced attempt update rejected for execution " + current.executionId());
+        }
+        if (current.state() == newState) {
+            return;
+        }
+        if (!isAllowedTransition(current.state(), newState)) {
+            throw new IllegalStateException("Illegal attempt state transition: " + current.state() + " -> " + newState);
+        }
+        attempts.put(attemptId, current.withState(newState));
+    }
+
+    private static boolean isAllowedTransition(
+            tech.kayys.andalus.execution.attempt.AttemptState current,
+            tech.kayys.andalus.execution.attempt.AttemptState next) {
+        return switch (current) {
+            case INITIALIZING -> next == tech.kayys.andalus.execution.attempt.AttemptState.STARTING
+                    || next == tech.kayys.andalus.execution.attempt.AttemptState.RUNNING
+                    || next == tech.kayys.andalus.execution.attempt.AttemptState.FAILED
+                    || next == tech.kayys.andalus.execution.attempt.AttemptState.LOST;
+            case STARTING -> next == tech.kayys.andalus.execution.attempt.AttemptState.RUNNING
+                    || next == tech.kayys.andalus.execution.attempt.AttemptState.FAILED
+                    || next == tech.kayys.andalus.execution.attempt.AttemptState.LOST;
+            case RUNNING -> next == tech.kayys.andalus.execution.attempt.AttemptState.CHECKPOINTING
+                    || next == tech.kayys.andalus.execution.attempt.AttemptState.PAUSED
+                    || next == tech.kayys.andalus.execution.attempt.AttemptState.COMPLETED
+                    || next == tech.kayys.andalus.execution.attempt.AttemptState.FAILED
+                    || next == tech.kayys.andalus.execution.attempt.AttemptState.LOST
+                    || next == tech.kayys.andalus.execution.attempt.AttemptState.PREEMPTED;
+            case CHECKPOINTING -> next == tech.kayys.andalus.execution.attempt.AttemptState.RUNNING
+                    || next == tech.kayys.andalus.execution.attempt.AttemptState.PAUSED
+                    || next == tech.kayys.andalus.execution.attempt.AttemptState.FAILED
+                    || next == tech.kayys.andalus.execution.attempt.AttemptState.LOST;
+            case PAUSED -> next == tech.kayys.andalus.execution.attempt.AttemptState.STARTING
+                    || next == tech.kayys.andalus.execution.attempt.AttemptState.RUNNING
+                    || next == tech.kayys.andalus.execution.attempt.AttemptState.FAILED
+                    || next == tech.kayys.andalus.execution.attempt.AttemptState.LOST
+                    || next == tech.kayys.andalus.execution.attempt.AttemptState.PREEMPTED;
+            case COMPLETED, FAILED, LOST, PREEMPTED -> false;
+        };
+    }
+
     @Override
     public synchronized Optional<ExecutionAttempt> get(AttemptId attemptId) {
         return Optional.ofNullable(attempts.get(attemptId));
