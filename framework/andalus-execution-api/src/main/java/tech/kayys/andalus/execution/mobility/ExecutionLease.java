@@ -24,7 +24,7 @@ public record ExecutionLease(
     }
 
     public boolean isExpired() {
-        return Instant.now().isAfter(expiresAt);
+        return !Instant.now().isBefore(expiresAt);
     }
 
     public boolean isValidFor(String holder, FencingToken token) {
