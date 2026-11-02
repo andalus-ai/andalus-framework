@@ -1,54 +1,51 @@
 package tech.kayys.andalus.harness.learning;
 
-import java.util.HashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
- * Process-local evidence reservation store for tests and development only.
- *
- * <p>This implementation is not durable, is not shared between processes,
- * and loses reservations on restart. Production deployments must provide a
- * transactional persistent implementation of {@link FeedbackEvidenceStore}.</p>
+ * Process-local reference implementation. Durable deployments should provide a
+ * transactional implementation backed by a shared database.
  */
 public final class InMemoryFeedbackEvidenceStore implements FeedbackEvidenceStore {
-
-    private final Map<String, String> ownerByEvidence = new HashMap<>();
-    private final Map<String, List<String>> referencesBySignal = new HashMap<>();
+    private final Map<String, String> ownersByReference = new ConcurrentHashMap<>();
+    private final Map<String, List<String>> referencesBySignal = new ConcurrentHashMap<>();
 
     @Override
     public synchronized Reservation reserve(String signalId, List<String> evidenceReferences) {
-        if (signalId == null || signalId.isBlank() || evidenceReferences == null
-                || evidenceReferences.isEmpty()
-                || evidenceReferences.stream().anyMatch(ref -> ref == null || ref.isBlank())
-                || evidenceReferences.stream().distinct().count() != evidenceReferences.size()) {
-            return new Reservation(signalId, evidenceReferences, ReservationStatus.INVALID_REQUEST);
+        if (signalId == null || signalId.isBlank() || evidenceReferences == null || evidenceReferences.isEmpty()) {
+            return new Reservation("invalid", List.of(), ReservationStatus.INVALID_REQUEST);
+        }
+        if (evidenceReferences.stream().anyMatch(reference -> reference == null || reference.isBlank())
+                || new LinkedHashSet<>(evidenceReferences).size() != evidenceReferences.size()) {
+            return new Reservation(signalId, List.of(), ReservationStatus.INVALID_REQUEST);
         }
 
         List<String> requested = List.copyOf(evidenceReferences);
-        List<String> existingForSignal = referencesBySignal.get(signalId);
-        if (existingForSignal != null) {
-            return new Reservation(signalId, requested,
-                    existingForSignal.equals(requested)
-                            ? ReservationStatus.ALREADY_RESERVED_BY_SAME_SIGNAL
-                            : ReservationStatus.EVIDENCE_ALREADY_CONSUMED);
+        List<String> prior = referencesBySignal.get(signalId);
+        if (prior != null) {
+            return new Reservation(signalId, requested, prior.equals(requested)
+                    ? ReservationStatus.ALREADY_RESERVED_BY_SAME_SIGNAL
+                    : ReservationStatus.EVIDENCE_ALREADY_CONSUMED);
         }
-
-        boolean conflict = requested.stream()
-                .anyMatch(reference -> ownerByEvidence.containsKey(reference));
-        if (conflict) {
+        if (requested.stream().anyMatch(ownersByReference::containsKey)) {
             return new Reservation(signalId, requested, ReservationStatus.EVIDENCE_ALREADY_CONSUMED);
         }
 
-        // All checks complete before mutating either index: no partial reservation.
-        requested.forEach(reference -> ownerByEvidence.put(reference, signalId));
+        // Check and write occur under one monitor: no partial reservation on conflict.
+        requested.forEach(reference -> ownersByReference.put(reference, signalId));
         referencesBySignal.put(signalId, requested);
         return new Reservation(signalId, requested, ReservationStatus.RESERVED);
     }
 
     @Override
-    public synchronized Optional<String> findOwner(String evidenceReference) {
-        return Optional.ofNullable(ownerByEvidence.get(evidenceReference));
+    public Optional<String> findOwner(String evidenceReference) {
+        if (evidenceReference == null || evidenceReference.isBlank()) {
+            return Optional.empty();
+        }
+        return Optional.ofNullable(ownersByReference.get(evidenceReference));
     }
 }
