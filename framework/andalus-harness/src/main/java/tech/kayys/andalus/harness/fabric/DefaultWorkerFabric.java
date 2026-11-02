@@ -61,7 +61,12 @@ public class DefaultWorkerFabric implements WorkerFabric {
             if (previous != null && heartbeat.timestamp().isBefore(previous)) {
                 return existing;
             }
-            if (existing.status() == WorkerStatus.DRAINING && heartbeat.status().isAvailable()) {
+            if (existing.status() == WorkerStatus.DRAINING) {
+                if (existing instanceof DefaultExecutionWorker drainingWorker) {
+                    return drainingWorker.withResources(heartbeat.resources())
+                            .withHealth(heartbeat.health())
+                            .withLease(drainingWorker.lease().renew(Duration.ofMinutes(5)));
+                }
                 return existing;
             }
             if (existing instanceof DefaultExecutionWorker defaultWorker) {
