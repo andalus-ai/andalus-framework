@@ -70,7 +70,8 @@ public class DefaultWorkerFabric implements WorkerFabric {
                 return existing;
             }
             if (existing instanceof DefaultExecutionWorker defaultWorker) {
-                WorkerHealth health = heartbeat.health();
+                WorkerHealth health = new WorkerHealth(heartbeat.health().healthy(), heartbeat.timestamp(),
+                        heartbeat.health().statusMessage());
                 return defaultWorker
                         .withStatus(heartbeat.status())
                         .withResources(heartbeat.resources())
@@ -98,6 +99,8 @@ public class DefaultWorkerFabric implements WorkerFabric {
                 .filter(w -> {
                     if (requirements == null) return true;
                     if (requirements.hasGpu() && !w.capabilities().hasGpu()) return false;
+                    if (!w.capabilities().supportedEnvironments().containsAll(requirements.supportedEnvironments())) return false;
+                    if (!w.capabilities().supportedExecutors().containsAll(requirements.supportedExecutors())) return false;
                     if (w.capabilities().maxCpuCores() < requirements.maxCpuCores()) return false;
                     return w.capabilities().maxMemoryMb() >= requirements.maxMemoryMb();
                 })
