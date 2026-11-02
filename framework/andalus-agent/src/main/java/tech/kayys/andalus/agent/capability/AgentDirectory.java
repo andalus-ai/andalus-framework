@@ -1,7 +1,10 @@
 package tech.kayys.andalus.agent.capability;
 
+import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 /**
  * Registry contract for discovering agents by identity or advertised capability.
@@ -40,6 +43,38 @@ public interface AgentDirectory {
      * selection reproducible.</p>
      */
     List<AgentProfile> findByCapability(String capabilityId);
+
+    /**
+     * Finds agents that advertise every requested capability.
+     *
+     * <p>This is an AND query: a profile is returned only when it supports
+     * all identifiers in {@code capabilityIds}. Results are sorted by agent
+     * ID so selection remains reproducible across implementations. Null,
+     * empty, or malformed queries return an empty list rather than matching
+     * every registered agent.</p>
+     *
+     * <p>The default implementation preserves compatibility for existing
+     * directory providers. Distributed implementations may override it with
+     * an indexed query.</p>
+     *
+     * @param capabilityIds required capability identifiers
+     * @return matching profiles in deterministic ID order
+     */
+    default List<AgentProfile> findByCapabilities(Set<String> capabilityIds) {
+        if (capabilityIds == null || capabilityIds.isEmpty()
+                || capabilityIds.stream().anyMatch(id -> id == null || id.isBlank())) {
+            return List.of();
+        }
+
+        Set<String> required = capabilityIds.stream()
+                .map(String::trim)
+                .collect(Collectors.toUnmodifiableSet());
+
+        return findAll().stream()
+                .filter(profile -> required.stream().allMatch(profile::supports))
+                .sorted(Comparator.comparing(AgentProfile::id))
+                .toList();
+    }
 
     /**
      * Returns a snapshot of all currently registered profiles.

@@ -4,7 +4,13 @@ import tech.kayys.andalus.execution.attempt.AttemptId;
 import tech.kayys.andalus.execution.checkpoint.CheckpointStore;
 import tech.kayys.andalus.execution.checkpoint.ExecutionCheckpoint;
 import tech.kayys.andalus.execution.recovery.*;
+import tech.kayys.andalus.execution.mobility.ExecutionDurableState;
+import tech.kayys.andalus.execution.mobility.ExecutionLease;
+import tech.kayys.andalus.execution.mobility.ExecutionStatus;
+import tech.kayys.andalus.execution.mobility.LeaseManager;
+import tech.kayys.andalus.execution.mobility.state.ExecutionStateStore;
 
+import java.time.Duration;
 import java.time.Instant;
 import java.util.Map;
 import java.util.Objects;
@@ -13,9 +19,36 @@ import java.util.Optional;
 public class DefaultRecoveryManager implements RecoveryManager {
 
     private final CheckpointStore checkpointStore;
+    private final LeaseManager leaseManager;
+    private final ExecutionStateStore stateStore;
+    private final String recoveryWorkerId;
+    private final Duration leaseDuration;
 
     public DefaultRecoveryManager(CheckpointStore checkpointStore) {
         this.checkpointStore = Objects.requireNonNull(checkpointStore, "checkpointStore cannot be null");
+        this.leaseManager = null;
+        this.stateStore = null;
+        this.recoveryWorkerId = null;
+        this.leaseDuration = null;
+    }
+
+    /**
+     * Creates a recovery manager that claims a fenced execution lease and persists RECOVERING
+     * before reporting that recovery ownership has been established.
+     */
+    public DefaultRecoveryManager(CheckpointStore checkpointStore, LeaseManager leaseManager,
+            ExecutionStateStore stateStore, String recoveryWorkerId, Duration leaseDuration) {
+        this.checkpointStore = Objects.requireNonNull(checkpointStore, "checkpointStore cannot be null");
+        this.leaseManager = Objects.requireNonNull(leaseManager, "leaseManager cannot be null");
+        this.stateStore = Objects.requireNonNull(stateStore, "stateStore cannot be null");
+        if (recoveryWorkerId == null || recoveryWorkerId.isBlank()) {
+            throw new IllegalArgumentException("recoveryWorkerId must not be blank");
+        }
+        this.recoveryWorkerId = recoveryWorkerId;
+        this.leaseDuration = Objects.requireNonNull(leaseDuration, "leaseDuration cannot be null");
+        if (leaseDuration.isZero() || leaseDuration.isNegative()) {
+            throw new IllegalArgumentException("leaseDuration must be positive");
+        }
     }
 
     @Override
@@ -90,10 +123,36 @@ public class DefaultRecoveryManager implements RecoveryManager {
             return RecoveryResult.failure(plan.executionId(), plan.mode(), "Unsupported recovery mode");
         }
 
-        // This establishes a fresh attempt identity only. Runtime restoration and lease/fencing
-        // acquisition are performed by the execution adapter, not by this planning component.
-        String newAttemptId = AttemptId.random().value();
-        return RecoveryResult.success(plan.executionId(), plan.mode(), newAttemptId);
+        if (leaseManager == null) {
+            // Compatibility mode for callers that only use the recovery planning contract.
+            String newAttemptId = AttemptId.random().value();
+            return RecoveryResult.success(plan.executionId(), plan.mode(), newAttemptId);
+        }
+
+        ExecutionDurableState currentState = stateStore.load(plan.executionId()).orElse(null);
+        if (currentState == null) {
+            return RecoveryResult.failure(plan.executionId(), plan.mode(),
+                    "Cannot recover execution without durable state");
+        }
+        if (currentState.status().isTerminal()) {
+            return RecoveryResult.failure(plan.executionId(), plan.mode(),
+                    "Cannot recover a terminal execution");
+        }
+
+        ExecutionLease lease = null;
+        try {
+            lease = leaseManager.acquireLease(plan.executionId(), recoveryWorkerId, leaseDuration);
+            ExecutionDurableState recovering = currentState.withStatus(ExecutionStatus.RECOVERING);
+            stateStore.save(recovering, lease.fencingToken());
+            String newAttemptId = AttemptId.random().value();
+            return RecoveryResult.success(plan.executionId(), plan.mode(), newAttemptId);
+        } catch (RuntimeException failure) {
+            if (lease != null) {
+                leaseManager.releaseLease(plan.executionId(), recoveryWorkerId);
+            }
+            return RecoveryResult.failure(plan.executionId(), plan.mode(),
+                    "Failed to claim fenced recovery ownership: " + failure.getMessage());
+        }
     }
 
     private static boolean sameCheckpoint(Optional<ExecutionCheckpoint> left,
