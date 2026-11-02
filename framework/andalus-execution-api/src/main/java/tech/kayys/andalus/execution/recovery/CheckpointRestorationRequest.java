@@ -23,7 +23,7 @@ public record CheckpointRestorationRequest(
         if (targetWorkerId == null || targetWorkerId.isBlank()) {
             throw new IllegalArgumentException("targetWorkerId must not be blank");
         }
-        if (!checkpoint.executionId().equals(durableState.identity().executionId())) {
+        if (!checkpoint.executionId().equals(durableState.identity().id())) {
             throw new IllegalArgumentException("checkpoint and durable state execution IDs must match");
         }
     }
