@@ -11,6 +11,7 @@ import tech.kayys.andalus.execution.recovery.*;
 import tech.kayys.andalus.execution.mobility.ExecutionDurableState;
 import tech.kayys.andalus.execution.mobility.ExecutionLease;
 import tech.kayys.andalus.execution.mobility.ExecutionStatus;
+import tech.kayys.andalus.execution.mobility.FencedLeaseManager;
 import tech.kayys.andalus.execution.mobility.LeaseManager;
 import tech.kayys.andalus.execution.mobility.state.ExecutionStateStore;
 
@@ -234,7 +235,12 @@ public class DefaultRecoveryManager implements RecoveryManager {
                     // Preserve the original recovery failure; reconciliation can inspect durable state.
                 }
                 try {
-                    leaseManager.releaseLease(plan.executionId(), recoveryWorkerId);
+                    if (leaseManager instanceof FencedLeaseManager fenced) {
+                        fenced.releaseLease(plan.executionId(), recoveryWorkerId, lease.fencingToken());
+                    } else {
+                        // Compatibility for legacy providers; distributed providers should implement FencedLeaseManager.
+                        leaseManager.releaseLease(plan.executionId(), recoveryWorkerId);
+                    }
                 } catch (RuntimeException ignored) {
                     // Lease expiry remains the fallback if release itself fails.
                 }
