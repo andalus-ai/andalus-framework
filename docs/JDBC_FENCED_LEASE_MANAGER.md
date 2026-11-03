@@ -23,14 +23,12 @@ generation. Storage errors fail closed; there is no local fallback.
 
 Use a shared writable database for all nodes, not a read replica. Lease timestamps
 and expiry decisions must use the database clock, never application-node clocks.
-The default constructor uses the standard SQL `CURRENT_TIMESTAMP` expression via
-`JdbcLeaseTimeSources.standard()`. Note that some databases (including PostgreSQL)
-define this value at transaction start, so it is not suitable when a transaction
-may wait on a row lock.
-
-For PostgreSQL, construct the manager with
-`JdbcLeaseTimeSources.postgresql()`, which queries `clock_timestamp()` after the
-row lock is acquired. Other databases should provide a `JdbcLeaseTimeSource`
+The default constructor uses `JdbcLeaseTimeSources.autoDetect()`: PostgreSQL is
+automatically routed to `clock_timestamp()`, while other database products use
+the standard SQL `CURRENT_TIMESTAMP` expression. This matters because PostgreSQL
+defines `CURRENT_TIMESTAMP` at transaction start, which can be stale after a row-lock
+wait. Other databases that use transaction-start timestamps should provide a
+`JdbcLeaseTimeSource`
 whose SQL expression returns the database's current wall-clock timestamp at
 statement execution time. Keep the time source and lease table on the same
 authoritative database. Configure the database and pool so transactions honor
