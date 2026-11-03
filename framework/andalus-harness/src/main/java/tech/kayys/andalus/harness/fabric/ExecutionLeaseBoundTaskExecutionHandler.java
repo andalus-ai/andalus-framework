@@ -10,15 +10,16 @@ import java.util.Objects;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * Acquires execution ownership before running work and retains the same fencing
  * token through durable completion. The queue claim token remains a separate
  * fencing domain and is passed unchanged to the completion committer.
  *
- * <p>Long-running workers can opt into host-managed periodic lease renewal.
- * Cooperative work additionally receives an execution context that signals
- * lease loss and supports cancellation callbacks.</p>
+ * <p>Long-running workers can opt into lease renewal by supplying a
+ * host-managed scheduler and heartbeat interval. The scheduler is never
+ * created or shut down by this handler.</p>
  */
 public final class ExecutionLeaseBoundTaskExecutionHandler implements TaskExecutionHandler {
     private final LeaseManager leaseManager;
@@ -64,6 +65,20 @@ public final class ExecutionLeaseBoundTaskExecutionHandler implements TaskExecut
             ScheduledExecutorService heartbeatScheduler, Duration heartbeatInterval,
             FencedTaskExecutionWork work, CooperativeFencedTaskExecutionWork cooperativeWork,
             FencedExecutionCompletionCommitter committer) {
+        this(leaseManager, leaseDuration, null, null, work, committer);
+    }
+
+    /**
+     * Creates a handler with host-managed periodic lease renewal.
+     * The heartbeat interval must be shorter than the lease duration.
+     */
+    public ExecutionLeaseBoundTaskExecutionHandler(
+            LeaseManager leaseManager,
+            Duration leaseDuration,
+            ScheduledExecutorService heartbeatScheduler,
+            Duration heartbeatInterval,
+            FencedTaskExecutionWork work,
+            FencedExecutionCompletionCommitter committer) {
         this.leaseManager = Objects.requireNonNull(leaseManager, "leaseManager cannot be null");
         this.leaseDuration = positive(leaseDuration, "leaseDuration");
         this.heartbeatScheduler = heartbeatScheduler;
@@ -102,22 +117,18 @@ public final class ExecutionLeaseBoundTaskExecutionHandler implements TaskExecut
         String holderId = claim.token().workerId().value();
         ExecutionLease lease = leaseManager.acquireLease(executionId, holderId, leaseDuration);
         FencingToken executionFence = lease.fencingToken();
-        ExecutionLeaseContext leaseContext = new ExecutionLeaseContext();
+        AtomicBoolean ownershipLost = new AtomicBoolean();
         ScheduledFuture<?> heartbeat = null;
 
         try {
-            requireCurrentLease(executionId, executionFence, leaseContext);
+            requireCurrentLease(executionId, executionFence, ownershipLost);
             if (heartbeatScheduler != null) {
                 heartbeat = heartbeatScheduler.scheduleAtFixedRate(
-                        () -> renewLease(executionId, holderId, executionFence, leaseContext),
+                        () -> renewLease(executionId, holderId, executionFence, ownershipLost),
                         heartbeatInterval.toNanos(), heartbeatInterval.toNanos(), TimeUnit.NANOSECONDS);
             }
-            if (cooperativeWork != null) {
-                cooperativeWork.execute(claim, visibility, executionFence, leaseContext);
-            } else {
-                work.execute(claim, visibility, executionFence);
-            }
-            requireCurrentLease(executionId, executionFence, leaseContext);
+            work.execute(claim, visibility, executionFence);
+            requireCurrentLease(executionId, executionFence, ownershipLost);
             committer.commitCompleted(claim.assignment(), claim.token(), executionFence);
         } finally {
             if (heartbeat != null) {
@@ -128,8 +139,8 @@ public final class ExecutionLeaseBoundTaskExecutionHandler implements TaskExecut
     }
 
     private void renewLease(
-            String executionId, String holderId, FencingToken token, ExecutionLeaseContext context) {
-        if (context.isCancellationRequested()) {
+            String executionId, String holderId, FencingToken token, AtomicBoolean ownershipLost) {
+        if (ownershipLost.get()) {
             return;
         }
         try {
@@ -137,10 +148,11 @@ public final class ExecutionLeaseBoundTaskExecutionHandler implements TaskExecut
                     ? fenced.renewLease(executionId, holderId, token, leaseDuration)
                     : leaseManager.renewLease(executionId, holderId, leaseDuration);
             if (!renewed) {
-                context.cancel();
+                ownershipLost.set(true);
             }
         } catch (RuntimeException renewalFailure) {
-            context.cancel();
+            // Fail closed: work may finish, but completion cannot be committed.
+            ownershipLost.set(true);
         }
     }
 
@@ -154,10 +166,9 @@ public final class ExecutionLeaseBoundTaskExecutionHandler implements TaskExecut
     }
 
     private void requireCurrentLease(
-            String executionId, FencingToken executionFence, ExecutionLeaseContext context)
+            String executionId, FencingToken executionFence, AtomicBoolean ownershipLost)
             throws StaleExecutionCompletionException {
-        if (context.isCancellationRequested() || !leaseManager.validateToken(executionId, executionFence)) {
-            context.cancel();
+        if (ownershipLost.get() || !leaseManager.validateToken(executionId, executionFence)) {
             throw new StaleExecutionCompletionException(
                     "Execution lease expired or was superseded for execution " + executionId
                             + " at fencing generation " + executionFence.generation());
