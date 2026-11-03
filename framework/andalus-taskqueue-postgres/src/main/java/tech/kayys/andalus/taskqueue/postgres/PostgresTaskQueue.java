@@ -49,7 +49,7 @@ public final class PostgresTaskQueue implements TaskQueue {
                     claim_owner VARCHAR(255),
                     claim_until TIMESTAMPTZ,
                     claim_generation BIGINT NOT NULL DEFAULT 0 CHECK (claim_generation >= 0),
-                    acknowledged BOOLEAN NOT NULL DEFAULT FALSE,
+                    acknowledged BOOLEAN NOT NULL DEFAULT FALSE,\n                    acknowledged_claim_owner VARCHAR(255),\n                    acknowledged_claim_generation BIGINT,
                     failure_count INTEGER NOT NULL DEFAULT 0 CHECK (failure_count >= 0),
                     failure_category VARCHAR(128),
                     failure_message TEXT,
@@ -69,7 +69,7 @@ public final class PostgresTaskQueue implements TaskQueue {
             statement.execute("ALTER TABLE andalus_execution_task ADD COLUMN IF NOT EXISTS failure_count INTEGER NOT NULL DEFAULT 0");
             statement.execute("ALTER TABLE andalus_execution_task ADD COLUMN IF NOT EXISTS failure_category VARCHAR(128)");
             statement.execute("ALTER TABLE andalus_execution_task ADD COLUMN IF NOT EXISTS failure_message TEXT");
-            statement.execute("ALTER TABLE andalus_execution_task ADD COLUMN IF NOT EXISTS dead_lettered_at TIMESTAMPTZ");
+            statement.execute("ALTER TABLE andalus_execution_task ADD COLUMN IF NOT EXISTS dead_lettered_at TIMESTAMPTZ");\n            statement.execute("ALTER TABLE andalus_execution_task ADD COLUMN IF NOT EXISTS acknowledged_claim_owner VARCHAR(255)");\n            statement.execute("ALTER TABLE andalus_execution_task ADD COLUMN IF NOT EXISTS acknowledged_claim_generation BIGINT");
             statement.execute(index);
         } catch (SQLException e) {
             throw storageFailure("Unable to initialize PostgreSQL task queue schema", e);
@@ -184,13 +184,51 @@ public final class PostgresTaskQueue implements TaskQueue {
     @Override
     public boolean acknowledge(TaskClaimToken token) {
         Objects.requireNonNull(token, "token cannot be null");
-        String sql = """
+        String update = """
                 UPDATE andalus_execution_task
-                SET acknowledged = TRUE, claim_owner = NULL, claim_until = NULL
+                SET acknowledged = TRUE, acknowledged_claim_owner = ?,
+                    acknowledged_claim_generation = ?, claim_owner = NULL, claim_until = NULL
                 WHERE assignment_id = ? AND claim_owner = ? AND claim_generation = ?
                   AND claim_until > CURRENT_TIMESTAMP AND acknowledged = FALSE
                 """;
-        return mutateClaim(sql, token, null);
+        String verify = """
+                SELECT acknowledged FROM andalus_execution_task
+                WHERE assignment_id = ? AND acknowledged = TRUE
+                  AND acknowledged_claim_owner = ? AND acknowledged_claim_generation = ?
+                """;
+        try (Connection connection = dataSource.getConnection()) {
+            connection.setAutoCommit(false);
+            try {
+                int changed;
+                try (PreparedStatement statement = connection.prepareStatement(update)) {
+                    statement.setString(1, token.workerId().value());
+                    statement.setLong(2, token.generation());
+                    statement.setString(3, token.assignmentId().value());
+                    statement.setString(4, token.workerId().value());
+                    statement.setLong(5, token.generation());
+                    changed = statement.executeUpdate();
+                }
+                boolean acknowledged = changed == 1;
+                if (!acknowledged) {
+                    try (PreparedStatement statement = connection.prepareStatement(verify)) {
+                        statement.setString(1, token.assignmentId().value());
+                        statement.setString(2, token.workerId().value());
+                        statement.setLong(3, token.generation());
+                        try (ResultSet result = statement.executeQuery()) {
+                            acknowledged = result.next() && result.getBoolean(1);
+                        }
+                    }
+                }
+                connection.commit();
+                return acknowledged;
+            } catch (Exception e) {
+                rollback(connection, e);
+                if (e instanceof RuntimeException runtime) throw runtime;
+                throw storageFailure("Unable to acknowledge task", (SQLException) e);
+            }
+        } catch (SQLException e) {
+            throw storageFailure("Unable to acknowledge task", e);
+        }
     }
 
     @Override
