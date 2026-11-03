@@ -22,7 +22,14 @@ import java.util.Objects;
  * Queue acknowledgement follows both durable commits and is itself recoverable.</p>
  */
 public final class CompletionReconciler {
-    public enum Outcome { ACKNOWLEDGED, COMPLETED_CLAIM_NOT_CURRENT, DEFERRED_ACTIVE_LEASE }
+    public enum Outcome {
+        ACKNOWLEDGED,
+        COMPLETED_CLAIM_NOT_CURRENT,
+        DEFERRED_ACTIVE_LEASE,
+        NO_MATCHING_COMPLETION,
+        COMPLETION_NOT_CONFIRMED,
+        ASSIGNMENT_MISMATCH
+    }
 
     private final CompletionIntentStore intents;
     private final ExecutionStateStore executionStates;
@@ -61,6 +68,45 @@ public final class CompletionReconciler {
             outcomes.add(reconcile(intent.idempotencyKey()));
         }
         return List.copyOf(outcomes);
+    }
+
+    /**
+     * Acknowledge a redelivered assignment only when its original completion
+     * intent and both durable terminal records prove that the work already finished.
+     * The new claim token is used; the expired token retained in the intent is never used.
+     */
+    public Outcome acknowledgeCompletedRedelivery(TaskClaim claim) {
+        Objects.requireNonNull(claim, "claim cannot be null");
+        ExecutionAssignment assignment = claim.assignment();
+        CompletionIntent intent = intents.findByAssignmentId(assignment.id()).orElse(null);
+        if (intent == null) return Outcome.NO_MATCHING_COMPLETION;
+
+        if (!intent.assignmentId().equals(assignment.id())
+                || !intent.executionId().equals(assignment.executionId().value())
+                || intent.assignmentFenceGeneration() != assignment.fence().generation()
+                || !assignment.fence().assignmentId().equals(assignment.id())
+                || !claim.token().assignmentId().equals(assignment.id())) {
+            return Outcome.ASSIGNMENT_MISMATCH;
+        }
+        if (intent.stage().ordinal() < CompletionIntentStage.COMPLETED.ordinal())
+            return Outcome.COMPLETION_NOT_CONFIRMED;
+
+        ExecutionDurableState state = executionStates.load(intent.executionId()).orElse(null);
+        if (state == null || state.status() != ExecutionStatus.COMPLETED)
+            return Outcome.COMPLETION_NOT_CONFIRMED;
+
+        ExecutionAttempt attempt = attempts.get(intent.physicalAttemptId()).orElse(null);
+        if (attempt == null
+                || !attempt.executionId().equals(intent.executionId())
+                || attempt.state() != AttemptState.COMPLETED) {
+            return Outcome.COMPLETION_NOT_CONFIRMED;
+        }
+
+        // Critical: acknowledge only this delivery's current token, never the
+        // superseded token stored in CompletionIntent.queueClaimToken().
+        return queue.acknowledge(claim.token())
+                ? Outcome.ACKNOWLEDGED
+                : Outcome.COMPLETED_CLAIM_NOT_CURRENT;
     }
 
     public Outcome reconcile(String idempotencyKey) {
@@ -106,12 +152,6 @@ public final class CompletionReconciler {
         }
     }
 
-
-    /**
-     * Queue acknowledgement is intentionally the final operation. TaskQueue
-     * guarantees that only the original exact token can acknowledge, and that
-     * retrying that same token after a successful ack is idempotent.
-     */
     private Outcome acknowledgeCompleted(CompletionIntent intent) {
         if (!queue.acknowledge(intent.queueClaimToken())) return Outcome.COMPLETED_CLAIM_NOT_CURRENT;
         intents.advance(intent.idempotencyKey(), CompletionIntentStage.COMPLETED,
