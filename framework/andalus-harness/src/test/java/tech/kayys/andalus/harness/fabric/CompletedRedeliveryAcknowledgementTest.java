@@ -53,8 +53,11 @@ class CompletedRedeliveryAcknowledgementTest {
         var identity = ExecutionIdentity.of(EXECUTION_ID, "workflow-redelivery", "agent-redelivery");
         var state = ExecutionDurableState.of(identity, ExecutionCursor.initial("workflow-redelivery"));
         states.save(state, lease.fencingToken());
-        states.save(state.withStatus(completed ? ExecutionStatus.COMPLETED : ExecutionStatus.RUNNING),
-                lease.fencingToken());
+        states.save(state.withStatus(ExecutionStatus.RUNNING), lease.fencingToken());
+        if (completed) {
+            states.save(states.load(EXECUTION_ID).orElseThrow()
+                    .withStatus(ExecutionStatus.COMPLETED), lease.fencingToken());
+        }
 
         var physicalAttempt = tech.kayys.andalus.execution.attempt.AttemptId.of("physical-redelivery-1");
         var attempt = new ExecutionAttempt(EXECUTION_ID, physicalAttempt, 1,
