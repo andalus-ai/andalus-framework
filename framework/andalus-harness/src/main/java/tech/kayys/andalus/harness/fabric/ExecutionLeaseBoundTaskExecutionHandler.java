@@ -25,15 +25,45 @@ public final class ExecutionLeaseBoundTaskExecutionHandler implements TaskExecut
     private final LeaseManager leaseManager;
     private final Duration leaseDuration;
     private final FencedTaskExecutionWork work;
+    private final CooperativeFencedTaskExecutionWork cooperativeWork;
     private final FencedExecutionCompletionCommitter committer;
     private final ScheduledExecutorService heartbeatScheduler;
     private final Duration heartbeatInterval;
 
     /** Compatibility constructor for bounded work that completes within the lease duration. */
     public ExecutionLeaseBoundTaskExecutionHandler(
-            LeaseManager leaseManager,
-            Duration leaseDuration,
-            FencedTaskExecutionWork work,
+            LeaseManager leaseManager, Duration leaseDuration,
+            FencedTaskExecutionWork work, FencedExecutionCompletionCommitter committer) {
+        this(leaseManager, leaseDuration, null, null, work, null, committer);
+    }
+
+    /** Constructor for bounded work that cooperatively observes lease cancellation. */
+    public ExecutionLeaseBoundTaskExecutionHandler(
+            LeaseManager leaseManager, Duration leaseDuration,
+            CooperativeFencedTaskExecutionWork work, FencedExecutionCompletionCommitter committer) {
+        this(leaseManager, leaseDuration, null, null, null, work, committer);
+    }
+
+    /** Constructor with host-managed periodic renewal for legacy work callbacks. */
+    public ExecutionLeaseBoundTaskExecutionHandler(
+            LeaseManager leaseManager, Duration leaseDuration,
+            ScheduledExecutorService heartbeatScheduler, Duration heartbeatInterval,
+            FencedTaskExecutionWork work, FencedExecutionCompletionCommitter committer) {
+        this(leaseManager, leaseDuration, heartbeatScheduler, heartbeatInterval, work, null, committer);
+    }
+
+    /** Constructor with host-managed periodic renewal and cooperative cancellation. */
+    public ExecutionLeaseBoundTaskExecutionHandler(
+            LeaseManager leaseManager, Duration leaseDuration,
+            ScheduledExecutorService heartbeatScheduler, Duration heartbeatInterval,
+            CooperativeFencedTaskExecutionWork work, FencedExecutionCompletionCommitter committer) {
+        this(leaseManager, leaseDuration, heartbeatScheduler, heartbeatInterval, null, work, committer);
+    }
+
+    private ExecutionLeaseBoundTaskExecutionHandler(
+            LeaseManager leaseManager, Duration leaseDuration,
+            ScheduledExecutorService heartbeatScheduler, Duration heartbeatInterval,
+            FencedTaskExecutionWork work, CooperativeFencedTaskExecutionWork cooperativeWork,
             FencedExecutionCompletionCommitter committer) {
         this(leaseManager, leaseDuration, null, null, work, committer);
     }
@@ -62,7 +92,11 @@ public final class ExecutionLeaseBoundTaskExecutionHandler implements TaskExecut
                 throw new IllegalArgumentException("heartbeatInterval must be shorter than leaseDuration");
             }
         }
-        this.work = Objects.requireNonNull(work, "work cannot be null");
+        if ((work == null) == (cooperativeWork == null)) {
+            throw new IllegalArgumentException("Exactly one work callback must be supplied");
+        }
+        this.work = work;
+        this.cooperativeWork = cooperativeWork;
         this.committer = Objects.requireNonNull(committer, "committer cannot be null");
     }
 
