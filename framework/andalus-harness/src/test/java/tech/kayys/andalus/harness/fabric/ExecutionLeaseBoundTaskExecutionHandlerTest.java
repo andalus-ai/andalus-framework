@@ -1,0 +1,98 @@
+package tech.kayys.andalus.harness.fabric;
+
+import org.junit.jupiter.api.Test;
+import tech.kayys.andalus.execution.mobility.ExecutionLease;
+import tech.kayys.andalus.execution.mobility.FencingToken;
+import tech.kayys.andalus.execution.mobility.LeaseManager;
+import tech.kayys.andalus.harness.consistency.state.ExecutionId;
+import tech.kayys.andalus.workflow.graph.NodeId;
+
+import java.time.Duration;
+import java.time.Instant;
+import java.util.Optional;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
+
+import static org.junit.jupiter.api.Assertions.*;
+
+class ExecutionLeaseBoundTaskExecutionHandlerTest {
+    private TaskClaim claim() {
+        AssignmentId id = AssignmentId.of("lease-bound");
+        DefaultExecutionAssignment assignment = new DefaultExecutionAssignment(
+                id, ExecutionId.of("exec-lease-bound"), NodeId.of("node"),
+                AttemptId.initial(), WorkerId.of("scheduler"),
+                AssignmentFence.of(id, 3), AssignmentStatus.PENDING,
+                AssignmentConstraints.defaults());
+        Instant now = Instant.now();
+        return new TaskClaim(assignment,
+                new TaskClaimToken(id, WorkerId.of("worker-a"), 9),
+                now, now.plusSeconds(30));
+    }
+
+    private LeaseManager leaseManager(AtomicBoolean valid, AtomicInteger releases) {
+        FencingToken token = FencingToken.of(41);
+        return new LeaseManager() {
+            @Override public ExecutionLease acquireLease(String executionId, String holderId, Duration duration) {
+                assertEquals("exec-lease-bound", executionId);
+                assertEquals("worker-a", holderId);
+                return new ExecutionLease(executionId, holderId, token, Instant.now(), Instant.now().plus(duration));
+            }
+            @Override public boolean renewLease(String executionId, String holderId, Duration duration) { return valid.get(); }
+            @Override public void releaseLease(String executionId, String holderId) { releases.incrementAndGet(); valid.set(false); }
+            @Override public boolean validateToken(String executionId, FencingToken supplied) {
+                return valid.get() && token.equals(supplied);
+            }
+            @Override public Optional<FencingToken> currentToken(String executionId) { return Optional.of(token); }
+            @Override public Optional<ExecutionLease> getLease(String executionId) { return Optional.empty(); }
+        };
+    }
+
+    @Test
+    void acquiresExecutionFenceBeforeWorkAndCommitsWithSameToken() throws Exception {
+        AtomicBoolean valid = new AtomicBoolean(true);
+        AtomicInteger releases = new AtomicInteger();
+        FencingToken expected = FencingToken.of(41);
+        AtomicInteger stages = new AtomicInteger();
+        ExecutionLeaseBoundTaskExecutionHandler handler = new ExecutionLeaseBoundTaskExecutionHandler(
+                leaseManager(valid, releases), Duration.ofMinutes(1),
+                (task, visibility, fence) -> {
+                    assertEquals(expected, fence);
+                    assertEquals(0, stages.getAndIncrement());
+                },
+                (assignment, claimToken, fence) -> {
+                    assertEquals(expected, fence);
+                    assertEquals(1, stages.getAndIncrement());
+                    assertEquals(9, claimToken.generation());
+                });
+
+        handler.execute(claim(), extension -> true);
+
+        assertEquals(2, stages.get());
+        assertEquals(1, releases.get());
+    }
+
+    @Test
+    void lostExecutionLeasePreventsCompletionCommit() {
+        AtomicBoolean valid = new AtomicBoolean(false);
+        AtomicInteger releases = new AtomicInteger();
+        AtomicInteger commits = new AtomicInteger();
+        ExecutionLeaseBoundTaskExecutionHandler handler = new ExecutionLeaseBoundTaskExecutionHandler(
+                leaseManager(valid, releases), Duration.ofMinutes(1),
+                (task, visibility, fence) -> fail("work must not start without a valid lease"),
+                (assignment, claimToken, fence) -> commits.incrementAndGet());
+
+        assertThrows(StaleExecutionCompletionException.class,
+                () -> handler.execute(claim(), extension -> true));
+        assertEquals(0, commits.get());
+        assertEquals(1, releases.get());
+    }
+
+    @Test
+    void rejectsNonPositiveLeaseDuration() {
+        assertThrows(IllegalArgumentException.class, () ->
+                new ExecutionLeaseBoundTaskExecutionHandler(
+                        leaseManager(new AtomicBoolean(true), new AtomicInteger()),
+                        Duration.ZERO, (task, visibility, fence) -> {},
+                        (assignment, token, fence) -> {}));
+    }
+}
