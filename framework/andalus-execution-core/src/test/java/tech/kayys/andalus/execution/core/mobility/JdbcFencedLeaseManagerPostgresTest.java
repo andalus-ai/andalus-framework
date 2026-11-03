@@ -97,6 +97,32 @@ class JdbcFencedLeaseManagerPostgresTest {
     }
 
     @Test
+    void postgresUsesWallClockAfterWaitingForLeaseRowLock() throws Exception {
+        JdbcFencedLeaseManager firstNode = manager();
+        JdbcFencedLeaseManager waitingNode = manager();
+        ExecutionLease first = firstNode.acquireLease("postgres-lock-wait", "node-a", Duration.ofMillis(200));
+
+        try (Connection blocker = dataSource.getConnection();
+             var statement = blocker.createStatement()) {
+            blocker.setAutoCommit(false);
+            statement.executeQuery("SELECT execution_id FROM andalus_execution_lease "
+                    + "WHERE execution_id='postgres-lock-wait' FOR UPDATE").close();
+
+            try (var executor = Executors.newSingleThreadExecutor()) {
+                Future<ExecutionLease> acquisition = executor.submit(() ->
+                        waitingNode.acquireLease("postgres-lock-wait", "node-b", Duration.ofSeconds(10)));
+
+                Thread.sleep(350);
+                blocker.commit();
+
+                ExecutionLease successor = acquisition.get(10, TimeUnit.SECONDS);
+                assertEquals(first.fencingToken().generation() + 1, successor.fencingToken().generation());
+                assertEquals("node-b", successor.holderId());
+            }
+        }
+    }
+
+    @Test
     void postgresPreservesGenerationAfterFencedReleaseAndReacquisition() {
         JdbcFencedLeaseManager firstNode = manager();
         ExecutionLease first = firstNode.acquireLease("postgres-release", "node-a", Duration.ofSeconds(10));
