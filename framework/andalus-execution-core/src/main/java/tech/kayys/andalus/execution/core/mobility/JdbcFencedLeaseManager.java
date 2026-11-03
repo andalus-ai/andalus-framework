@@ -6,7 +6,6 @@ import tech.kayys.andalus.execution.mobility.FencingToken;
 
 import javax.sql.DataSource;
 import java.sql.*;
-import java.time.Clock;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.Objects;
@@ -19,15 +18,15 @@ import java.util.Optional;
 public final class JdbcFencedLeaseManager implements FencedLeaseManager {
     private static final String TABLE = "andalus_execution_lease";
     private final DataSource dataSource;
-    private final Clock clock;
+    private final JdbcLeaseTimeSource timeSource;
 
     public JdbcFencedLeaseManager(DataSource dataSource) {
-        this(dataSource, Clock.systemUTC());
+        this(dataSource, JdbcLeaseTimeSources.autoDetect());
     }
 
-    public JdbcFencedLeaseManager(DataSource dataSource, Clock clock) {
+    public JdbcFencedLeaseManager(DataSource dataSource, JdbcLeaseTimeSource timeSource) {
         this.dataSource = Objects.requireNonNull(dataSource, "dataSource");
-        this.clock = Objects.requireNonNull(clock, "clock");
+        this.timeSource = Objects.requireNonNull(timeSource, "timeSource");
     }
 
     @Override
@@ -37,7 +36,7 @@ public final class JdbcFencedLeaseManager implements FencedLeaseManager {
         long durationMillis = positiveMillis(duration);
         return tx(c -> {
             Row row = lock(c, executionId);
-            Instant now = clock.instant();
+            Instant now = Instant.ofEpochMilli(timeSource.currentTimeMillis(c));
             if (row.holder != null && now.toEpochMilli() < row.expires
                     && !row.holder.equals(holderId)) {
                 throw new IllegalStateException("Execution lease is still held by " + row.holder);
@@ -70,7 +69,7 @@ public final class JdbcFencedLeaseManager implements FencedLeaseManager {
         long durationMillis = positiveMillis(duration);
         return tx(c -> {
             Row row = lock(c, executionId);
-            long now = clock.millis();
+            long now = timeSource.currentTimeMillis(c);
             if (!active(row, holderId, now)) return false;
             return updateExpiry(c, executionId, holderId, row.generation,
                     expiryMillis(now, durationMillis));
@@ -85,7 +84,7 @@ public final class JdbcFencedLeaseManager implements FencedLeaseManager {
         long durationMillis = positiveMillis(duration);
         return tx(c -> {
             Row row = lock(c, executionId);
-            long now = clock.millis();
+            long now = timeSource.currentTimeMillis(c);
             if (!active(row, holderId, now) || row.generation != token.generation()) return false;
             return updateExpiry(c, executionId, holderId, token.generation(),
                     expiryMillis(now, durationMillis));
@@ -110,7 +109,7 @@ public final class JdbcFencedLeaseManager implements FencedLeaseManager {
         Objects.requireNonNull(token, "token");
         return tx(c -> {
             Row row = lock(c, executionId);
-            if (!active(row, holderId, clock.millis()) || row.generation != token.generation()) return false;
+            if (!active(row, holderId, timeSource.currentTimeMillis(c)) || row.generation != token.generation()) return false;
             clear(c, executionId, holderId, token.generation());
             return true;
         });
@@ -122,7 +121,7 @@ public final class JdbcFencedLeaseManager implements FencedLeaseManager {
         return tx(c -> {
             Row row = read(c, executionId);
             return row != null && row.holder != null && row.generation == token.generation()
-                    && clock.millis() < row.expires;
+                    && timeSource.currentTimeMillis(c) < row.expires;
         });
     }
 
@@ -140,7 +139,7 @@ public final class JdbcFencedLeaseManager implements FencedLeaseManager {
         if (executionId == null || executionId.isBlank()) return Optional.empty();
         return tx(c -> {
             Row row = read(c, executionId);
-            if (row == null || row.holder == null || clock.millis() >= row.expires) return Optional.empty();
+            if (row == null || row.holder == null || timeSource.currentTimeMillis(c) >= row.expires) return Optional.empty();
             return Optional.of(new ExecutionLease(executionId, row.holder, FencingToken.of(row.generation),
                     Instant.ofEpochMilli(row.acquired), Instant.ofEpochMilli(row.expires)));
         });

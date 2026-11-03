@@ -21,18 +21,27 @@ the same holder. Renewal retains generation; the fenced overload requires an
 exact holder and token. Fenced release also requires an exact active holder and
 generation. Storage errors fail closed; there is no local fallback.
 
-Use a shared writable database for all nodes, not a read replica. Keep node
-clocks synchronized or supply a shared clock policy. Configure the database and
-pool so transactions honor SELECT FOR UPDATE. Dialects without the required
-locking and savepoint behavior need a provider-specific implementation.
+Use a shared writable database for all nodes, not a read replica. Lease timestamps
+and expiry decisions must use the database clock, never application-node clocks.
+The default constructor uses `JdbcLeaseTimeSources.autoDetect()`: PostgreSQL is
+automatically routed to `clock_timestamp()`, while other database products use
+the standard SQL `CURRENT_TIMESTAMP` expression. This matters because PostgreSQL
+defines `CURRENT_TIMESTAMP` at transaction start, which can be stale after a row-lock
+wait. Other databases that use transaction-start timestamps should provide a
+`JdbcLeaseTimeSource` whose SQL expression returns the database's current wall-clock timestamp at
+statement execution time. Keep the time source and lease table on the same
+authoritative database. Configure the database and pool so transactions honor
+SELECT FOR UPDATE. Dialects without the required locking and savepoint behavior
+need a provider-specific implementation.
 
 
 ## PostgreSQL integration coverage
 
 The execution-core test suite includes a Testcontainers-backed PostgreSQL 16
 integration test. It exercises concurrent first-row acquisition from separate
-manager instances, stale-token rejection after lease takeover, and generation
-preservation across release/reacquisition. The test is automatically skipped
+manager instances, stale-token rejection after lease takeover, generation
+preservation across release/reacquisition, and expiry decisions after waiting on
+a row lock. The test is automatically skipped
 when Docker is unavailable; CI runners with Docker execute it as part of the
 normal Maven test lifecycle.
 
