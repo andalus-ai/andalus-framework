@@ -36,6 +36,7 @@ public final class CompletionReconciler {
             ExecutionStateStore executionStates,
             ExecutionAttemptStore attempts,
             LeaseManager leases,
+            TaskQueue queue,
             String holderId,
             Duration leaseDuration) {
         this.intents = Objects.requireNonNull(intents, "intents cannot be null");
@@ -50,7 +51,7 @@ public final class CompletionReconciler {
             throw new IllegalArgumentException("leaseDuration must be positive");
     }
 
-    /** Reconcile a bounded oldest-first batch; no queue ack is issued here. */
+    /** Reconcile a bounded oldest-first batch and acknowledge only exact original claims. */
     public List<Outcome> reconcileIncomplete(int limit) {
         List<CompletionIntent> pending = intents.listIncomplete(limit);
         List<Outcome> outcomes = new ArrayList<>(pending.size());
