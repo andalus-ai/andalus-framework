@@ -28,6 +28,18 @@ public final class InMemoryCompletionIntentStore implements CompletionIntentStor
     }
 
     @Override
+    public Optional<CompletionIntent> findByAssignmentId(AssignmentId assignmentId) {
+        Objects.requireNonNull(assignmentId, "assignmentId cannot be null");
+        List<CompletionIntent> matches = intents.values().stream()
+                .filter(intent -> intent.assignmentId().equals(assignmentId))
+                .limit(2)
+                .toList();
+        if (matches.size() > 1)
+            throw new IllegalStateException("Multiple completion intents exist for assignment " + assignmentId.value());
+        return matches.stream().findFirst();
+    }
+
+    @Override
     public List<CompletionIntent> listIncomplete(int limit) {
         if (limit <= 0) throw new IllegalArgumentException("limit must be positive");
         return intents.values().stream()
