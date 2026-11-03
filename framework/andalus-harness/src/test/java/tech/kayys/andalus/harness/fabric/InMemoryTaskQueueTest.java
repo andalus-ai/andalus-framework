@@ -67,7 +67,7 @@ class InMemoryTaskQueueTest {
         assertEquals(first.token().generation() + 1, second.token().generation());
         assertFalse(queue.acknowledge(first.token()));
         assertTrue(queue.acknowledge(second.token()));
-        assertFalse(queue.acknowledge(second.token()));
+        assertTrue(queue.acknowledge(second.token()), "same exact token is idempotently acknowledged");
     }
 
     @Test

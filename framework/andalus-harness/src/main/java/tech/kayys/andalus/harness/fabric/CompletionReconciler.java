@@ -19,15 +19,16 @@ import java.util.Objects;
  *
  * <p>Every reconciliation acquires a new execution lease. The original execution
  * fence and queue claim in the intent are audit data only and are never reused.
- * Queue acknowledgement is deliberately outside this coordinator.</p>
+ * Queue acknowledgement follows both durable commits and is itself recoverable.</p>
  */
 public final class CompletionReconciler {
-    public enum Outcome { COMPLETED, DEFERRED_ACTIVE_LEASE }
+    public enum Outcome { ACKNOWLEDGED, COMPLETED_CLAIM_NOT_CURRENT, DEFERRED_ACTIVE_LEASE }
 
     private final CompletionIntentStore intents;
     private final ExecutionStateStore executionStates;
     private final ExecutionAttemptStore attempts;
     private final LeaseManager leases;
+    private final TaskQueue queue;
     private final String holderId;
     private final Duration leaseDuration;
 
@@ -36,12 +37,14 @@ public final class CompletionReconciler {
             ExecutionStateStore executionStates,
             ExecutionAttemptStore attempts,
             LeaseManager leases,
+            TaskQueue queue,
             String holderId,
             Duration leaseDuration) {
         this.intents = Objects.requireNonNull(intents, "intents cannot be null");
         this.executionStates = Objects.requireNonNull(executionStates, "executionStates cannot be null");
         this.attempts = Objects.requireNonNull(attempts, "attempts cannot be null");
         this.leases = Objects.requireNonNull(leases, "leases cannot be null");
+        this.queue = Objects.requireNonNull(queue, "queue cannot be null");
         if (holderId == null || holderId.isBlank())
             throw new IllegalArgumentException("holderId cannot be blank");
         this.holderId = holderId;
@@ -50,7 +53,7 @@ public final class CompletionReconciler {
             throw new IllegalArgumentException("leaseDuration must be positive");
     }
 
-    /** Reconcile a bounded oldest-first batch; no queue ack is issued here. */
+    /** Reconcile a bounded oldest-first batch and acknowledge only exact original claims. */
     public List<Outcome> reconcileIncomplete(int limit) {
         List<CompletionIntent> pending = intents.listIncomplete(limit);
         List<Outcome> outcomes = new ArrayList<>(pending.size());
@@ -63,7 +66,8 @@ public final class CompletionReconciler {
     public Outcome reconcile(String idempotencyKey) {
         CompletionIntent intent = intents.get(idempotencyKey)
                 .orElseThrow(() -> new IllegalArgumentException("Unknown completion intent: " + idempotencyKey));
-        if (intent.stage() == CompletionIntentStage.COMPLETED) return Outcome.COMPLETED;
+        if (intent.stage() == CompletionIntentStage.ACKNOWLEDGED) return Outcome.ACKNOWLEDGED;
+        if (intent.stage() == CompletionIntentStage.COMPLETED) return acknowledgeCompleted(intent);
 
         final ExecutionLease lease;
         try {
@@ -96,10 +100,23 @@ public final class CompletionReconciler {
             CompletionIntent completed = intents.get(idempotencyKey).orElseThrow();
             if (completed.stage() != CompletionIntentStage.COMPLETED)
                 throw new IllegalStateException("Completion intent did not reach COMPLETED");
-            return Outcome.COMPLETED;
+            return acknowledgeCompleted(completed);
         } finally {
             leases.releaseLease(intent.executionId(), holderId);
         }
+    }
+
+
+    /**
+     * Queue acknowledgement is intentionally the final operation. TaskQueue
+     * guarantees that only the original exact token can acknowledge, and that
+     * retrying that same token after a successful ack is idempotent.
+     */
+    private Outcome acknowledgeCompleted(CompletionIntent intent) {
+        if (!queue.acknowledge(intent.queueClaimToken())) return Outcome.COMPLETED_CLAIM_NOT_CURRENT;
+        intents.advance(intent.idempotencyKey(), CompletionIntentStage.COMPLETED,
+                CompletionIntentStage.ACKNOWLEDGED);
+        return Outcome.ACKNOWLEDGED;
     }
 
     private void commitExecutionState(CompletionIntent intent, ExecutionLease lease) {
