@@ -31,7 +31,7 @@ public final class InMemoryCompletionIntentStore implements CompletionIntentStor
     public List<CompletionIntent> listIncomplete(int limit) {
         if (limit <= 0) throw new IllegalArgumentException("limit must be positive");
         return intents.values().stream()
-                .filter(intent -> intent.stage() != CompletionIntentStage.COMPLETED)
+                .filter(intent -> intent.stage() != CompletionIntentStage.ACKNOWLEDGED)
                 .sorted(Comparator.comparing(CompletionIntent::createdAt)
                         .thenComparing(CompletionIntent::idempotencyKey))
                 .limit(limit)
