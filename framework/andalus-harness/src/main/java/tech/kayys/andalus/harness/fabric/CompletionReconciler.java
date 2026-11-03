@@ -6,6 +6,7 @@ import tech.kayys.andalus.execution.attempt.ExecutionAttemptStore;
 import tech.kayys.andalus.execution.mobility.ExecutionDurableState;
 import tech.kayys.andalus.execution.mobility.ExecutionLease;
 import tech.kayys.andalus.execution.mobility.ExecutionStatus;
+import tech.kayys.andalus.execution.mobility.FencedLeaseManager;
 import tech.kayys.andalus.execution.mobility.LeaseManager;
 import tech.kayys.andalus.execution.mobility.state.ExecutionStateStore;
 
@@ -148,7 +149,12 @@ public final class CompletionReconciler {
                 throw new IllegalStateException("Completion intent did not reach COMPLETED");
             return acknowledgeCompleted(completed);
         } finally {
-            leases.releaseLease(intent.executionId(), holderId);
+            if (leases instanceof FencedLeaseManager fenced) {
+                fenced.releaseLease(intent.executionId(), holderId, lease.fencingToken());
+            } else {
+                // Compatibility for legacy providers; distributed providers should implement FencedLeaseManager.
+                leases.releaseLease(intent.executionId(), holderId);
+            }
         }
     }
 
