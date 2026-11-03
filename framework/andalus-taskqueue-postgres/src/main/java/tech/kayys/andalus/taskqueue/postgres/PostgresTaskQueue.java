@@ -50,6 +50,10 @@ public final class PostgresTaskQueue implements TaskQueue {
                     claim_until TIMESTAMPTZ,
                     claim_generation BIGINT NOT NULL DEFAULT 0 CHECK (claim_generation >= 0),
                     acknowledged BOOLEAN NOT NULL DEFAULT FALSE,
+                    failure_count INTEGER NOT NULL DEFAULT 0 CHECK (failure_count >= 0),
+                    failure_category VARCHAR(128),
+                    failure_message TEXT,
+                    dead_lettered_at TIMESTAMPTZ,
                     created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
                     CHECK ((claim_owner IS NULL) = (claim_until IS NULL))
                 )
@@ -62,6 +66,10 @@ public final class PostgresTaskQueue implements TaskQueue {
         try (Connection connection = dataSource.getConnection();
              Statement statement = connection.createStatement()) {
             statement.execute(table);
+            statement.execute("ALTER TABLE andalus_execution_task ADD COLUMN IF NOT EXISTS failure_count INTEGER NOT NULL DEFAULT 0");
+            statement.execute("ALTER TABLE andalus_execution_task ADD COLUMN IF NOT EXISTS failure_category VARCHAR(128)");
+            statement.execute("ALTER TABLE andalus_execution_task ADD COLUMN IF NOT EXISTS failure_message TEXT");
+            statement.execute("ALTER TABLE andalus_execution_task ADD COLUMN IF NOT EXISTS dead_lettered_at TIMESTAMPTZ");
             statement.execute(index);
         } catch (SQLException e) {
             throw storageFailure("Unable to initialize PostgreSQL task queue schema", e);
@@ -120,7 +128,7 @@ public final class PostgresTaskQueue implements TaskQueue {
                 SELECT assignment_id, execution_id, node_id, attempt_number, assigned_worker_id,
                        assignment_fence_generation, assignment_status, timeout_millis, max_retries
                 FROM andalus_execution_task
-                WHERE acknowledged = FALSE
+                WHERE acknowledged = FALSE AND dead_lettered_at IS NULL
                   AND available_at <= CURRENT_TIMESTAMP
                   AND (claim_owner IS NULL OR claim_until <= CURRENT_TIMESTAMP)
                 ORDER BY available_at, assignment_id
@@ -210,6 +218,79 @@ public final class PostgresTaskQueue implements TaskQueue {
                   AND claim_until > CURRENT_TIMESTAMP AND acknowledged = FALSE
                 """;
         return mutateClaim(sql, token, extensionMillis);
+    }
+
+    @Override
+    public TaskFailureResult fail(TaskClaimToken token, TaskFailureDecision decision) {
+        Objects.requireNonNull(token, "token cannot be null");
+        Objects.requireNonNull(decision, "decision cannot be null");
+        boolean retryable = decision.retryDelay().isPresent();
+        long delayMillis = retryable ? nonNegativeMillis(decision.retryDelay().orElseThrow(), "retryDelay") : 0L;
+        String sql = """
+                UPDATE andalus_execution_task
+                SET failure_count = failure_count + 1,
+                    failure_category = ?, failure_message = ?,
+                    dead_lettered_at = CASE
+                        WHEN ? = FALSE OR failure_count >= max_retries THEN CURRENT_TIMESTAMP
+                        ELSE NULL END,
+                    available_at = CASE
+                        WHEN ? = TRUE AND failure_count < max_retries
+                            THEN CURRENT_TIMESTAMP + (? * INTERVAL '1 millisecond')
+                        ELSE available_at END,
+                    claim_owner = NULL, claim_until = NULL
+                WHERE assignment_id = ? AND claim_owner = ? AND claim_generation = ?
+                  AND claim_until > CURRENT_TIMESTAMP AND acknowledged = FALSE
+                  AND dead_lettered_at IS NULL
+                RETURNING failure_count, dead_lettered_at
+                """;
+        try (Connection connection = dataSource.getConnection();
+             PreparedStatement statement = connection.prepareStatement(sql)) {
+            statement.setString(1, decision.category());
+            statement.setString(2, decision.message());
+            statement.setBoolean(3, retryable);
+            statement.setBoolean(4, retryable);
+            statement.setLong(5, delayMillis);
+            statement.setString(6, token.assignmentId().value());
+            statement.setString(7, token.workerId().value());
+            statement.setLong(8, token.generation());
+            try (ResultSet result = statement.executeQuery()) {
+                if (!result.next()) return TaskFailureResult.LOST_CLAIM;
+                return result.getTimestamp(2) == null
+                        ? TaskFailureResult.RETRY_SCHEDULED : TaskFailureResult.DEAD_LETTERED;
+            }
+        } catch (SQLException e) {
+            throw storageFailure("Unable to record task failure", e);
+        }
+    }
+
+    @Override
+    public List<DeadLetterTask> listDeadLetters(int limit) {
+        if (limit < 1) throw new IllegalArgumentException("limit must be positive");
+        String sql = """
+                SELECT assignment_id, execution_id, node_id, attempt_number, assigned_worker_id,
+                       assignment_fence_generation, assignment_status, timeout_millis, max_retries,
+                       failure_count, failure_category, failure_message, dead_lettered_at
+                FROM andalus_execution_task
+                WHERE dead_lettered_at IS NOT NULL
+                ORDER BY dead_lettered_at, assignment_id
+                LIMIT ?
+                """;
+        try (Connection connection = dataSource.getConnection();
+             PreparedStatement statement = connection.prepareStatement(sql)) {
+            statement.setInt(1, limit);
+            try (ResultSet result = statement.executeQuery()) {
+                List<DeadLetterTask> deadLetters = new ArrayList<>();
+                while (result.next()) {
+                    deadLetters.add(new DeadLetterTask(readAssignment(result).toAssignment(),
+                            result.getInt("failure_count"), result.getString("failure_category"),
+                            result.getString("failure_message"),
+                            result.getTimestamp("dead_lettered_at").toInstant()));
+                }
+                return List.copyOf(deadLetters);
+            }
+        } catch (SQLException e) {
+            throw storageFailure("Unable to list dead-letter tasks", e);
+        }
     }
 
     private boolean mutateClaim(String sql, TaskClaimToken token, Long durationMillis) {
