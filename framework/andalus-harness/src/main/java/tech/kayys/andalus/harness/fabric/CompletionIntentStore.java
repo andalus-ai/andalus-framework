@@ -1,5 +1,6 @@
 package tech.kayys.andalus.harness.fabric;
 
+import java.util.List;
 import java.util.Optional;
 
 /**
@@ -10,6 +11,9 @@ public interface CompletionIntentStore {
     CompletionIntent createIfAbsent(CompletionIntent intent);
 
     Optional<CompletionIntent> get(String idempotencyKey);
+
+    /** Return at most {@code limit} intents not yet acknowledged, oldest first. */
+    List<CompletionIntent> listIncomplete(int limit);
 
     boolean advance(String idempotencyKey, CompletionIntentStage expected,
                     CompletionIntentStage next);
