@@ -54,7 +54,7 @@ class JdbcFencedLeaseManagerPostgresTest {
     }
 
     private JdbcFencedLeaseManager manager() {
-        return new JdbcFencedLeaseManager(dataSource);
+        return new JdbcFencedLeaseManager(dataSource, JdbcLeaseTimeSources.postgresql());
     }
 
     @Test
