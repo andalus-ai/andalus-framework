@@ -17,19 +17,18 @@ public interface TaskQueue {
 
     List<TaskClaim> claim(WorkerId workerId, int maxTasks, Duration visibilityTimeout);
 
+    /**
+     * Acknowledge only the exact current, unexpired claim. Repeating the same token
+     * after its acknowledgement succeeded must return true; a different or superseded
+     * token must return false, including after a later delivery is claimed.
+     */
     boolean acknowledge(TaskClaimToken token);
 
     boolean negativeAcknowledge(TaskClaimToken token, Duration delay);
 
     boolean extendVisibility(TaskClaimToken token, Duration extension);
 
-    /**
-     * Atomically records a failure and either schedules redelivery or moves the task
-     * to the dead-letter set. Retryable failures are retried up to assignment.maxRetries;
-     * the initial delivery is not counted as a retry.
-     */
     TaskFailureResult fail(TaskClaimToken token, TaskFailureDecision decision);
 
-    /** Returns a bounded immutable snapshot of dead-lettered tasks, oldest first. */
     List<DeadLetterTask> listDeadLetters(int limit);
 }
