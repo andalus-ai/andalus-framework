@@ -25,3 +25,18 @@ Use a shared writable database for all nodes, not a read replica. Keep node
 clocks synchronized or supply a shared clock policy. Configure the database and
 pool so transactions honor SELECT FOR UPDATE. Dialects without the required
 locking and savepoint behavior need a provider-specific implementation.
+
+
+## PostgreSQL integration coverage
+
+The execution-core test suite includes a Testcontainers-backed PostgreSQL 16
+integration test. It exercises concurrent first-row acquisition from separate
+manager instances, stale-token rejection after lease takeover, and generation
+preservation across release/reacquisition. The test is automatically skipped
+when Docker is unavailable; CI runners with Docker execute it as part of the
+normal Maven test lifecycle.
+
+The H2 tests remain useful for fast local feedback, but PostgreSQL integration
+coverage is the dialect-specific check for the locking and savepoint behavior
+used by this adapter. Other database engines still require their own integration
+coverage before being treated as supported.
