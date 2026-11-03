@@ -104,10 +104,13 @@ class CompletionReconcilerTest {
         f.attempts().updateState(f.attemptId(), AttemptState.COMPLETED, lease.fencingToken());
         f.leases().releaseLease(f.executionId(), "crashed-reconciler");
 
-        assertEquals(CompletionReconciler.Outcome.COMPLETED,
+        assertEquals(CompletionReconciler.Outcome.ACKNOWLEDGED,
                 f.reconciler().reconcile("completion-1"));
         assertEquals(CompletionIntentStage.COMPLETED,
                 f.intents().get("completion-1").orElseThrow().stage());
+        assertEquals(CompletionReconciler.Outcome.ACKNOWLEDGED,
+                f.reconciler().reconcile("completion-1"),
+                "retry after acknowledgement must be idempotent");
     }
 
     @Test
