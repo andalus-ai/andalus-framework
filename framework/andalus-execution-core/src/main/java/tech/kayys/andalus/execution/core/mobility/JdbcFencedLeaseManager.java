@@ -21,7 +21,7 @@ public final class JdbcFencedLeaseManager implements FencedLeaseManager {
     private final JdbcLeaseTimeSource timeSource;
 
     public JdbcFencedLeaseManager(DataSource dataSource) {
-        this(dataSource, JdbcLeaseTimeSources.standard());
+        this(dataSource, JdbcLeaseTimeSources.autoDetect());
     }
 
     public JdbcFencedLeaseManager(DataSource dataSource, JdbcLeaseTimeSource timeSource) {
