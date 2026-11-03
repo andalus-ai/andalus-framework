@@ -19,7 +19,7 @@ import java.util.Objects;
  *
  * <p>Every reconciliation acquires a new execution lease. The original execution
  * fence and queue claim in the intent are audit data only and are never reused.
- * Queue acknowledgement is deliberately outside this coordinator.</p>
+ * Queue acknowledgement follows both durable commits and is itself recoverable.</p>
  */
 public final class CompletionReconciler {
     public enum Outcome { ACKNOWLEDGED, COMPLETED_CLAIM_NOT_CURRENT, DEFERRED_ACTIVE_LEASE }
