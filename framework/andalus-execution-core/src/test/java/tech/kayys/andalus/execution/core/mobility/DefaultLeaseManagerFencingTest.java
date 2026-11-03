@@ -70,4 +70,41 @@ class DefaultLeaseManagerFencingTest {
                 () -> manager.acquireLease("exec-5", " ", Duration.ofSeconds(1)));
         assertFalse(manager.validateToken("exec-5", FencingToken.of(1)));
     }
+
+    @Test
+    void staleGenerationCannotRenewSuccessorLeaseEvenForSameHolder() {
+        DefaultLeaseManager manager = new DefaultLeaseManager();
+        ExecutionLease first = manager.acquireLease("tenant-a/agent-a", "node-a", Duration.ofMinutes(1));
+        ExecutionLease successor = manager.acquireLease("tenant-a/agent-a", "node-a", Duration.ofMinutes(1));
+
+        assertTrue(successor.fencingToken().isAfter(first.fencingToken()));
+        assertFalse(manager.renewLease(first.executionId(), first.holderId(),
+                first.fencingToken(), Duration.ofMinutes(2)));
+        assertEquals(successor.fencingToken(),
+                manager.getLease(successor.executionId()).orElseThrow().fencingToken());
+    }
+
+    @Test
+    void staleGenerationCannotReleaseSuccessorLeaseEvenForSameHolder() {
+        DefaultLeaseManager manager = new DefaultLeaseManager();
+        ExecutionLease first = manager.acquireLease("tenant-a/agent-a", "node-a", Duration.ofMinutes(1));
+        ExecutionLease successor = manager.acquireLease("tenant-a/agent-a", "node-a", Duration.ofMinutes(1));
+
+        assertFalse(manager.releaseLease(first.executionId(), first.holderId(), first.fencingToken()));
+        assertEquals(successor.fencingToken(),
+                manager.getLease(successor.executionId()).orElseThrow().fencingToken());
+    }
+
+    @Test
+    void currentGenerationCanRenewAndReleaseWithExactToken() {
+        DefaultLeaseManager manager = new DefaultLeaseManager();
+        ExecutionLease lease = manager.acquireLease("tenant-a/agent-a", "node-a", Duration.ofMinutes(1));
+
+        assertTrue(manager.renewLease(lease.executionId(), lease.holderId(),
+                lease.fencingToken(), Duration.ofMinutes(2)));
+        assertEquals(lease.fencingToken(),
+                manager.getLease(lease.executionId()).orElseThrow().fencingToken());
+        assertTrue(manager.releaseLease(lease.executionId(), lease.holderId(), lease.fencingToken()));
+        assertTrue(manager.getLease(lease.executionId()).isEmpty());
+    }
 }
