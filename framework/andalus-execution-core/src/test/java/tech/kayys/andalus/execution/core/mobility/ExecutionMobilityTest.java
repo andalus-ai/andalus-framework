@@ -128,7 +128,10 @@ class ExecutionMobilityTest {
         ExecutionDurableState sStaleSeq = new ExecutionDurableState(identity, ExecutionStatus.RUNNING, cursor, 1L, "sha256:0", null);
         assertThrows(IllegalStateException.class, () -> stateStore.save(sStaleSeq, token1));
 
-        // 4. Token generation incremented by new lease
+        // 4. Release the current holder before transferring ownership.
+        leaseManager.releaseLease(execId, "runtime-A");
+
+        // Token generation increments when the next holder acquires the lease.
         ExecutionLease lease2 = leaseManager.acquireLease(execId, "runtime-B", Duration.ofMinutes(5));
         FencingToken token2 = lease2.fencingToken();
         assertTrue(token2.generation() > token1.generation());
