@@ -154,4 +154,33 @@ class CompletedRedeliveryAcknowledgementTest {
         assertEquals(CompletionReconciler.Outcome.ACKNOWLEDGED,
                 f.reconciler().acknowledgeCompletedRedelivery(f.claim()));
     }
+
+    @Test
+    void rejectsRedeliveryForDifferentExecution() {
+        Fixture f = fixture(true, true);
+        Assignment original = (Assignment) f.claim().assignment();
+        Assignment mismatched = new Assignment(original.id(),
+                tech.kayys.andalus.harness.consistency.state.ExecutionId.of("another-execution"),
+                original.nodeId(), original.attemptId(), original.workerId(), original.fence(),
+                original.status(), original.constraints());
+        TaskClaim badClaim = new TaskClaim(mismatched, f.claim().token(),
+                f.claim().claimedAt(), f.claim().visibilityExpiresAt());
+
+        assertEquals(CompletionReconciler.Outcome.ASSIGNMENT_MISMATCH,
+                f.reconciler().acknowledgeCompletedRedelivery(badClaim));
+        assertNull(f.acknowledged().get());
+    }
+
+    @Test
+    void staleNewDeliveryTokenIsRejectedByQueue() {
+        Fixture f = fixture(true, true);
+        TaskClaimToken staleToken = new TaskClaimToken(
+                f.claim().token().assignmentId(), f.claim().token().workerId(), 9);
+        TaskClaim staleClaim = new TaskClaim(f.claim().assignment(), staleToken,
+                f.claim().claimedAt(), f.claim().visibilityExpiresAt());
+
+        assertEquals(CompletionReconciler.Outcome.COMPLETED_CLAIM_NOT_CURRENT,
+                f.reconciler().acknowledgeCompletedRedelivery(staleClaim));
+        assertNull(f.acknowledged().get());
+    }
 }
