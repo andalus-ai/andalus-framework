@@ -39,67 +39,53 @@ This proposal builds on those structures. In particular, the visual editor's nod
 
 ## Document model
 
-A designer document has two independent parts:
+The framework schema module exposes `WorkflowDocument` as the versioned interchange envelope:
 
-1. `workflow`: the canonical executable workflow definition, compatible with `WorkflowSpec`.
-2. `editor`: presentation-only state used by graphical clients.
+- `schemaVersion`: integer document-schema version (currently `1`).
+- `documentId`: stable workflow-document identifier assigned by the caller/runtime.
+- `name` and `description`: human-readable document metadata.
+- `revision`: non-negative optimistic-concurrency token; revision zero denotes a new, not-yet-persisted document.
+- `workflow`: canonical executable workflow definition, represented by the existing `WorkflowSpec`.
+- `canvas`: editor presentation data, represented by the existing `CanvasData`.
+- `metadata`: extensible document metadata.
 
-Example:
+The model intentionally reuses `WorkflowSpec` and `CanvasData`; it does not introduce a parallel execution graph. `CanvasData` currently carries visual nodes, edges, layout, groups, and annotations. Runtime persistence owns revision advancement and conflict detection; the framework schema only transports the token.
+
+Example (abbreviated):
 
 ```json
 {
-  "apiVersion": "andalus.ai/workflow-editor/v1",
-  "kind": "WorkflowDocument",
+  "schemaVersion": 1,
+  "documentId": "support-triage",
+  "name": "Support triage",
+  "revision": 0,
   "workflow": {
-    "metadata": {
-      "name": "support-triage",
-      "version": "1.0.0"
-    },
-    "entryNodeId": "receive",
-    "exitNodeIds": ["resolved"],
-    "nodes": [
-      { "id": "receive", "type": "trigger", "name": "Receive request" },
-      { "id": "classify", "type": "agent", "name": "Classify request" },
-      { "id": "resolved", "type": "output", "name": "Return result" }
-    ],
-    "connections": [
-      {
-        "fromNodeId": "receive",
-        "toNodeId": "classify",
-        "fromPort": "output",
-        "toPort": "input"
-      },
-      {
-        "fromNodeId": "classify",
-        "toNodeId": "resolved",
-        "fromPort": "output",
-        "toPort": "input"
-      }
-    ],
+    "nodes": [],
+    "connections": [],
     "variables": {},
-    "configuration": {}
+    "entryNodeId": "receive",
+    "exitNodeIds": ["resolved"]
   },
-  "editor": {
-    "schemaVersion": 1,
-    "nodes": {
-      "receive": { "x": 80, "y": 120, "collapsed": false },
-      "classify": { "x": 360, "y": 120, "collapsed": false },
-      "resolved": { "x": 640, "y": 120, "collapsed": false }
-    },
-    "viewport": { "x": 0, "y": 0, "zoom": 1.0 }
-  }
+  "canvas": {
+    "nodes": [],
+    "edges": [],
+    "layout": { "autoLayout": false },
+    "groups": [],
+    "annotations": []
+  },
+  "metadata": {}
 }
 ```
 
-The example is illustrative. Node fields MUST conform to the actual node schema supported by the selected framework version; clients must not assume the abbreviated example is a complete executable workflow.
+The example is illustrative. Executable node fields MUST conform to the actual node schema supported by the selected framework version. Editor-only canvas data MUST NOT be treated as execution instructions.
 
 ## Contract requirements
 
 ### Workflow identity and versioning
 
-- Every saved workflow MUST have a stable identifier.
+- Every saved workflow document MUST have a stable `documentId`.
 - Published workflow versions MUST be immutable.
-- Draft revisions MAY change and MUST carry a revision or ETag.
+- Draft revisions MAY change and MUST carry the `revision` token (or an equivalent transport ETag).
 - A publish operation MUST record the source revision and framework schema version.
 - Importers MUST reject unsupported major schema versions and may warn on newer compatible minor versions.
 
@@ -113,13 +99,22 @@ The example is illustrative. Node fields MUST conform to the actual node schema 
 
 ### Editor presentation state
 
-- Coordinates MUST be finite numbers.
+- Canvas coordinates MUST be finite numbers.
 - Zoom MUST be finite and within client-defined safe bounds.
-- Editor metadata MUST NOT affect execution semantics.
-- Unknown editor metadata SHOULD be preserved during round trips to support forward compatibility.
+- Canvas/editor metadata MUST NOT affect execution semantics.
+- Unknown document metadata SHOULD be preserved during round trips to support forward compatibility.
 - Runtime execution MUST ignore the `editor` section.
 
 ### Validation
+
+The schema module now provides a dependency-free structural validation slice:
+
+- `WorkflowDiagnosticSeverity`: `ERROR`, `WARNING`, or `INFO`.
+- `WorkflowDiagnostic`: stable code, severity, JSON pointer, and message.
+- `WorkflowValidationResult`: immutable diagnostic list plus validity/error/warning counts.
+- `WorkflowDocumentValidator`: checks required document/workflow, supported schema version, node identity uniqueness, entry/exit references, connection endpoints, canvas node identity consistency, and finite canvas coordinates.
+
+Executable node identity is read from `Node.metadata.id`; visual identity is read from `CanvasNode.id`. Missing canvas layout and canvas-only nodes are warnings because visual presentation must not change executable workflow validity. Invalid references in the executable graph and invalid canvas coordinates are errors.
 
 Validation is staged:
 
@@ -224,8 +219,8 @@ A later collaboration workstream may introduce operation-based synchronization o
 
 ## Implementation sequence
 
-1. Add framework-side editor document and diagnostics contracts in the schema module, reusing `WorkflowSpec`.
-2. Add schema validation and round-trip tests.
+1. Add framework-side `WorkflowDocument` envelope in the schema module, reusing `WorkflowSpec` and `CanvasData`; add diagnostics contracts next.
+2. Add schema validation and round-trip tests (the initial envelope round-trip tests are included with the model).
 3. Add runtime draft/version persistence and optimistic concurrency.
 4. Add runtime validate/publish/export/import APIs.
 5. Implement the browser designer as a separate application consuming the runtime APIs and capability catalog.
