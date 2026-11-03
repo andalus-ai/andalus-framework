@@ -4,6 +4,7 @@ import org.junit.jupiter.api.Test;
 import tech.kayys.andalus.execution.mobility.ExecutionLease;
 import tech.kayys.andalus.execution.mobility.FencingToken;
 import tech.kayys.andalus.execution.mobility.LeaseManager;
+import tech.kayys.andalus.execution.core.mobility.DefaultLeaseManager;
 import tech.kayys.andalus.harness.consistency.state.ExecutionId;
 import tech.kayys.andalus.workflow.graph.NodeId;
 
@@ -85,6 +86,29 @@ class ExecutionLeaseBoundTaskExecutionHandlerTest {
                 () -> handler.execute(claim(), extension -> true));
         assertEquals(0, commits.get());
         assertEquals(1, releases.get());
+    }
+
+    @Test
+    void staleFinallyCannotReleaseSuccessorLeaseOwnedBySameHolder() {
+        DefaultLeaseManager leases = new DefaultLeaseManager();
+        AtomicBoolean successorAcquired = new AtomicBoolean();
+        ExecutionLeaseBoundTaskExecutionHandler handler = new ExecutionLeaseBoundTaskExecutionHandler(
+                leases, Duration.ofMinutes(1),
+                (task, visibility, fence) -> {
+                    leases.releaseLease("exec-lease-bound", "worker-a");
+                    ExecutionLease successor = leases.acquireLease(
+                            "exec-lease-bound", "worker-a", Duration.ofMinutes(1));
+                    assertTrue(successor.fencingToken().generation() > fence.generation());
+                    successorAcquired.set(true);
+                },
+                (assignment, token, fence) -> fail("stale work must not commit"));
+
+        assertThrows(StaleExecutionCompletionException.class,
+                () -> handler.execute(claim(), extension -> true));
+
+        assertTrue(successorAcquired.get());
+        assertTrue(leases.getLease("exec-lease-bound").isPresent(),
+                "cleanup for the old generation must not release the successor lease");
     }
 
     @Test
