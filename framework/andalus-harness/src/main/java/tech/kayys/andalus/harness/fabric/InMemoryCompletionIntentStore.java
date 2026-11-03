@@ -10,15 +10,23 @@ import java.util.concurrent.ConcurrentHashMap;
 /** Process-local test adapter; production deployments must use a shared durable store. */
 public final class InMemoryCompletionIntentStore implements CompletionIntentStore {
     private final Map<String, CompletionIntent> intents = new ConcurrentHashMap<>();
+    private final Map<AssignmentId, String> assignmentIndex = new ConcurrentHashMap<>();
 
     @Override
-    public CompletionIntent createIfAbsent(CompletionIntent intent) {
+    public synchronized CompletionIntent createIfAbsent(CompletionIntent intent) {
         Objects.requireNonNull(intent, "intent cannot be null");
-        CompletionIntent existing = intents.putIfAbsent(intent.idempotencyKey(), intent);
-        if (existing == null) return intent;
-        if (!existing.hasSameOperation(intent))
-            throw new IllegalStateException("Completion idempotency key is already bound to another operation");
-        return existing;
+        CompletionIntent existing = intents.get(intent.idempotencyKey());
+        if (existing != null) {
+            if (!existing.hasSameOperation(intent))
+                throw new IllegalStateException("Completion idempotency key is already bound to another operation");
+            return existing;
+        }
+        String existingKey = assignmentIndex.get(intent.assignmentId());
+        if (existingKey != null && !existingKey.equals(intent.idempotencyKey()))
+            throw new IllegalStateException("Assignment already has a completion intent: " + intent.assignmentId().value());
+        intents.put(intent.idempotencyKey(), intent);
+        assignmentIndex.put(intent.assignmentId(), intent.idempotencyKey());
+        return intent;
     }
 
     @Override
@@ -30,13 +38,8 @@ public final class InMemoryCompletionIntentStore implements CompletionIntentStor
     @Override
     public Optional<CompletionIntent> findByAssignmentId(AssignmentId assignmentId) {
         Objects.requireNonNull(assignmentId, "assignmentId cannot be null");
-        List<CompletionIntent> matches = intents.values().stream()
-                .filter(intent -> intent.assignmentId().equals(assignmentId))
-                .limit(2)
-                .toList();
-        if (matches.size() > 1)
-            throw new IllegalStateException("Multiple completion intents exist for assignment " + assignmentId.value());
-        return matches.stream().findFirst();
+        String key = assignmentIndex.get(assignmentId);
+        return key == null ? Optional.empty() : get(key);
     }
 
     @Override
