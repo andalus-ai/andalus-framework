@@ -4,7 +4,6 @@ import org.junit.jupiter.api.Test;
 import tech.kayys.andalus.execution.attempt.AttemptLineage;
 import tech.kayys.andalus.execution.attempt.AttemptState;
 import tech.kayys.andalus.execution.attempt.ExecutionAttempt;
-import tech.kayys.andalus.execution.attempt.ExecutionAttemptStore;
 import tech.kayys.andalus.execution.core.attempt.InMemoryExecutionAttemptStore;
 import tech.kayys.andalus.execution.core.mobility.DefaultLeaseManager;
 import tech.kayys.andalus.execution.core.mobility.InMemoryExecutionStateStore;
@@ -12,7 +11,6 @@ import tech.kayys.andalus.execution.mobility.ExecutionCursor;
 import tech.kayys.andalus.execution.mobility.ExecutionDurableState;
 import tech.kayys.andalus.execution.mobility.ExecutionIdentity;
 import tech.kayys.andalus.execution.mobility.ExecutionStatus;
-import tech.kayys.andalus.execution.mobility.state.ExecutionStateStore;
 import tech.kayys.andalus.workflow.graph.NodeId;
 
 import java.time.Duration;
@@ -60,10 +58,12 @@ class CompletedRedeliveryAcknowledgementTest {
 
         var physicalAttempt = tech.kayys.andalus.execution.attempt.AttemptId.of("physical-redelivery-1");
         var attempt = new ExecutionAttempt(EXECUTION_ID, physicalAttempt, 1,
-                completed ? AttemptState.COMPLETED : AttemptState.RUNNING,
-                "worker-old", Instant.now(), completed ? Optional.of(Instant.now()) : Optional.empty());
+                AttemptState.RUNNING, "worker-old", Instant.now(), Optional.empty());
         attempts.save(attempt, new AttemptLineage(EXECUTION_ID, physicalAttempt,
                 Optional.empty(), Optional.empty()), lease.fencingToken());
+        if (completed) {
+            attempts.updateState(physicalAttempt, AttemptState.COMPLETED, lease.fencingToken());
+        }
         leases.releaseLease(EXECUTION_ID, "setup");
 
         AssignmentId assignmentId = AssignmentId.of("assignment-redelivery");
