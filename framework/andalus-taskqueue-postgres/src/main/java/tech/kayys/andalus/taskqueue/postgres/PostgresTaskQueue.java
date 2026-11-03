@@ -49,7 +49,9 @@ public final class PostgresTaskQueue implements TaskQueue {
                     claim_owner VARCHAR(255),
                     claim_until TIMESTAMPTZ,
                     claim_generation BIGINT NOT NULL DEFAULT 0 CHECK (claim_generation >= 0),
-                    acknowledged BOOLEAN NOT NULL DEFAULT FALSE,\n                    acknowledged_claim_owner VARCHAR(255),\n                    acknowledged_claim_generation BIGINT,
+                    acknowledged BOOLEAN NOT NULL DEFAULT FALSE,
+                    acknowledged_claim_owner VARCHAR(255),
+                    acknowledged_claim_generation BIGINT,
                     failure_count INTEGER NOT NULL DEFAULT 0 CHECK (failure_count >= 0),
                     failure_category VARCHAR(128),
                     failure_message TEXT,
@@ -69,7 +71,9 @@ public final class PostgresTaskQueue implements TaskQueue {
             statement.execute("ALTER TABLE andalus_execution_task ADD COLUMN IF NOT EXISTS failure_count INTEGER NOT NULL DEFAULT 0");
             statement.execute("ALTER TABLE andalus_execution_task ADD COLUMN IF NOT EXISTS failure_category VARCHAR(128)");
             statement.execute("ALTER TABLE andalus_execution_task ADD COLUMN IF NOT EXISTS failure_message TEXT");
-            statement.execute("ALTER TABLE andalus_execution_task ADD COLUMN IF NOT EXISTS dead_lettered_at TIMESTAMPTZ");\n            statement.execute("ALTER TABLE andalus_execution_task ADD COLUMN IF NOT EXISTS acknowledged_claim_owner VARCHAR(255)");\n            statement.execute("ALTER TABLE andalus_execution_task ADD COLUMN IF NOT EXISTS acknowledged_claim_generation BIGINT");
+            statement.execute("ALTER TABLE andalus_execution_task ADD COLUMN IF NOT EXISTS dead_lettered_at TIMESTAMPTZ");
+            statement.execute("ALTER TABLE andalus_execution_task ADD COLUMN IF NOT EXISTS acknowledged_claim_owner VARCHAR(255)");
+            statement.execute("ALTER TABLE andalus_execution_task ADD COLUMN IF NOT EXISTS acknowledged_claim_generation BIGINT");
             statement.execute(index);
         } catch (SQLException e) {
             throw storageFailure("Unable to initialize PostgreSQL task queue schema", e);
