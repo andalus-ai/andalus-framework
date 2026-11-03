@@ -10,6 +10,21 @@ import java.sql.Timestamp;
 public final class JdbcLeaseTimeSources {
     private JdbcLeaseTimeSources() { }
 
+    /**
+     * Selects a safe wall-clock expression for known database products.
+     * PostgreSQL requires clock_timestamp() because CURRENT_TIMESTAMP is fixed
+     * at transaction start. Other products use the standard SQL expression.
+     */
+    public static JdbcLeaseTimeSource autoDetect() {
+        return connection -> {
+            String product = connection.getMetaData().getDatabaseProductName();
+            if (product != null && product.toLowerCase(java.util.Locale.ROOT).contains("postgresql")) {
+                return postgresql().currentTimeMillis(connection);
+            }
+            return standard().currentTimeMillis(connection);
+        };
+    }
+
     /** Uses the standard SQL CURRENT_TIMESTAMP expression. */
     public static JdbcLeaseTimeSource standard() {
         return query("SELECT CURRENT_TIMESTAMP");
