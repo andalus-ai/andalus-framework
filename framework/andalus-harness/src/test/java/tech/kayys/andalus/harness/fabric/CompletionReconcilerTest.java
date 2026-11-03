@@ -89,7 +89,7 @@ class CompletionReconcilerTest {
                 f.states().load(f.executionId()).orElseThrow().status());
         assertEquals(AttemptState.COMPLETED,
                 f.attempts().get(f.attemptId()).orElseThrow().state());
-        assertEquals(CompletionIntentStage.COMPLETED,
+        assertEquals(CompletionIntentStage.ACKNOWLEDGED,
                 f.intents().get("completion-1").orElseThrow().stage());
         assertTrue(f.leases().getLease(f.executionId()).isEmpty(),
                 "reconciliation must release its fresh lease");
