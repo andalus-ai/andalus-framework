@@ -2,7 +2,7 @@ package tech.kayys.andalus.execution.core.mobility;
 
 import tech.kayys.andalus.execution.mobility.ExecutionLease;
 import tech.kayys.andalus.execution.mobility.FencingToken;
-import tech.kayys.andalus.execution.mobility.LeaseManager;
+import tech.kayys.andalus.execution.mobility.FencedLeaseManager;
 
 import java.time.Duration;
 import java.time.Instant;
@@ -17,7 +17,7 @@ import java.util.Optional;
  * <p>This implementation is suitable for a single process only. Distributed deployments
  * must use an adapter backed by an atomic shared coordinator.</p>
  */
-public class DefaultLeaseManager implements LeaseManager {
+public class DefaultLeaseManager implements FencedLeaseManager {
 
     private final Map<String, ExecutionLease> leases = new HashMap<>();
     private final Map<String, Long> generations = new HashMap<>();
@@ -59,6 +59,43 @@ public class DefaultLeaseManager implements LeaseManager {
         Instant now = Instant.now();
         leases.put(executionId, new ExecutionLease(executionId, holderId, current.fencingToken(),
                 current.acquiredAt(), now.plus(duration)));
+        return true;
+    }
+
+    @Override
+    public synchronized boolean renewLease(String executionId, String holderId,
+                                           FencingToken token, Duration duration) {
+        requireText(executionId, "executionId");
+        requireText(holderId, "holderId");
+        Objects.requireNonNull(token, "token cannot be null");
+        requireDuration(duration);
+
+        ExecutionLease current = leases.get(executionId);
+        if (current == null || current.isExpired()
+                || !current.holderId().equals(holderId)
+                || !current.fencingToken().equals(token)
+                || generations.getOrDefault(executionId, 0L) != token.generation()) {
+            return false;
+        }
+
+        Instant now = Instant.now();
+        leases.put(executionId, new ExecutionLease(executionId, holderId, token,
+                current.acquiredAt(), now.plus(duration)));
+        return true;
+    }
+
+    @Override
+    public synchronized boolean releaseLease(String executionId, String holderId, FencingToken token) {
+        requireText(executionId, "executionId");
+        requireText(holderId, "holderId");
+        Objects.requireNonNull(token, "token cannot be null");
+        ExecutionLease current = leases.get(executionId);
+        if (current == null || !current.holderId().equals(holderId)
+                || !current.fencingToken().equals(token)
+                || generations.getOrDefault(executionId, 0L) != token.generation()) {
+            return false;
+        }
+        leases.remove(executionId);
         return true;
     }
 
