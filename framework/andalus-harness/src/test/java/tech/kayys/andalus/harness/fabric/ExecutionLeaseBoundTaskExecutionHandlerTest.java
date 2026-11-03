@@ -156,6 +156,7 @@ class ExecutionLeaseBoundTaskExecutionHandlerTest {
                     (task, visibility, fence) -> {
                         assertEquals(token, fence);
                         assertTrue(renewalAttempted.await(1, TimeUnit.SECONDS));
+                        Thread.sleep(50);
                     },
                     (assignment, claimToken, fence) -> commits.incrementAndGet());
 
