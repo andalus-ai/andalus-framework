@@ -66,6 +66,7 @@ public final class CompletionReconciler {
     public Outcome reconcile(String idempotencyKey) {
         CompletionIntent intent = intents.get(idempotencyKey)
                 .orElseThrow(() -> new IllegalArgumentException("Unknown completion intent: " + idempotencyKey));
+        if (intent.stage() == CompletionIntentStage.ACKNOWLEDGED) return Outcome.ACKNOWLEDGED;
         if (intent.stage() == CompletionIntentStage.COMPLETED) return acknowledgeCompleted(intent);
 
         final ExecutionLease lease;
@@ -112,9 +113,10 @@ public final class CompletionReconciler {
      * retrying that same token after a successful ack is idempotent.
      */
     private Outcome acknowledgeCompleted(CompletionIntent intent) {
-        return queue.acknowledge(intent.queueClaimToken())
-                ? Outcome.ACKNOWLEDGED
-                : Outcome.COMPLETED_CLAIM_NOT_CURRENT;
+        if (!queue.acknowledge(intent.queueClaimToken())) return Outcome.COMPLETED_CLAIM_NOT_CURRENT;
+        intents.advance(intent.idempotencyKey(), CompletionIntentStage.COMPLETED,
+                CompletionIntentStage.ACKNOWLEDGED);
+        return Outcome.ACKNOWLEDGED;
     }
 
     private void commitExecutionState(CompletionIntent intent, ExecutionLease lease) {
