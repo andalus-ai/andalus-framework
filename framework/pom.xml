@@ -51,6 +51,7 @@
         <module>andalus-rag</module>
         <module>andalus-configuration</module>
         <module>andalus-harness</module>
+        <module>andalus-taskqueue-postgres</module>
         <module>andalus-core</module>
         <module>andalus-database</module>
         <module>andalus-plugin</module>
