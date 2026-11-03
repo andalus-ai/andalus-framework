@@ -106,7 +106,7 @@ class CompletionReconcilerTest {
 
         assertEquals(CompletionReconciler.Outcome.ACKNOWLEDGED,
                 f.reconciler().reconcile("completion-1"));
-        assertEquals(CompletionIntentStage.COMPLETED,
+        assertEquals(CompletionIntentStage.ACKNOWLEDGED,
                 f.intents().get("completion-1").orElseThrow().stage());
         assertEquals(CompletionReconciler.Outcome.ACKNOWLEDGED,
                 f.reconciler().reconcile("completion-1"),
