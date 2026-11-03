@@ -45,7 +45,7 @@ class JdbcFencedLeaseManagerTest {
     }
 
     private JdbcFencedLeaseManager manager() {
-        return new JdbcFencedLeaseManager(dataSource, clock);
+        return new JdbcFencedLeaseManager(dataSource, connection -> clock.millis());
     }
 
     @Test
