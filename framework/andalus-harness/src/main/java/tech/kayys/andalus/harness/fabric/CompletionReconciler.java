@@ -27,7 +27,8 @@ public final class CompletionReconciler {
     private final CompletionIntentStore intents;
     private final ExecutionStateStore executionStates;
     private final ExecutionAttemptStore attempts;
-    private final LeaseManager leases;\n    private final TaskQueue queue;
+    private final LeaseManager leases;
+    private final TaskQueue queue;
     private final String holderId;
     private final Duration leaseDuration;
 
@@ -42,7 +43,8 @@ public final class CompletionReconciler {
         this.intents = Objects.requireNonNull(intents, "intents cannot be null");
         this.executionStates = Objects.requireNonNull(executionStates, "executionStates cannot be null");
         this.attempts = Objects.requireNonNull(attempts, "attempts cannot be null");
-        this.leases = Objects.requireNonNull(leases, "leases cannot be null");\n        this.queue = Objects.requireNonNull(queue, "queue cannot be null");
+        this.leases = Objects.requireNonNull(leases, "leases cannot be null");
+        this.queue = Objects.requireNonNull(queue, "queue cannot be null");
         if (holderId == null || holderId.isBlank())
             throw new IllegalArgumentException("holderId cannot be blank");
         this.holderId = holderId;
