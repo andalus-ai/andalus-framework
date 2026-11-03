@@ -26,6 +26,7 @@ class CompletionReconcilerTest {
             InMemoryExecutionStateStore states,
             InMemoryExecutionAttemptStore attempts,
             InMemoryCompletionIntentStore intents,
+            TaskQueue queue,
             CompletionReconciler reconciler,
             AttemptId attemptId,
             String executionId) {}
@@ -57,23 +58,38 @@ class CompletionReconcilerTest {
                 CompletionIntentStage.RECORDED, java.time.Instant.now()));
         leases.releaseLease(executionId, "worker-1");
 
+        TaskQueue queue = new TaskQueue() {
+            private TaskClaimToken acknowledged;
+            @Override public void enqueue(String key, ExecutionAssignment assignment) { throw new UnsupportedOperationException(); }
+            @Override public java.util.List<TaskClaim> claim(WorkerId worker, int max, Duration visibility) { throw new UnsupportedOperationException(); }
+            @Override public boolean acknowledge(TaskClaimToken token) {
+                if (acknowledged != null) return acknowledged.equals(token);
+                if (!claim.equals(token)) return false;
+                acknowledged = token;
+                return true;
+            }
+            @Override public boolean negativeAcknowledge(TaskClaimToken token, Duration delay) { throw new UnsupportedOperationException(); }
+            @Override public boolean extendVisibility(TaskClaimToken token, Duration extension) { throw new UnsupportedOperationException(); }
+            @Override public TaskFailureResult fail(TaskClaimToken token, TaskFailureDecision decision) { throw new UnsupportedOperationException(); }
+            @Override public java.util.List<DeadLetterTask> listDeadLetters(int limit) { throw new UnsupportedOperationException(); }
+        };
         CompletionReconciler reconciler = new CompletionReconciler(
-                intents, states, attempts, leases, "reconciler-1", LEASE);
-        return new Fixture(leases, states, attempts, intents, reconciler, attemptId, executionId);
+                intents, states, attempts, leases, queue, "reconciler-1", LEASE);
+        return new Fixture(leases, states, attempts, intents, queue, reconciler, attemptId, executionId);
     }
 
     @Test
     void reconcilesBothStoresUsingFreshFenceAndCompletesIntent() {
         Fixture f = fixture();
 
-        assertEquals(CompletionReconciler.Outcome.COMPLETED,
+        assertEquals(CompletionReconciler.Outcome.ACKNOWLEDGED,
                 f.reconciler().reconcile("completion-1"));
 
         assertEquals(ExecutionStatus.COMPLETED,
                 f.states().load(f.executionId()).orElseThrow().status());
         assertEquals(AttemptState.COMPLETED,
                 f.attempts().get(f.attemptId()).orElseThrow().state());
-        assertEquals(CompletionIntentStage.COMPLETED,
+        assertEquals(CompletionIntentStage.ACKNOWLEDGED,
                 f.intents().get("completion-1").orElseThrow().stage());
         assertTrue(f.leases().getLease(f.executionId()).isEmpty(),
                 "reconciliation must release its fresh lease");
@@ -88,10 +104,13 @@ class CompletionReconcilerTest {
         f.attempts().updateState(f.attemptId(), AttemptState.COMPLETED, lease.fencingToken());
         f.leases().releaseLease(f.executionId(), "crashed-reconciler");
 
-        assertEquals(CompletionReconciler.Outcome.COMPLETED,
+        assertEquals(CompletionReconciler.Outcome.ACKNOWLEDGED,
                 f.reconciler().reconcile("completion-1"));
-        assertEquals(CompletionIntentStage.COMPLETED,
+        assertEquals(CompletionIntentStage.ACKNOWLEDGED,
                 f.intents().get("completion-1").orElseThrow().stage());
+        assertEquals(CompletionReconciler.Outcome.ACKNOWLEDGED,
+                f.reconciler().reconcile("completion-1"),
+                "retry after acknowledgement must be idempotent");
     }
 
     @Test

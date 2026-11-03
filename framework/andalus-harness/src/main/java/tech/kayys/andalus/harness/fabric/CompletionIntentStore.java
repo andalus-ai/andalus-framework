@@ -12,7 +12,7 @@ public interface CompletionIntentStore {
 
     Optional<CompletionIntent> get(String idempotencyKey);
 
-    /** Return at most {@code limit} non-terminal intents, oldest first. */
+    /** Return at most {@code limit} intents not yet acknowledged, oldest first. */
     List<CompletionIntent> listIncomplete(int limit);
 
     boolean advance(String idempotencyKey, CompletionIntentStage expected,
