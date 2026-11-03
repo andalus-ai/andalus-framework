@@ -25,6 +25,8 @@ public final class InMemoryTaskQueue implements TaskQueue {
         private String failureMessage;
         private Instant deadLetteredAt;
         private boolean acknowledged;
+        private WorkerId acknowledgedBy;
+        private long acknowledgedGeneration;
 
         private Entry(String key, ExecutionAssignment assignment, Instant availableAt) {
             this.key = key;
@@ -81,9 +83,17 @@ public final class InMemoryTaskQueue implements TaskQueue {
 
     @Override
     public synchronized boolean acknowledge(TaskClaimToken token) {
-        Entry entry = current(token);
+        if (token == null) return false;
+        Entry entry = entries.get(token.assignmentId());
         if (entry == null) return false;
+        if (entry.acknowledged) {
+            return token.workerId().equals(entry.acknowledgedBy)
+                    && token.generation() == entry.acknowledgedGeneration;
+        }
+        if (current(token) == null) return false;
         entry.acknowledged = true;
+        entry.acknowledgedBy = token.workerId();
+        entry.acknowledgedGeneration = token.generation();
         clearClaim(entry);
         return true;
     }

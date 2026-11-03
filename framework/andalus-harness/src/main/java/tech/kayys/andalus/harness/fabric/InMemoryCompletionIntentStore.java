@@ -1,5 +1,7 @@
 package tech.kayys.andalus.harness.fabric;
 
+import java.util.Comparator;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
@@ -23,6 +25,17 @@ public final class InMemoryCompletionIntentStore implements CompletionIntentStor
     public Optional<CompletionIntent> get(String idempotencyKey) {
         if (idempotencyKey == null) return Optional.empty();
         return Optional.ofNullable(intents.get(idempotencyKey));
+    }
+
+    @Override
+    public List<CompletionIntent> listIncomplete(int limit) {
+        if (limit <= 0) throw new IllegalArgumentException("limit must be positive");
+        return intents.values().stream()
+                .filter(intent -> intent.stage() != CompletionIntentStage.ACKNOWLEDGED)
+                .sorted(Comparator.comparing(CompletionIntent::createdAt)
+                        .thenComparing(CompletionIntent::idempotencyKey))
+                .limit(limit)
+                .toList();
     }
 
     @Override
