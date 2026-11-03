@@ -2,6 +2,7 @@ package tech.kayys.andalus.harness.fabric;
 
 import tech.kayys.andalus.execution.mobility.ExecutionLease;
 import tech.kayys.andalus.execution.mobility.FencingToken;
+import tech.kayys.andalus.execution.mobility.FencedLeaseManager;
 import tech.kayys.andalus.execution.mobility.LeaseManager;
 
 import java.time.Duration;
@@ -52,6 +53,15 @@ public final class ExecutionLeaseBoundTaskExecutionHandler implements TaskExecut
             requireCurrentLease(executionId, executionFence);
             committer.commitCompleted(claim.assignment(), claim.token(), executionFence);
         } finally {
+            releaseLease(executionId, holderId, executionFence);
+        }
+    }
+
+    private void releaseLease(String executionId, String holderId, FencingToken token) {
+        if (leaseManager instanceof FencedLeaseManager fenced) {
+            fenced.releaseLease(executionId, holderId, token);
+        } else {
+            // Compatibility for legacy providers; distributed providers should implement FencedLeaseManager.
             leaseManager.releaseLease(executionId, holderId);
         }
     }
