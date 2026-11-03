@@ -5,5 +5,6 @@ public enum CompletionIntentStage {
     RECORDED,
     EXECUTION_STATE_COMMITTED,
     ATTEMPT_COMMITTED,
-    COMPLETED
+    COMPLETED,
+    ACKNOWLEDGED
 }
