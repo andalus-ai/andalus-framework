@@ -107,6 +107,15 @@ The example is illustrative. Executable node fields MUST conform to the actual n
 
 ### Validation
 
+The schema module now provides a dependency-free structural validation slice:
+
+- `WorkflowDiagnosticSeverity`: `ERROR`, `WARNING`, or `INFO`.
+- `WorkflowDiagnostic`: stable code, severity, JSON pointer, and message.
+- `WorkflowValidationResult`: immutable diagnostic list plus validity/error/warning counts.
+- `WorkflowDocumentValidator`: checks required document/workflow, supported schema version, node identity uniqueness, entry/exit references, connection endpoints, canvas node identity consistency, and finite canvas coordinates.
+
+Executable node identity is read from `Node.metadata.id`; visual identity is read from `CanvasNode.id`. Missing canvas layout and canvas-only nodes are warnings because visual presentation must not change executable workflow validity. Invalid references in the executable graph and invalid canvas coordinates are errors.
+
 Validation is staged:
 
 1. **Document validation** — parse, required fields, supported schema version.
