@@ -1,7 +1,8 @@
 package tech.kayys.andalus.harness.planning;
 
 import java.util.ArrayList;
-import java.util.HashSet;
+import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 
@@ -36,8 +37,8 @@ public class DefaultPlanValidator implements PlanValidator {
         }
 
         // 1. Collect all step IDs and check uniqueness
-        Set<String> stepIdValues = new HashSet<>();
-        Set<String> duplicates = new HashSet<>();
+        Set<String> stepIdValues = new LinkedHashSet<>();
+        Set<String> duplicates = new LinkedHashSet<>();
         for (PlanStep step : steps) {
             String idVal = step.id().value();
             if (!stepIdValues.add(idVal)) {
@@ -85,20 +86,20 @@ public class DefaultPlanValidator implements PlanValidator {
 
     private List<String> detectCycles(List<PlanStep> steps, Set<String> allIds) {
         // Build adjacency: stepId -> set of dependency stepIds
-        java.util.Map<String, Set<String>> adj = new java.util.HashMap<>();
+        java.util.Map<String, Set<String>> adj = new LinkedHashMap<>();
         for (PlanStep step : steps) {
-            Set<String> deps = new HashSet<>();
+            Set<String> deps = new LinkedHashSet<>();
             for (PlanStepId dep : step.dependsOn()) {
                 deps.add(dep.value());
             }
             adj.put(step.id().value(), deps);
         }
 
-        Set<String> visited = new HashSet<>();
-        Set<String> inStack = new HashSet<>();
+        Set<String> visited = new LinkedHashSet<>();
+        Set<String> inStack = new LinkedHashSet<>();
         List<String> errors = new ArrayList<>();
 
-        for (String id : allIds) {
+        for (String id : adj.keySet()) {
             if (!visited.contains(id)) {
                 dfs(id, adj, visited, inStack, errors);
             }
