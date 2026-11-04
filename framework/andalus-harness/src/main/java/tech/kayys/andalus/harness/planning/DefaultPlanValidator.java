@@ -68,7 +68,7 @@ public class DefaultPlanValidator implements PlanValidator {
 
         // 4. Cycle detection (DFS)
         if (errors.isEmpty()) {
-            List<String> cycleErrors = detectCycles(steps, stepIdValues);
+            List<String> cycleErrors = detectCycles(steps);
             errors.addAll(cycleErrors);
         }
 
@@ -84,7 +84,7 @@ public class DefaultPlanValidator implements PlanValidator {
 
     // ── cycle detection ───────────────────────────────────────────────────────
 
-    private List<String> detectCycles(List<PlanStep> steps, Set<String> allIds) {
+    private List<String> detectCycles(List<PlanStep> steps) {
         // Build adjacency: stepId -> set of dependency stepIds
         java.util.Map<String, Set<String>> adj = new LinkedHashMap<>();
         for (PlanStep step : steps) {
