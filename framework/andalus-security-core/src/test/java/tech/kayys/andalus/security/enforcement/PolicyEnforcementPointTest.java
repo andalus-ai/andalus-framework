@@ -5,6 +5,10 @@ import org.junit.jupiter.api.Test;
 import tech.kayys.andalus.security.authz.AuthorizationDecision;
 import tech.kayys.andalus.security.authz.AuthorizationService;
 import tech.kayys.andalus.security.context.SecurityContext;
+import tech.kayys.andalus.security.delegation.DelegationAudience;
+import tech.kayys.andalus.security.delegation.DelegationConstraints;
+import tech.kayys.andalus.security.delegation.DelegationContext;
+import tech.kayys.andalus.security.authz.AuthorizationRequest;
 import tech.kayys.andalus.security.identity.Principal;
 import tech.kayys.andalus.security.obligation.*;
 import tech.kayys.andalus.security.tenant.TenantContext;
@@ -13,7 +17,9 @@ import tech.kayys.andalus.security.transform.DefaultDataTransformer;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.atomic.AtomicReference;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -70,6 +76,34 @@ class PolicyEnforcementPointTest {
         assertNotNull(result);
         assertFalse(result.allowed());
         assertTrue(result.reason().contains("Unauthorized capability"));
+    }
+
+    @Test
+    void testEnforcementPropagatesDelegationToAuthorizationService() {
+        AtomicReference<AuthorizationRequest> captured = new AtomicReference<>();
+        AuthorizationService authService = request -> {
+            captured.set(request);
+            return CompletableFuture.completedFuture(AuthorizationDecision.allow());
+        };
+        DefaultPolicyEnforcementPoint pep = new DefaultPolicyEnforcementPoint(authService, pipeline, transformer);
+        SecurityContext securityContext = SecurityContext.of(
+                Principal.agent("agent-child", "Child Agent"), TenantContext.of("tenant-1"));
+        DelegationContext delegation = DelegationContext.create(
+                DelegationAudience.of("agent-child"),
+                new DelegationConstraints(List.of("document.read"), List.of("execute"), 1),
+                300);
+
+        EnforcementRequest request = EnforcementRequest.of(
+                securityContext, "document.read", "execute", "document:42", Map.of(),
+                Optional.of(delegation));
+
+        EnforcementResult result = pep.enforce(request).toCompletableFuture().join();
+
+        assertTrue(result.allowed());
+        assertNotNull(captured.get());
+        assertEquals(Optional.of(delegation), captured.get().delegation());
+        assertEquals("document.read", captured.get().capability());
+        assertEquals("document:42", captured.get().resource());
     }
 
     @Test
