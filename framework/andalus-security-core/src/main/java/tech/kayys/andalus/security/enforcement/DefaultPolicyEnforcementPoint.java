@@ -36,7 +36,8 @@ public final class DefaultPolicyEnforcementPoint implements PolicyEnforcementPoi
                 request.capability(),
                 request.action(),
                 request.resource(),
-                request.attributes()
+                request.attributes(),
+                request.delegation()
         );
 
         return authorizationService.authorize(authReq).thenCompose(decision -> {
