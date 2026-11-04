@@ -188,6 +188,21 @@ The visual designer needs a discoverable catalog describing which node types can
 
 Catalog entries are descriptive metadata. The runtime MUST still validate actual configurations and enforce permissions.
 
+
+### Implemented capability catalog contract
+
+The schema module now includes a portable catalog snapshot and node descriptors under
+`tech.kayys.andalus.schema.workflow.catalog`:
+
+- `NodeCapabilityCatalog`: versioned catalog envelope.
+- `NodeTypeDescriptor`: stable type ID, version, display metadata, category, provider/plugin identity, input/output ports, configuration JSON Schema, required capabilities and permissions, framework compatibility bounds, and streaming/retry/human-approval feature flags.
+- `NodePortDescriptor` and `NodePortDirection`: typed input/output port contracts, including optional value-schema fragments and requiredness.
+- `NodeCapabilityCatalogValidator`: deterministic checks for catalog version, required descriptor metadata, duplicate type IDs, port IDs/directions/data types, and duplicate or empty requirements.
+
+These are metadata contracts, not executable plugin declarations. The runtime remains responsible for discovering providers, applying tenant and caller authorization, filtering unavailable capabilities, resolving plugin lifecycle, and serving catalog queries. The frontend should render only trusted icon keys and must never load executable code from a catalog entry.
+
+The descriptor deliberately uses an extensible category string and generic JSON-compatible schema maps so third-party node categories and configuration schemas can be represented without adding a frontend or runtime dependency to the framework schema module.
+
 ## Collaboration and conflict handling
 
 Collaborative editing is intentionally not part of the first contract slice. The initial implementation uses optimistic concurrency:
