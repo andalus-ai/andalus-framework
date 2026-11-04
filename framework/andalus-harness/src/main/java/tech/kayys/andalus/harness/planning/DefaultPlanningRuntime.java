@@ -10,8 +10,7 @@ import java.util.logging.Logger;
  *
  * <h3>Algorithm</h3>
  * <ol>
- *   <li>Resolve the {@link Planner} from the {@link PlannerRegistry}. If none
- *       is available return {@link PlanningResult#failed(String)} immediately.</li>
+ *   <li>Resolve the planner with the lexicographically smallest registered ID.</li>
  *   <li>Invoke {@link Planner#plan(PlanningRequest)} (or {@link Planner#revise}).</li>
  *   <li>If the planner returns a successful result, run {@link PlanValidator}.</li>
  *   <li>If validation fails, wrap into {@link PlanningResult#invalid(String)}.</li>
@@ -43,29 +42,29 @@ public class DefaultPlanningRuntime implements PlanningRuntime {
         this(registry, new DefaultPlanValidator());
     }
 
-    // ── PlanningRuntime ───────────────────────────────────────────────────────
-
     @Override
     public CompletionStage<PlanningResult> createPlan(PlanningRequest request) {
+        if (request == null) {
+            return CompletableFuture.completedFuture(PlanningResult.failed("Planning request must not be null."));
+        }
         Planner planner = resolveFirst();
         if (planner == null) {
-            return CompletableFuture.completedFuture(
-                    PlanningResult.failed("No planner is registered."));
+            return CompletableFuture.completedFuture(PlanningResult.failed("No planner is registered."));
         }
         return invokePlanner(() -> planner.plan(request));
     }
 
     @Override
     public CompletionStage<PlanningResult> revisePlan(PlanRevisionRequest request) {
+        if (request == null) {
+            return CompletableFuture.completedFuture(PlanningResult.failed("Plan revision request must not be null."));
+        }
         Planner planner = resolveFirst();
         if (planner == null) {
-            return CompletableFuture.completedFuture(
-                    PlanningResult.failed("No planner is registered."));
+            return CompletableFuture.completedFuture(PlanningResult.failed("No planner is registered."));
         }
         return invokePlanner(() -> planner.revise(request));
     }
-
-    // ── helpers ───────────────────────────────────────────────────────────────
 
     private Planner resolveFirst() {
         return registry.all().stream().findFirst().orElse(null);
@@ -91,6 +90,9 @@ public class DefaultPlanningRuntime implements PlanningRuntime {
     }
 
     private PlanningResult validateIfSuccessful(PlanningResult result) {
+        if (result == null) {
+            return PlanningResult.failed("Planner returned a null result.");
+        }
         if (!result.isSuccess()) {
             return result;
         }
