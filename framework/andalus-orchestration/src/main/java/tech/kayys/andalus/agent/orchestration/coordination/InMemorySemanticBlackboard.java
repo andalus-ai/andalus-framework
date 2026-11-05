@@ -60,9 +60,12 @@ public class InMemorySemanticBlackboard implements SemanticBlackboard {
     public AutoCloseable subscribe(String topic, Consumer<BlackboardEntry> listener) {
         requireText(topic, "topic");
         Objects.requireNonNull(listener, "listener cannot be null");
-        List<Consumer<BlackboardEntry>> subscribers =
-                topicSubscribers.computeIfAbsent(topic, ignored -> new CopyOnWriteArrayList<>());
-        subscribers.add(listener);
+        topicSubscribers.compute(topic, (key, current) -> {
+            List<Consumer<BlackboardEntry>> subscribers =
+                    current == null ? new CopyOnWriteArrayList<>() : current;
+            subscribers.add(listener);
+            return subscribers;
+        });
         return () -> topicSubscribers.computeIfPresent(topic, (key, current) -> {
             current.remove(listener);
             return current.isEmpty() ? null : current;
