@@ -100,23 +100,27 @@ public class InMemorySemanticBlackboard implements SemanticBlackboard {
     }
 
     @Override
-    public synchronized BlackboardEntry updateClaimed(String entryId, String agentId, String newPayloadJson) {
+    public BlackboardEntry updateClaimed(String entryId, String agentId, String newPayloadJson) {
         requireText(entryId, "entryId");
         requireText(agentId, "agentId");
         Objects.requireNonNull(newPayloadJson, "newPayloadJson cannot be null");
 
-        ClaimLock lock = claims.get(entryId);
-        if (lock == null || lock.isExpired() || !lock.ownerAgentId().equals(agentId)) {
-            throw new IllegalStateException(
-                    "Agent " + agentId + " does not hold a valid active claim on " + entryId);
-        }
+        BlackboardEntry updated;
+        synchronized (this) {
+            ClaimLock lock = claims.get(entryId);
+            if (lock == null || lock.isExpired() || !lock.ownerAgentId().equals(agentId)) {
+                throw new IllegalStateException(
+                        "Agent " + agentId + " does not hold a valid active claim on " + entryId);
+            }
 
-        BlackboardEntry current = entries.get(entryId);
-        if (current == null) {
-            throw new IllegalArgumentException("Entry not found: " + entryId);
+            BlackboardEntry current = entries.get(entryId);
+            if (current == null) {
+                throw new IllegalArgumentException("Entry not found: " + entryId);
+            }
+            updated = current.withPayload(newPayloadJson);
+            entries.put(entryId, updated);
         }
-        BlackboardEntry updated = current.withPayload(newPayloadJson);
-        entries.put(entryId, updated);
+        // Invoke external callbacks outside the claim lock to avoid blocking coordination.
         notifySubscribers(updated);
         return updated;
     }
