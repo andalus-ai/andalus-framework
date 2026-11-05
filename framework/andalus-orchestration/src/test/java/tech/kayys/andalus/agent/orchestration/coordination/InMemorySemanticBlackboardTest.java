@@ -63,3 +63,55 @@ class InMemorySemanticBlackboardTest {
         assertThat(notifications.get()).isEqualTo(2);
     }
 }
+
+    @Test
+    void topicEntriesAreReturnedInPublicationOrder() {
+        BlackboardEntry first = blackboard.post("shared", "agent-1", "app/json", "{\\"n\\":1}");
+        BlackboardEntry second = blackboard.post("shared", "agent-2", "app/json", "{\\"n\\":2}");
+
+        assertThat(blackboard.getByTopic("shared"))
+                .extracting(BlackboardEntry::entryId)
+                .containsExactly(first.entryId(), second.entryId());
+    }
+
+    @Test
+    void expiredOrForeignClaimsCannotUpdateEntry() throws Exception {
+        BlackboardEntry entry = blackboard.post("shared", "agent-1", "app/json", "{}");
+        assertThat(blackboard.claimEntry(entry.entryId(), "agent-2", 1)).isTrue();
+        Thread.sleep(10);
+
+        assertThatThrownBy(() -> blackboard.updateClaimed(entry.entryId(), "agent-2", "{\\"stale\\":true}"))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(blackboard.claimEntry(entry.entryId(), "agent-3", 5_000)).isTrue();
+        assertThatThrownBy(() -> blackboard.updateClaimed(entry.entryId(), "agent-2", "{\\"stale\\":true}"))
+                .isInstanceOf(IllegalStateException.class);
+
+        BlackboardEntry updated = blackboard.updateClaimed(entry.entryId(), "agent-3", "{\\"owner\\":\\"agent-3\\"}");
+        assertThat(updated.version()).isEqualTo(2L);
+        assertThat(updated.payloadJson()).contains("agent-3");
+    }
+
+    @Test
+    void rejectsInvalidClaimLeaseDurationAndBlankIdentity() {
+        BlackboardEntry entry = blackboard.post("shared", "agent-1", "app/json", "{}");
+
+        assertThatThrownBy(() -> blackboard.claimEntry(entry.entryId(), "agent-2", 0))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("positive");
+        assertThatThrownBy(() -> blackboard.post(" ", "agent-1", "app/json", "{}"))
+                .isInstanceOf(IllegalArgumentException.class);
+    }
+
+    @Test
+    void closingLastSubscriptionRemovesListenerRegistration() throws Exception {
+        AtomicInteger notifications = new AtomicInteger();
+        AutoCloseable subscription = blackboard.subscribe("events", entry -> notifications.incrementAndGet());
+
+        blackboard.post("events", "agent-1", "app/json", "{}");
+        subscription.close();
+        blackboard.post("events", "agent-1", "app/json", "{}");
+
+        assertThat(notifications.get()).isEqualTo(1);
+    }
+\n}\n
