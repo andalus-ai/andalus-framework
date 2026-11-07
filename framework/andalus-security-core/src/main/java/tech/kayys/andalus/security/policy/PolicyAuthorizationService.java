@@ -65,9 +65,13 @@ public final class PolicyAuthorizationService implements AuthorizationService {
             return AuthorizationDecision.deny("Action is outside delegated authority");
         }
 
-        if (request.resource() != null && !request.resource().isBlank()
-                && !delegation.audience().allows(request.resource())) {
-            return AuthorizationDecision.deny("Resource is outside delegation audience");
+        Object delegatedTo = request.securityContext().attributes().get("delegated_to");
+        if (!(delegatedTo instanceof String targetAgentId) || targetAgentId.isBlank()) {
+            return AuthorizationDecision.deny("Delegated target agent is missing");
+        }
+
+        if (!delegation.audience().allows(targetAgentId)) {
+            return AuthorizationDecision.deny("Target agent is outside delegation audience");
         }
 
         return AuthorizationDecision.allow("Delegation constraints satisfied");
