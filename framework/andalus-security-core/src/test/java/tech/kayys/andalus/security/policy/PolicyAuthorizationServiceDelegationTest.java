@@ -24,7 +24,14 @@ class PolicyAuthorizationServiceDelegationTest {
     private static final Instant NOW = Instant.parse("2026-11-01T12:00:00Z");
 
     private SecurityContext context() {
-        return SecurityContext.of(Principal.agent("agent-a", "Agent A"), TenantContext.of("tenant-a"));
+        return contextForTarget("agent-b");
+    }
+
+    private SecurityContext contextForTarget(String targetAgentId) {
+        return new SecurityContext(
+                Principal.agent("agent-a", "Agent A"),
+                TenantContext.of("tenant-a"),
+                Map.of("delegated_to", targetAgentId));
     }
 
     private DelegationContext delegation(
@@ -56,7 +63,7 @@ class PolicyAuthorizationServiceDelegationTest {
         AtomicBoolean policyCalled = new AtomicBoolean();
         var service = service(policyCalled);
         var request = new AuthorizationRequest(
-                context(), "payments.transfer", "execute", "agent-b", Map.of(),
+                context(), "payments.transfer", "execute", "invoice:42", Map.of(),
                 Optional.of(delegation(List.of("documents.read"), List.of("read"), List.of("agent-b"), NOW.plusSeconds(60))));
 
         AuthorizationDecision decision = service.authorize(request).toCompletableFuture().join();
@@ -70,10 +77,10 @@ class PolicyAuthorizationServiceDelegationTest {
     void delegatedActionAndAudienceAreEnforced() {
         var service = service(new AtomicBoolean());
         var actionRequest = new AuthorizationRequest(
-                context(), "documents.read", "delete", "agent-b", Map.of(),
+                context(), "documents.read", "delete", "invoice:42", Map.of(),
                 Optional.of(delegation(List.of("documents.read"), List.of("read"), List.of("agent-b"), NOW.plusSeconds(60))));
         var audienceRequest = new AuthorizationRequest(
-                context(), "documents.read", "read", "agent-c", Map.of(),
+                contextForTarget("agent-c"), "documents.read", "read", "invoice:42", Map.of(),
                 Optional.of(delegation(List.of("documents.read"), List.of("read"), List.of("agent-b"), NOW.plusSeconds(60))));
 
         assertFalse(service.authorize(actionRequest).toCompletableFuture().join().allowed());
@@ -84,13 +91,39 @@ class PolicyAuthorizationServiceDelegationTest {
     void expiredDelegationIsDenied() {
         var service = service(new AtomicBoolean());
         var request = new AuthorizationRequest(
-                context(), "documents.read", "read", "agent-b", Map.of(),
+                context(), "documents.read", "read", "invoice:42", Map.of(),
                 Optional.of(delegation(List.of("*"), List.of("*"), List.of("agent-b"), NOW)));
 
         AuthorizationDecision decision = service.authorize(request).toCompletableFuture().join();
 
         assertFalse(decision.allowed());
         assertEquals("Delegation expired", decision.reason());
+    }
+
+
+    @Test
+    void delegatedAudienceIsBoundToTargetAgentNotResourceIdentifier() {
+        var service = service(new AtomicBoolean());
+        var request = new AuthorizationRequest(
+                context(), "documents.read", "read", "customer-record:123", Map.of(),
+                Optional.of(delegation(List.of("documents.read"), List.of("read"), List.of("agent-b"), NOW.plusSeconds(60))));
+
+        assertTrue(service.authorize(request).toCompletableFuture().join().allowed());
+    }
+
+    @Test
+    void missingDelegatedTargetIsDenied() {
+        var service = service(new AtomicBoolean());
+        var contextWithoutTarget = SecurityContext.of(
+                Principal.agent("agent-a", "Agent A"), TenantContext.of("tenant-a"));
+        var request = new AuthorizationRequest(
+                contextWithoutTarget, "documents.read", "read", "customer-record:123", Map.of(),
+                Optional.of(delegation(List.of("documents.read"), List.of("read"), List.of("agent-b"), NOW.plusSeconds(60))));
+
+        AuthorizationDecision decision = service.authorize(request).toCompletableFuture().join();
+
+        assertFalse(decision.allowed());
+        assertEquals("Delegated target agent is missing", decision.reason());
     }
 
     @Test
