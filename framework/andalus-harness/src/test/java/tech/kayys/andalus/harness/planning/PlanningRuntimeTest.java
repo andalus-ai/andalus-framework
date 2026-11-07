@@ -210,4 +210,54 @@ class PlanningRuntimeTest {
         assertThat(result.isFailure()).isTrue();
         assertThat(result.reason()).contains("No planner");
     }
+
+    @Test
+    void plannerSelectionUsesLexicographicallySmallestId() {
+        PlannerRegistry registry = new PlannerRegistry();
+        registry.register(new Planner() {
+            @Override public String id() { return "z-planner"; }
+            @Override public CompletionStage<PlanningResult> plan(PlanningRequest request) {
+                return CompletableFuture.completedFuture(PlanningResult.success(singleStepPlan()));
+            }
+        });
+        registry.register(new Planner() {
+            @Override public String id() { return "a-planner"; }
+            @Override public CompletionStage<PlanningResult> plan(PlanningRequest request) {
+                return CompletableFuture.completedFuture(PlanningResult.failed("selected-a"));
+            }
+        });
+
+        PlanningResult result = new DefaultPlanningRuntime(registry)
+                .createPlan(PlanningRequest.of(decisionContext)).toCompletableFuture().join();
+
+        assertThat(result.isFailure()).isTrue();
+        assertThat(result.reason()).isEqualTo("selected-a");
+    }
+
+    @Test
+    void nullPlanningRequestReturnsFailureInsteadOfThrowing() {
+        PlanningResult result = new DefaultPlanningRuntime(new PlannerRegistry())
+                .createPlan(null).toCompletableFuture().join();
+
+        assertThat(result.isFailure()).isTrue();
+        assertThat(result.reason()).contains("must not be null");
+    }
+
+    @Test
+    void nullPlannerResultReturnsFailureInsteadOfThrowing() {
+        PlannerRegistry registry = new PlannerRegistry();
+        registry.register(new Planner() {
+            @Override public String id() { return "null-result"; }
+            @Override public CompletionStage<PlanningResult> plan(PlanningRequest request) {
+                return CompletableFuture.completedFuture(null);
+            }
+        });
+
+        PlanningResult result = new DefaultPlanningRuntime(registry)
+                .createPlan(PlanningRequest.of(decisionContext)).toCompletableFuture().join();
+
+        assertThat(result.isFailure()).isTrue();
+        assertThat(result.reason()).contains("null result");
+    }
+
 }
