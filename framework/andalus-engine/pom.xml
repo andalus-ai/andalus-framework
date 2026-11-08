@@ -16,7 +16,12 @@
         <maven.compiler.target>25</maven.compiler.target>
     </properties>
 
-    <dependencies>\n        <dependency>\n            <groupId>tech.kayys.andalus</groupId>\n            <artifactId>andalus-execution-api</artifactId>\n            <version>${project.version}</version>\n        </dependency>
+    <dependencies>
+        <dependency>
+            <groupId>tech.kayys.andalus</groupId>
+            <artifactId>andalus-execution-api</artifactId>
+            <version>${project.version}</version>
+        </dependency>
         <dependency>
             <groupId>jakarta.enterprise</groupId>
             <artifactId>jakarta.enterprise.cdi-api</artifactId>
