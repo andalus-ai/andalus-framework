@@ -73,8 +73,20 @@ public class DefaultInferenceRuntime implements InferenceRuntime {
         InferenceProviderAdapter provider = providerOpt.get();
         long maxLatency = plan.constraints().maxLatencyMillis();
 
-        CompletableFuture<InferenceResult> executionFuture = provider.execute(request)
-                .toCompletableFuture();
+        final CompletableFuture<InferenceResult> executionFuture;
+        try {
+            CompletionStage<InferenceResult> execution = provider.execute(request);
+            if (execution == null) {
+                return CompletableFuture.completedFuture(
+                        InferenceResult.failed(InferenceStatus.FAILED, "Provider returned no execution stage"));
+            }
+            executionFuture = execution.toCompletableFuture();
+        } catch (RuntimeException failure) {
+            LOG.log(Level.WARNING, "Provider execution could not be started", failure);
+            return CompletableFuture.completedFuture(
+                    InferenceResult.failed(InferenceStatus.FAILED,
+                            "Provider execution could not be started: " + failure.getClass().getSimpleName()));
+        }
 
         if (maxLatency > 0) {
             executionFuture = executionFuture.orTimeout(maxLatency, TimeUnit.MILLISECONDS)
