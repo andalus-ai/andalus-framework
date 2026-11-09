@@ -4,6 +4,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import tech.kayys.andalus.harness.inference.InferenceInput;
+import tech.kayys.andalus.harness.inference.InferenceMetadata;
 import tech.kayys.andalus.harness.inference.InferenceProviderAdapter;
 import tech.kayys.andalus.harness.inference.InferenceRequest;
 import tech.kayys.andalus.harness.inference.InferenceResult;
@@ -34,8 +35,8 @@ import java.util.concurrent.CompletionStage;
  */
 public final class AndalusInferenceProviderAdapter implements InferenceProviderAdapter {
 
-    public static final String REASONING_TOKENS_KEY = "andalus.usage.reasoningTokens";
-    public static final String REASONING_BUDGET_KEY = "andalus.reasoningTokenBudget";
+    public static final String REASONING_TOKENS_KEY = InferenceMetadata.REASONING_TOKENS;
+    public static final String REASONING_BUDGET_KEY = InferenceMetadata.REASONING_TOKEN_BUDGET;
 
     private final String providerId;
     private final InferenceProvider delegate;
