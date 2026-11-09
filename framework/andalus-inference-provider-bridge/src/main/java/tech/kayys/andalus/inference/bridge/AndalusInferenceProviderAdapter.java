@@ -34,8 +34,8 @@ import java.util.concurrent.CompletionStage;
  */
 public final class AndalusInferenceProviderAdapter implements InferenceProviderAdapter {
 
-    public static final String REASONING_TOKENS_KEY = "kallam.usage.reasoningTokens";
-    public static final String REASONING_BUDGET_KEY = "kallam.reasoningTokenBudget";
+    public static final String REASONING_TOKENS_KEY = "andalus.usage.reasoningTokens";
+    public static final String REASONING_BUDGET_KEY = "andalus.reasoningTokenBudget";
 
     private final String providerId;
     private final InferenceProvider delegate;
@@ -146,12 +146,12 @@ public final class AndalusInferenceProviderAdapter implements InferenceProviderA
         // Only forward explicitly namespaced Kallam control metadata. Arbitrary
         // request attributes may contain application data or credentials.
         plan.metadata().forEach((key, value) -> {
-            if (key != null && key.startsWith("kallam.") && value != null) {
+            if (key != null && key.startsWith("andalus.") && value != null) {
                 builder.metadata(key, value);
             }
         });
         plan.constraints().attributes().forEach((key, value) -> {
-            if (key != null && key.startsWith("kallam.") && value != null) {
+            if (key != null && key.startsWith("andalus.") && value != null) {
                 builder.metadata(key, value);
             }
         });
