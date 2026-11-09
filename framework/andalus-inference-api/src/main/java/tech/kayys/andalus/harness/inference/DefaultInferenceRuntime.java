@@ -34,10 +34,14 @@ public class DefaultInferenceRuntime implements InferenceRuntime {
 
     public void registerProvider(InferenceProviderAdapter provider) {
         if (provider != null) {
-            InferenceProviderAdapter existing = providers.putIfAbsent(provider.providerId(), provider);
+            String providerId = provider.providerId();
+            if (providerId == null || providerId.isBlank()) {
+                throw new IllegalArgumentException("providerId must not be blank");
+            }
+            InferenceProviderAdapter existing = providers.putIfAbsent(providerId, provider);
             if (existing != null && existing != provider) {
                 throw new IllegalArgumentException(
-                        "An inference provider is already registered with ID: " + provider.providerId());
+                        "An inference provider is already registered with ID: " + providerId);
             }
         }
     }
