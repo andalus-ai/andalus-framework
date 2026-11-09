@@ -59,7 +59,8 @@ class AndalusInferenceProviderAdapterTest {
         assertEquals(4096, sent.maxTokens());
         assertEquals(2, sent.messages().size());
         assertEquals("You are a scholarly research assistant.", sent.messages().get(0).content());
-        assertTrue(sent.messages().get(1).content().contains("\"methodologyId\":\"shafii\""));
+        assertTrue(sent.messages().get(1).content().contains("\"methodology\""));
+        assertTrue(sent.messages().get(1).content().contains("\"shafii\""));
         assertEquals(75, sent.metadata().get(AndalusInferenceProviderAdapter.REASONING_BUDGET_KEY));
         assertFalse(sent.metadata().containsKey("private.application.attribute"));
     }
