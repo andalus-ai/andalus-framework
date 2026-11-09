@@ -49,6 +49,7 @@ class AndalusInferenceProviderAdapterTest {
         assertEquals(37, result.metadata().get(AndalusInferenceProviderAdapter.REASONING_TOKENS_KEY));
         assertEquals(120, result.usage().inputTokens());
         assertEquals(80, result.usage().outputTokens());
+        assertEquals(205, result.usage().totalTokens());
 
         var captor = org.mockito.ArgumentCaptor.forClass(CompletionRequest.class);
         verify(provider).generateAsync(captor.capture());
@@ -120,6 +121,6 @@ class AndalusInferenceProviderAdapterTest {
 
     private static CompletionResult completion(String model, String content, Map<String, Object> metadata) {
         return new CompletionResult("completion-1", model,
-                List.of(Choice.of(Message.assistant(content))), Usage.of(120, 80), metadata, 321);
+                List.of(Choice.of(Message.assistant(content))), new Usage(120, 80, 205, 0.0), metadata, 321);
     }
 }
