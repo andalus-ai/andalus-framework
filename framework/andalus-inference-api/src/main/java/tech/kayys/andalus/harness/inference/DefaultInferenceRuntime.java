@@ -73,7 +73,7 @@ public class DefaultInferenceRuntime implements InferenceRuntime {
         InferenceProviderAdapter provider = providerOpt.get();
         long maxLatency = plan.constraints().maxLatencyMillis();
 
-        final CompletableFuture<InferenceResult> executionFuture;
+        CompletableFuture<InferenceResult> executionFuture;
         try {
             CompletionStage<InferenceResult> execution = provider.execute(request);
             if (execution == null) {
