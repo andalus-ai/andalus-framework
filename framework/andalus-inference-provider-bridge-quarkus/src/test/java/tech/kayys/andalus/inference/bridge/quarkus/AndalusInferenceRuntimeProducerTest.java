@@ -31,7 +31,7 @@ class AndalusInferenceRuntimeProducerTest {
                         null, Map.of(), 1)));
 
         var runtime = AndalusInferenceRuntimeProducer.createRuntime(List.of(provider));
-        var request = new InferenceRequest(
+        var request = InferenceRequest.of(
                 InferencePlan.direct("gpt-test", "openai", Set.of("text-generation")),
                 InferenceInput.of("hello"));
 
