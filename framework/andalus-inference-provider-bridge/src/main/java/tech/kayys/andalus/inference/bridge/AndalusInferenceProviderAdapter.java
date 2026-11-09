@@ -206,10 +206,14 @@ public final class AndalusInferenceProviderAdapter implements InferenceProviderA
         Usage providerUsage = completion.usage();
         InferenceUsage usage = providerUsage == null
                 ? InferenceUsage.empty()
-                : InferenceUsage.of(
+                : new InferenceUsage(
                         nonNegative(providerUsage.promptTokens()),
                         nonNegative(providerUsage.completionTokens()),
-                        Math.max(0, completion.generationTimeMs()));
+                        nonNegative(providerUsage.totalTokens()),
+                        completion.generationTimeMs() > 0
+                                ? java.util.Optional.of(completion.generationTimeMs())
+                                : java.util.Optional.empty(),
+                        java.util.Optional.empty());
 
         Map<String, Object> metadata = new LinkedHashMap<>();
         Object reasoningTokens = completion.metadata() == null
