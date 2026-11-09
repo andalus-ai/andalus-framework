@@ -36,13 +36,13 @@ The provider ID is explicit at composition time. The bridge only advertises mode
 - A map payload may contain `systemInstruction`; it becomes a system message. The remaining payload is serialized as the user message.
 - Structured requests marked with `structured-json` request `json_object` output and are rejected if the provider returns anything other than a JSON object.
 - Output-token limits, temperature, and top-p are forwarded.
-- Only `kallam.*` plan and constraint metadata is forwarded. Arbitrary application attributes are intentionally excluded.
+- Only `andalus.*` plan and constraint metadata is forwarded. Arbitrary application attributes are intentionally excluded.
 
 ## Result mapping and scholarly safety
 
 - The adapter returns the configured provider ID and the actual model ID reported by the provider (falling back to the requested model only if the provider omits it).
 - Provider input/output token usage is mapped without estimation.
-- The bridge copies `kallam.usage.reasoningTokens` only when the provider explicitly reports that exact metadata key. It never derives reasoning tokens from output-token totals.
+- The bridge copies `andalus.usage.reasoningTokens` only when the provider explicitly reports that exact metadata key. It never derives reasoning tokens from output-token totals.
 - If a provider does not report reasoning-token usage, Kallam's analyzer will continue to reject the analysis as incomplete/partial under its existing policy.
 - Kallam remains responsible for validating its versioned scholarly JSON schema, evidence IDs, methodology, and scholar-review boundary.
 
