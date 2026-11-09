@@ -75,6 +75,7 @@
         <module>andalus-project</module>
         <module>andalus-provider</module>
         <module>andalus-inference-provider-bridge</module>
+        <module>andalus-inference-provider-bridge-quarkus</module>
         <module>andalus-registry</module>
         <module>andalus-resilience</module>
         <module>andalus-runtime-spi</module>
