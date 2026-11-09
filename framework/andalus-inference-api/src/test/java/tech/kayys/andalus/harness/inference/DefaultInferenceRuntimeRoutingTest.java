@@ -59,6 +59,35 @@ class DefaultInferenceRuntimeRoutingTest {
                 () -> runtime.registerProvider(provider("openai", "other-model")));
     }
 
+
+    @Test
+    void normalizesSynchronousProviderInvocationFailures() {
+        InferenceProviderAdapter broken = new InferenceProviderAdapter() {
+            @Override
+            public String providerId() {
+                return "broken";
+            }
+
+            @Override
+            public boolean supports(String modelId) {
+                return true;
+            }
+
+            @Override
+            public java.util.concurrent.CompletionStage<InferenceResult> execute(InferenceRequest request) {
+                throw new IllegalStateException("transport initialization failed");
+            }
+        };
+        var runtime = new DefaultInferenceRuntime(Set.of(broken));
+
+        var result = runtime.execute(InferenceRequest.of(
+                InferencePlan.direct("model-x", "broken", Set.of()), "hello"))
+                .toCompletableFuture().join();
+
+        assertEquals(InferenceStatus.FAILED, result.status());
+        assertTrue(result.metadata().get("error").toString().contains("could not be started"));
+    }
+
     private static InferenceProviderAdapter provider(String id, String model) {
         return new InferenceProviderAdapter() {
             @Override
