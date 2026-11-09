@@ -5,7 +5,6 @@ import tech.kayys.andalus.harness.inference.InferenceInput;
 import tech.kayys.andalus.harness.inference.InferencePlan;
 import tech.kayys.andalus.harness.inference.InferenceRequest;
 import tech.kayys.andalus.harness.inference.InferenceStatus;
-import tech.kayys.inference.bridge.quarkus.AndalusInferenceRuntimeProducer;
 import tech.kayys.andalus.inference.Choice;
 import tech.kayys.andalus.inference.CompletionResult;
 import tech.kayys.andalus.inference.InferenceProvider;
