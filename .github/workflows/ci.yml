@@ -43,6 +43,11 @@ jobs:
           path: _aqli
           ref: main
 
+      - name: Setup Gradle 9.4.0
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: "9.4.0"
+
       - name: Cache Gradle packages (aqli)
         uses: actions/cache@v4
         with:
@@ -76,7 +81,7 @@ jobs:
             :core:aqli-core:publishToMavenLocal
             :plugin:aqli-plugin-kernel-core:publishToMavenLocal
           )
-          ./gradlew "${TASKS[@]}" --no-daemon -x test --parallel
+          gradle "${TASKS[@]}" --no-daemon -x test --parallel
       # ─────────────────────────────────────────────────────────────────────
 
       - name: Checkout gamelan (workflow engine dependency)
