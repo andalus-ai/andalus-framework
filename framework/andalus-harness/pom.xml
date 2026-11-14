@@ -21,6 +21,11 @@
     <dependencies>
         <dependency>
             <groupId>tech.kayys.andalus</groupId>
+            <artifactId>andalus-inference-api</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>tech.kayys.andalus</groupId>
             <artifactId>andalus-extension</artifactId>
             <version>${project.version}</version>
         </dependency>

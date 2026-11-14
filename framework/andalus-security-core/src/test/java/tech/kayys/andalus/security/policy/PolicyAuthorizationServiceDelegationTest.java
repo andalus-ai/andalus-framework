@@ -28,9 +28,13 @@ class PolicyAuthorizationServiceDelegationTest {
     }
 
     private SecurityContext contextForTarget(String targetAgentId) {
+        return contextForTenantAndTarget("tenant-a", targetAgentId);
+    }
+
+    private SecurityContext contextForTenantAndTarget(String tenantId, String targetAgentId) {
         return new SecurityContext(
                 Principal.agent("agent-a", "Agent A"),
-                TenantContext.of("tenant-a"),
+                TenantContext.of(tenantId),
                 Map.of("delegated_to", targetAgentId));
     }
 
@@ -46,7 +50,8 @@ class PolicyAuthorizationServiceDelegationTest {
                 new DelegationConstraints(capabilities, actions, 2),
                 NOW.minusSeconds(5),
                 expiresAt,
-                Optional.empty()
+                Optional.empty(),
+                Optional.of("tenant-a")
         );
     }
 
@@ -100,7 +105,6 @@ class PolicyAuthorizationServiceDelegationTest {
         assertEquals("Delegation expired", decision.reason());
     }
 
-
     @Test
     void delegatedAudienceIsBoundToTargetAgentNotResourceIdentifier() {
         var service = service(new AtomicBoolean());
@@ -124,6 +128,59 @@ class PolicyAuthorizationServiceDelegationTest {
 
         assertFalse(decision.allowed());
         assertEquals("Delegated target agent is missing", decision.reason());
+    }
+
+    @Test
+    void crossTenantDelegationIsDeniedBeforePolicyEvaluation() {
+        AtomicBoolean policyCalled = new AtomicBoolean();
+        var request = new AuthorizationRequest(
+                contextForTenantAndTarget("tenant-b", "agent-b"),
+                "documents.read", "read", "customer-record:123", Map.of(),
+                Optional.of(delegation(List.of("documents.read"), List.of("read"), List.of("agent-b"), NOW.plusSeconds(60))));
+
+        AuthorizationDecision decision = service(policyCalled).authorize(request).toCompletableFuture().join();
+
+        assertFalse(decision.allowed());
+        assertEquals("Delegation tenant does not match security context tenant", decision.reason());
+        assertFalse(policyCalled.get(), "cross-tenant delegation must be rejected before policy evaluation");
+    }
+
+    @Test
+    void missingTenantIsDeniedForDelegatedAuthorization() {
+        AtomicBoolean policyCalled = new AtomicBoolean();
+        var contextWithoutTenant = new SecurityContext(
+                Principal.agent("agent-a", "Agent A"),
+                TenantContext.empty(),
+                Map.of("delegated_to", "agent-b"));
+        var request = new AuthorizationRequest(
+                contextWithoutTenant, "documents.read", "read", "customer-record:123", Map.of(),
+                Optional.of(delegation(List.of("documents.read"), List.of("read"), List.of("agent-b"), NOW.plusSeconds(60))));
+
+        AuthorizationDecision decision = service(policyCalled).authorize(request).toCompletableFuture().join();
+
+        assertFalse(decision.allowed());
+        assertEquals("Tenant context is missing for delegated authorization", decision.reason());
+        assertFalse(policyCalled.get());
+    }
+
+    @Test
+    void unboundLegacyDelegationIsDenied() {
+        AtomicBoolean policyCalled = new AtomicBoolean();
+        DelegationContext unbound = new DelegationContext(
+                DelegationId.generate(),
+                new DelegationAudience(List.of("agent-b")),
+                new DelegationConstraints(List.of("documents.read"), List.of("read"), 2),
+                NOW.minusSeconds(5),
+                NOW.plusSeconds(60),
+                Optional.empty());
+        var request = new AuthorizationRequest(
+                context(), "documents.read", "read", "customer-record:123", Map.of(), Optional.of(unbound));
+
+        AuthorizationDecision decision = service(policyCalled).authorize(request).toCompletableFuture().join();
+
+        assertFalse(decision.allowed());
+        assertEquals("Delegation is not bound to a tenant", decision.reason());
+        assertFalse(policyCalled.get());
     }
 
     @Test

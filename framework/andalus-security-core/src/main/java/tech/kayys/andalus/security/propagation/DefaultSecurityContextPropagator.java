@@ -39,6 +39,11 @@ public final class DefaultSecurityContextPropagator implements SecurityContextPr
             throw new SecurityException("Delegation denied: no remaining hops or delegated capabilities");
         }
 
+        String tenantId = request.source().tenant().tenantId();
+        if (tenantId == null || tenantId.isBlank()) {
+            throw new SecurityException("Delegation denied: a tenant-scoped source context is required");
+        }
+
         DelegationAudience audience = DelegationAudience.of(request.targetAgentId());
 
         Instant now = Instant.now();
@@ -48,7 +53,8 @@ public final class DefaultSecurityContextPropagator implements SecurityContextPr
                 constraints.decrementHop(),
                 now,
                 now.plusSeconds(defaultTtlSeconds),
-                Optional.empty()
+                Optional.empty(),
+                Optional.of(tenantId)
         );
 
         Map<String, Object> propagatedAttributes = new HashMap<>(request.source().attributes());
