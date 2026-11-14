@@ -38,7 +38,7 @@ class DefaultDelegationServiceTest {
 
         SecurityContextSnapshot parent = new SecurityContextSnapshot(
                 Principal.anonymous(),
-                TenantContext.empty(),
+                TenantContext.of("tenant-a"),
                 Optional.of(parentDelegation),
                 Map.of()
         );
@@ -58,6 +58,7 @@ class DefaultDelegationServiceTest {
         assertEquals(List.of("exec"), child.constraints().allowedActions());
         assertEquals(2, child.constraints().maxHops());
         assertEquals(Optional.of(parentDelegation.id()), child.parent());
+        assertEquals(Optional.of("tenant-a"), child.tenantId());
     }
 
     @Test
