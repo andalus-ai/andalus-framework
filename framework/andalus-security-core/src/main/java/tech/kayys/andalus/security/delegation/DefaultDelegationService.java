@@ -5,6 +5,7 @@ import tech.kayys.andalus.security.propagation.SecurityContextSnapshot;
 import java.time.Clock;
 import java.time.Instant;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 
@@ -39,6 +40,17 @@ public final class DefaultDelegationService implements DelegationService {
             );
         }
 
+        Optional<String> tenantId = Optional.ofNullable(parent.tenant().tenantId());
+        if (parent.delegation().isPresent()) {
+            Optional<String> parentTenantId = parent.delegation().get().tenantId();
+            if (parentTenantId.isPresent()
+                    && !parentTenantId.equals(tenantId)) {
+                return CompletableFuture.failedFuture(
+                        new SecurityException("Parent delegation tenant does not match security context tenant")
+                );
+            }
+        }
+
         DelegationConstraints parentConstraints = parent.delegation()
                 .map(DelegationContext::constraints)
                 .orElseGet(DelegationConstraints::unrestricted);
@@ -65,7 +77,8 @@ public final class DefaultDelegationService implements DelegationService {
                 childConstraints,
                 now,
                 expiresAt,
-                parent.delegation().map(DelegationContext::id)
+                parent.delegation().map(DelegationContext::id),
+                tenantId
         );
 
         return CompletableFuture.completedFuture(delegation);
