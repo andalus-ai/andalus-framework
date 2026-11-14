@@ -6,6 +6,7 @@ import tech.kayys.andalus.communication.api.AgentTask;
 import tech.kayys.andalus.communication.protocol.ProtocolContext;
 import tech.kayys.andalus.communication.task.TaskStatus;
 import tech.kayys.andalus.security.context.SecurityContext;
+import tech.kayys.andalus.security.delegation.DelegationContext;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -15,6 +16,9 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 
 public final class DefaultA2AExecutionBridge implements A2AExecutionBridge {
+
+    private static final String SECURITY_CONTEXT_KEY = "andalus.security.context";
+    private static final String DELEGATION_CONTEXT_KEY = "andalus.security.delegation";
 
     private final AgentCommunicator communicator;
     private final A2ATaskRegistry taskRegistry;
@@ -62,19 +66,23 @@ public final class DefaultA2AExecutionBridge implements A2AExecutionBridge {
                 .orElseGet(() -> "exec-" + UUID.randomUUID());
     }
 
+    /**
+     * Protocol metadata is untrusted transport data. Reserved security keys are
+     * removed before trusted snapshot values are installed, so metadata cannot
+     * inject or replace an authenticated identity or delegated authority.
+     */
     private ProtocolContext createProtocolContext(A2AExecutionRequest request) {
         Map<String, Object> attrs = new HashMap<>(request.protocolMetadata());
-        if (request.security() != null) {
-            SecurityContext secCtx = SecurityContext.of(
-                    request.security().principal(),
-                    request.security().tenant()
-            );
-            attrs.put("andalus.security.context", secCtx);
-        }
-        return new ProtocolContext(
-                request.security() != null ? request.security().tenant().tenantId() : null,
-                attrs
-        );
+        attrs.remove(SECURITY_CONTEXT_KEY);
+        attrs.remove(DELEGATION_CONTEXT_KEY);
+
+        SecurityContext secCtx = request.security().restore();
+        attrs.put(SECURITY_CONTEXT_KEY, secCtx);
+
+        request.security().delegation().ifPresent(
+                delegation -> attrs.put(DELEGATION_CONTEXT_KEY, delegation));
+
+        return new ProtocolContext(request.security().tenant().tenantId(), attrs);
     }
 
     private record SimpleA2ATaskExecution(
