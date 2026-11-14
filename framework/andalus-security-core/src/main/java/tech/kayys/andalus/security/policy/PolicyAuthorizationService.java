@@ -74,6 +74,19 @@ public final class PolicyAuthorizationService implements AuthorizationService {
             return AuthorizationDecision.deny("Target agent is outside delegation audience");
         }
 
+        String contextTenantId = request.securityContext().tenant().tenantId();
+        if (contextTenantId == null || contextTenantId.isBlank()) {
+            return AuthorizationDecision.deny("Tenant context is missing for delegated authorization");
+        }
+
+        if (delegation.tenantId().isEmpty()) {
+            return AuthorizationDecision.deny("Delegation is not bound to a tenant");
+        }
+
+        if (!delegation.tenantId().get().equals(contextTenantId)) {
+            return AuthorizationDecision.deny("Delegation tenant does not match security context tenant");
+        }
+
         return AuthorizationDecision.allow("Delegation constraints satisfied");
     }
 }

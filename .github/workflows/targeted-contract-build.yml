@@ -35,3 +35,27 @@ jobs:
           -pl andalus-execution-api,andalus-engine
           -am verify
           -Pci
+
+  inference-provider-bridge:
+    name: Inference API and Provider Bridge
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Framework
+        uses: actions/checkout@v4
+
+      - name: Setup GraalVM (Java 25)
+        uses: actions/setup-java@v4
+        with:
+          distribution: graalvm
+          java-version: "25"
+          cache: maven
+
+      # Keep focused feedback for the lightweight inference contracts and
+      # both plain-Java and Quarkus provider composition modules.
+      - name: Build inference API and provider bridge modules
+        run: >-
+          ./mvnw -B -ntp
+          -f framework/pom.xml
+          -pl andalus-inference-provider-bridge-quarkus
+          -am verify
+          -Pci

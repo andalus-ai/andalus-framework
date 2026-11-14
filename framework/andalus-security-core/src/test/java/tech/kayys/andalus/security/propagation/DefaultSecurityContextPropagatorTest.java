@@ -26,7 +26,7 @@ class DefaultSecurityContextPropagatorTest {
     }
 
     @Test
-    void explicitGrantIsPropagatedWithReducedHopCount() {
+    void explicitGrantIsPropagatedWithReducedHopCountAndTenantBinding() {
         SecurityContext source = SecurityContext.of(
                 tech.kayys.andalus.security.identity.Principal.agent("agent-a", "Agent A"),
                 TenantContext.of("tenant-a"));
@@ -38,10 +38,24 @@ class DefaultSecurityContextPropagatorTest {
         PropagationResult result = propagator.propagate(request);
 
         assertEquals("tenant-a", result.context().tenant().tenantId());
+        assertEquals("tenant-a", result.delegation().orElseThrow().tenantId().orElseThrow());
         assertEquals("agent-a", result.context().attributes().get("delegated_by"));
         assertEquals("agent-b", result.context().attributes().get("delegated_to"));
         assertEquals(1, result.delegation().orElseThrow().constraints().maxHops());
         assertTrue(result.delegation().orElseThrow().audience().allows("agent-b"));
+    }
+
+    @Test
+    void tenantlessSourceCannotCreateDelegation() {
+        SecurityContext source = SecurityContext.of(
+                tech.kayys.andalus.security.identity.Principal.agent("agent-a", "Agent A"),
+                TenantContext.empty());
+        PropagationRequest request = PropagationRequest.of(
+                source,
+                "agent-b",
+                new DelegationConstraints(List.of("documents.read"), List.of("read"), 2));
+
+        assertThrows(SecurityException.class, () -> propagator.propagate(request));
     }
 
     @Test

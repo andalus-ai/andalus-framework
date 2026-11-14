@@ -34,7 +34,15 @@ public class DefaultInferenceRuntime implements InferenceRuntime {
 
     public void registerProvider(InferenceProviderAdapter provider) {
         if (provider != null) {
-            providers.put(provider.providerId(), provider);
+            String providerId = provider.providerId();
+            if (providerId == null || providerId.isBlank()) {
+                throw new IllegalArgumentException("providerId must not be blank");
+            }
+            InferenceProviderAdapter existing = providers.putIfAbsent(providerId, provider);
+            if (existing != null && existing != provider) {
+                throw new IllegalArgumentException(
+                        "An inference provider is already registered with ID: " + providerId);
+            }
         }
     }
 
@@ -57,7 +65,7 @@ public class DefaultInferenceRuntime implements InferenceRuntime {
             return CompletableFuture.completedFuture(
                     InferenceResult.failed(
                             InferenceStatus.PROVIDER_UNAVAILABLE,
-                            "No provider available for model: " + plan.modelId()
+                            providerResolutionFailure(plan)
                     )
             );
         }
@@ -65,8 +73,20 @@ public class DefaultInferenceRuntime implements InferenceRuntime {
         InferenceProviderAdapter provider = providerOpt.get();
         long maxLatency = plan.constraints().maxLatencyMillis();
 
-        CompletableFuture<InferenceResult> executionFuture = provider.execute(request)
-                .toCompletableFuture();
+        CompletableFuture<InferenceResult> executionFuture;
+        try {
+            CompletionStage<InferenceResult> execution = provider.execute(request);
+            if (execution == null) {
+                return CompletableFuture.completedFuture(
+                        InferenceResult.failed(InferenceStatus.FAILED, "Provider returned no execution stage"));
+            }
+            executionFuture = execution.toCompletableFuture();
+        } catch (RuntimeException failure) {
+            LOG.log(Level.WARNING, "Provider execution could not be started", failure);
+            return CompletableFuture.completedFuture(
+                    InferenceResult.failed(InferenceStatus.FAILED,
+                            "Provider execution could not be started: " + failure.getClass().getSimpleName()));
+        }
 
         if (maxLatency > 0) {
             executionFuture = executionFuture.orTimeout(maxLatency, TimeUnit.MILLISECONDS)
@@ -90,15 +110,31 @@ public class DefaultInferenceRuntime implements InferenceRuntime {
 
     private Optional<InferenceProviderAdapter> resolveProvider(InferencePlan plan) {
         if (plan.providerId().isPresent()) {
-            InferenceProviderAdapter byId = providers.get(plan.providerId().get());
-            if (byId != null) {
-                return Optional.of(byId);
-            }
+            InferenceProviderAdapter selected = providers.get(plan.providerId().get());
+            return selected != null && selected.supports(plan.modelId())
+                    ? Optional.of(selected)
+                    : Optional.empty();
         }
 
-        // Fall back to first provider supporting the model
-        return providers.values().stream()
-                .filter(p -> p.supports(plan.modelId()))
-                .findFirst();
+        // Never make provider choice depend on ConcurrentHashMap iteration order.
+        // An explicit provider ID is required when multiple adapters support the model.
+        List<InferenceProviderAdapter> compatible = providers.values().stream()
+                .filter(provider -> provider.supports(plan.modelId()))
+                .toList();
+        return compatible.size() == 1 ? Optional.of(compatible.getFirst()) : Optional.empty();
+    }
+
+    private String providerResolutionFailure(InferencePlan plan) {
+        if (plan.providerId().isPresent()) {
+            return "Provider '" + plan.providerId().get()
+                    + "' is unavailable or does not support model: " + plan.modelId();
+        }
+        long compatibleCount = providers.values().stream()
+                .filter(provider -> provider.supports(plan.modelId()))
+                .count();
+        return compatibleCount > 1
+                ? "Multiple providers support model '" + plan.modelId()
+                        + "'; specify an explicit provider ID"
+                : "No provider available for model: " + plan.modelId();
     }
 }
