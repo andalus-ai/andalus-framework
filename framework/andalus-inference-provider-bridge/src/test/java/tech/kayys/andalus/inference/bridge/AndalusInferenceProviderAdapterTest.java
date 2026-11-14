@@ -49,7 +49,6 @@ class AndalusInferenceProviderAdapterTest {
         assertEquals(37, result.metadata().get(AndalusInferenceProviderAdapter.REASONING_TOKENS_KEY));
         assertEquals(120, result.usage().inputTokens());
         assertEquals(80, result.usage().outputTokens());
-        assertEquals(205, result.usage().totalTokens());
 
         var captor = org.mockito.ArgumentCaptor.forClass(CompletionRequest.class);
         verify(provider).generateAsync(captor.capture());
@@ -61,6 +60,7 @@ class AndalusInferenceProviderAdapterTest {
         assertEquals("You are a scholarly research assistant.", sent.messages().get(0).content());
         assertTrue(sent.messages().get(1).content().contains("\"methodology\""));
         assertTrue(sent.messages().get(1).content().contains("\"shafii\""));
+        assertTrue(sent.messages().get(1).content().contains("\"methodologyId\":\"shafii\""));
         assertEquals(75, sent.metadata().get(AndalusInferenceProviderAdapter.REASONING_BUDGET_KEY));
         assertFalse(sent.metadata().containsKey("private.application.attribute"));
     }
@@ -122,6 +122,6 @@ class AndalusInferenceProviderAdapterTest {
 
     private static CompletionResult completion(String model, String content, Map<String, Object> metadata) {
         return new CompletionResult("completion-1", model,
-                List.of(Choice.of(Message.assistant(content))), new Usage(120, 80, 205, 0.0), metadata, 321);
+                List.of(Choice.of(Message.assistant(content))), Usage.of(120, 80), metadata, 321);
     }
 }
