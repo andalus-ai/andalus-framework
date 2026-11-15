@@ -17,6 +17,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 
@@ -34,8 +35,23 @@ import java.util.stream.Collectors;
  */
 public class ReActAgent extends BaseReActAgent {
 
+    private final AtomicBoolean cancellationReported = new AtomicBoolean(false);
+
+    private boolean stopIfCancelled(AndalusAgentListener listener) {
+        if (cancellationToken == null || !cancellationToken.isCancellationRequested()) {
+            return false;
+        }
+        if (cancellationReported.compareAndSet(false, true)) {
+            listener.onError("Execution cancelled.");
+        }
+        return true;
+    }
+
     @Override
     public void send(String userInput, AndalusAgentListener listener) {
+        if (stopIfCancelled(listener)) {
+            return;
+        }
         if (memory != null) {
             memory.addMessage(ChatMessage.userText(userInput));
         }
@@ -47,6 +63,10 @@ public class ReActAgent extends BaseReActAgent {
     // -------------------------------------------------------------------------
 
     private void executeLoop(String userInput, AndalusAgentListener listener, int stepCount) {
+        if (stopIfCancelled(listener)) {
+            return;
+        }
+
         // --- Budget guard ---
         int maxSteps = 25;
         if (stepCount >= maxSteps) {
@@ -74,6 +94,12 @@ public class ReActAgent extends BaseReActAgent {
 
         try {
             provider.streamChat(history, effectiveSystemPrompt, toolSpecs, 0.7, 4096, event -> {
+                // Provider.streamChat is blocking and has no cancellation handle today.
+                // Ignore subsequent events after cancellation; the provider call itself
+                // may continue until its implementation returns or its request times out.
+                if (stopIfCancelled(listener)) {
+                    return;
+                }
                 if (event instanceof StreamEvent.TextDelta textEvent) {
                     listener.onTextDelta(textEvent.text());
 
@@ -89,6 +115,7 @@ public class ReActAgent extends BaseReActAgent {
                     listener.onDone(stopEvent.reason());
                 }
             });
+            stopIfCancelled(listener);
         } catch (IOException | InterruptedException e) {
             Thread.currentThread().interrupt();
             listener.onError("Model communication error: " + e.getMessage());
@@ -105,6 +132,10 @@ public class ReActAgent extends BaseReActAgent {
             String userInput,
             AndalusAgentListener listener,
             int stepCount) {
+
+        if (stopIfCancelled(listener)) {
+            return;
+        }
 
         if (toolName == null) {
             listener.onError("Received ToolUseEnd without a preceding ToolUseStart.");
@@ -127,6 +158,10 @@ public class ReActAgent extends BaseReActAgent {
 
         try {
             ToolResult result = executeToolViaPolicy(matchingTool, invocation);
+
+            if (stopIfCancelled(listener)) {
+                return;
+            }
 
             listener.onToolResult(toolEnd.id(), toolName, result);
 
@@ -156,6 +191,9 @@ public class ReActAgent extends BaseReActAgent {
      * and headless scenarios where no CDI container is present.
      */
     private ToolResult executeToolViaPolicy(Tool tool, ToolInvocation invocation) throws Exception {
+        if (cancellationToken != null && cancellationToken.isCancellationRequested()) {
+            throw new java.util.concurrent.CancellationException("Execution cancelled before tool dispatch.");
+        }
         if (toolExecutor != null) {
             return toolExecutor.executeViaPolicy(invocation, () -> {
                 try {
