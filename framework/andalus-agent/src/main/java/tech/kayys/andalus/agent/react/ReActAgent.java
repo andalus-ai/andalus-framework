@@ -131,6 +131,11 @@ public class ReActAgent extends BaseReActAgent {
                     break;
                 } catch (TimeoutException waiting) {
                     // Re-check the execution-scoped cancellation signal.
+                } catch (InterruptedException interrupted) {
+                    // Nested ReAct iterations run from provider callbacks. Propagate
+                    // interruption down to the currently active nested provider stream.
+                    stream.cancel();
+                    throw interrupted;
                 } catch (CancellationException cancelled) {
                     stopIfCancelled(listener);
                     return;
@@ -214,7 +219,9 @@ public class ReActAgent extends BaseReActAgent {
             executeLoop(userInput, listener, stepCount + 1);
 
         } catch (Exception e) {
-            listener.onError("Tool execution failed [" + toolName + "]: " + e.getMessage());
+            if (!stopIfCancelled(listener)) {
+                listener.onError("Tool execution failed [" + toolName + "]: " + e.getMessage());
+            }
         }
     }
 
