@@ -131,6 +131,9 @@ public class ReActAgent extends BaseReActAgent {
                     break;
                 } catch (TimeoutException waiting) {
                     // Re-check the execution-scoped cancellation signal.
+                } catch (CancellationException cancelled) {
+                    stopIfCancelled(listener);
+                    return;
                 } catch (ExecutionException failed) {
                     Throwable cause = failed.getCause();
                     if (cause instanceof CancellationException && stopIfCancelled(listener)) {
