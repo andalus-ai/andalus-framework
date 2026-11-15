@@ -50,8 +50,6 @@ class PlanningRuntimeTest {
         decisionContext = DecisionContext.of(turnContext);
     }
 
-    // ── helper factories ──────────────────────────────────────────────────────
-
     private AgentPlan singleStepPlan() {
         return new AgentPlan(
                 PlanId.generate(),
@@ -80,8 +78,6 @@ class PlanningRuntimeTest {
         );
     }
 
-    // ── planner helpers ───────────────────────────────────────────────────────
-
     private Planner plannerFor(AgentPlan result) {
         return new Planner() {
             @Override public String id() { return "test-planner"; }
@@ -101,8 +97,6 @@ class PlanningRuntimeTest {
             }
         };
     }
-
-    // ── tests ─────────────────────────────────────────────────────────────────
 
     @Test
     void simplePlanCreation_returnsSuccess() {
@@ -134,7 +128,6 @@ class PlanningRuntimeTest {
 
     @Test
     void cyclicDependency_isRejected() {
-        // Construct a plan with A -> B -> A cycle manually (bypassing PlanStep factory)
         PlanStepId idA = PlanStepId.generate();
         PlanStepId idB = PlanStepId.generate();
 
@@ -187,6 +180,72 @@ class PlanningRuntimeTest {
     }
 
     @Test
+    void planRevision_rejectsDifferentPlanIdentity() {
+        AgentPlan original = singleStepPlan();
+        AgentPlan unrelated = new AgentPlan(
+                PlanId.generate(), original.executionId(), original.goalId(), 1L,
+                PlanStatus.PROPOSED, List.of(PlanStep.of("Replacement")), original.createdAt(), Map.of());
+
+        PlannerRegistry registry = new PlannerRegistry();
+        registry.register(revisionPlannerReturning(unrelated));
+
+        PlanningResult result = new DefaultPlanningRuntime(registry)
+                .revisePlan(new PlanRevisionRequest(original, decisionContext, "changed", Map.of()))
+                .toCompletableFuture().join();
+
+        assertThat(result.status()).isEqualTo(PlanningStatus.INVALID);
+        assertThat(result.reason()).contains("original plan ID");
+    }
+
+    @Test
+    void planRevision_rejectsDifferentExecutionIdentity() {
+        AgentPlan original = singleStepPlan();
+        AgentPlan revised = new AgentPlan(
+                original.id(), "another-execution", original.goalId(), 1L,
+                PlanStatus.PROPOSED, List.of(PlanStep.of("Replacement")), original.createdAt(), Map.of());
+
+        PlannerRegistry registry = new PlannerRegistry();
+        registry.register(revisionPlannerReturning(revised));
+
+        PlanningResult result = new DefaultPlanningRuntime(registry)
+                .revisePlan(new PlanRevisionRequest(original, decisionContext, "changed", Map.of()))
+                .toCompletableFuture().join();
+
+        assertThat(result.status()).isEqualTo(PlanningStatus.INVALID);
+        assertThat(result.reason()).contains("execution ID");
+    }
+
+    @Test
+    void planRevision_rejectsStaleOrSkippedRevisionNumber() {
+        AgentPlan original = singleStepPlan();
+        AgentPlan stale = new AgentPlan(
+                original.id(), original.executionId(), original.goalId(), 0L,
+                PlanStatus.PROPOSED, List.of(PlanStep.of("Replacement")), original.createdAt(), Map.of());
+
+        PlannerRegistry registry = new PlannerRegistry();
+        registry.register(revisionPlannerReturning(stale));
+
+        PlanningResult result = new DefaultPlanningRuntime(registry)
+                .revisePlan(new PlanRevisionRequest(original, decisionContext, "changed", Map.of()))
+                .toCompletableFuture().join();
+
+        assertThat(result.status()).isEqualTo(PlanningStatus.INVALID);
+        assertThat(result.reason()).contains("exactly one");
+    }
+
+    private Planner revisionPlannerReturning(AgentPlan plan) {
+        return new Planner() {
+            @Override public String id() { return "revision-planner"; }
+            @Override public CompletionStage<PlanningResult> plan(PlanningRequest request) {
+                return CompletableFuture.completedFuture(PlanningResult.success(plan));
+            }
+            @Override public CompletionStage<PlanningResult> revise(PlanRevisionRequest request) {
+                return CompletableFuture.completedFuture(PlanningResult.success(plan));
+            }
+        };
+    }
+
+    @Test
     void plannerException_returnsFailedResult() {
         PlannerRegistry registry = new PlannerRegistry();
         registry.register(failingPlanner());
@@ -201,7 +260,7 @@ class PlanningRuntimeTest {
 
     @Test
     void noPlanner_returnsFailedResult() {
-        PlannerRegistry registry = new PlannerRegistry(); // empty
+        PlannerRegistry registry = new PlannerRegistry();
 
         PlanningRuntime runtime = new DefaultPlanningRuntime(registry);
         PlanningResult result = runtime.createPlan(PlanningRequest.of(decisionContext))
@@ -259,5 +318,4 @@ class PlanningRuntimeTest {
         assertThat(result.isFailure()).isTrue();
         assertThat(result.reason()).contains("null result");
     }
-
 }
