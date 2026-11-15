@@ -51,6 +51,10 @@ public final class AnpSecurityMapper {
         Objects.requireNonNull(signature, "signature");
         Objects.requireNonNull(delegation, "delegation");
 
+        if (!keyBelongsToCaller(callerDid, signature)) {
+            throw new SecurityException("ANP signing key does not belong to the claimed DID");
+        }
+
         if (!authVerifier.verify(method, path, host, signature)) {
             throw new SecurityException("ANP request signature verification failed");
         }
@@ -67,5 +71,17 @@ public final class AnpSecurityMapper {
         );
 
         return new SecurityContextSnapshot(principal, tenant, delegation, attributes);
+    }
+
+    /**
+     * ANP key identifiers are DID URLs. Require the key URL to be scoped to the
+     * exact caller DID before accepting a cryptographically valid signature.
+     */
+    private boolean keyBelongsToCaller(DidWbaIdentity callerDid, AnpHttpSignature signature) {
+        String keyId = signature.keyId();
+        String expectedPrefix = callerDid.raw() + "#";
+        return keyId.startsWith(expectedPrefix)
+                && keyId.length() > expectedPrefix.length()
+                && !keyId.substring(expectedPrefix.length()).isBlank();
     }
 }
