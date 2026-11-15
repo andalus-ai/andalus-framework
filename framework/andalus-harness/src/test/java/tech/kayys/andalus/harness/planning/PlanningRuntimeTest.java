@@ -246,6 +246,61 @@ class PlanningRuntimeTest {
     }
 
     @Test
+    void acceptedRevision_isRecordedWithExecutionFeedback() {
+        AgentPlan original = singleStepPlan();
+        PlanExecutionFeedback feedback = new PlanExecutionFeedback(
+                original.steps().get(0).id(),
+                PlanExecutionFeedback.Outcome.BLOCKED,
+                "Waiting for external approval",
+                Instant.now(),
+                Map.of("dependency", "approval"));
+        AgentPlan revised = original.revise(
+                List.of(PlanStep.of("Request approval, then continue research")), "step blocked");
+
+        PlannerRegistry registry = new PlannerRegistry();
+        registry.register(new Planner() {
+            @Override public String id() { return "feedback-planner"; }
+            @Override public CompletionStage<PlanningResult> plan(PlanningRequest req) {
+                return CompletableFuture.completedFuture(PlanningResult.success(original));
+            }
+            @Override public CompletionStage<PlanningResult> revise(PlanRevisionRequest req) {
+                assertThat(req.feedback()).containsExactly(feedback);
+                return CompletableFuture.completedFuture(PlanningResult.success(revised));
+            }
+        });
+
+        DefaultPlanningRuntime runtime = new DefaultPlanningRuntime(registry);
+        PlanRevisionRequest request = new PlanRevisionRequest(
+                original, decisionContext, "step blocked", Map.of(), List.of(feedback));
+
+        PlanningResult result = runtime.revisePlan(request).toCompletableFuture().join();
+
+        assertThat(result.isSuccess()).isTrue();
+        assertThat(runtime.revisionHistory().revisions(original.id())).hasSize(1);
+        PlanRevisionRecord record = runtime.revisionHistory().revisions(original.id()).get(0);
+        assertThat(record.fromRevision()).isZero();
+        assertThat(record.toRevision()).isEqualTo(1L);
+        assertThat(record.previousPlan()).isEqualTo(original);
+        assertThat(record.revisedPlan()).isEqualTo(revised);
+        assertThat(record.feedback()).containsExactly(feedback);
+    }
+
+    @Test
+    void revisionRequest_rejectsFeedbackForUnknownStep() {
+        AgentPlan original = singleStepPlan();
+        PlanExecutionFeedback feedback = new PlanExecutionFeedback(
+                PlanStepId.generate(),
+                PlanExecutionFeedback.Outcome.FAILED,
+                "Unknown step",
+                Instant.now(),
+                Map.of());
+
+        org.junit.jupiter.api.Assertions.assertThrows(IllegalArgumentException.class,
+                () -> new PlanRevisionRequest(
+                        original, decisionContext, "failure", Map.of(), List.of(feedback)));
+    }
+
+    @Test
     void plannerException_returnsFailedResult() {
         PlannerRegistry registry = new PlannerRegistry();
         registry.register(failingPlanner());
