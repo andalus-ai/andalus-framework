@@ -87,7 +87,7 @@ class ProviderStreamCancellationTest {
         assertEquals(1, callbacks.get());
         assertTrue(handle.cancel());
         assertTrue(interrupted.await(2, TimeUnit.SECONDS));
-        assertThrows(ExecutionException.class,
+        assertThrows(CancellationException.class,
                 () -> handle.completion().toCompletableFuture().get(2, TimeUnit.SECONDS));
         assertEquals(1, callbacks.get(), "no callbacks should be delivered after cancellation");
     }
