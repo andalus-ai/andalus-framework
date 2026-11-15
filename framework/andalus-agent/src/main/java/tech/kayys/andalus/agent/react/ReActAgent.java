@@ -155,8 +155,12 @@ public class ReActAgent extends BaseReActAgent {
             }
             stopIfCancelled(listener);
         } catch (IOException | InterruptedException e) {
-            Thread.currentThread().interrupt();
-            listener.onError("Model communication error: " + e.getMessage());
+            if (e instanceof InterruptedException) {
+                Thread.currentThread().interrupt();
+            }
+            if (!stopIfCancelled(listener)) {
+                listener.onError("Model communication error: " + e.getMessage());
+            }
         }
     }
 
