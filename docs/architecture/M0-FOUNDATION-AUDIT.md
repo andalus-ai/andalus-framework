@@ -167,3 +167,14 @@ The separately named `andalus-execution-api/.../execution/checkpoint/CheckpointS
 ### 9.4 Search evidence and limitations
 
 The follow-up used GitHub repository file fetches, directory listings and code search on the default branches. Search results are useful evidence but are not a complete symbol index. No checkout-wide grep, Maven dependency tree, duplicate-class scan, build, test, or runtime class-loading test was executed. These remain M0 exit criteria.
+
+
+### 9.5 Checkpoint implementation evidence from targeted code search
+
+The current Framework source search confirms:
+
+- `andalus-execution-core/.../InMemoryExecutionCheckpointStore.java` implements the execution API contract in `tech.kayys.andalus.execution.checkpoint`. It is consumed by `DefaultRecoveryManager`, `DefaultExecutionMobility` and `DefaultMigrationCoordinator`; tests cover sequencing, integrity, restoration and recovery reconciliation.
+- `andalus-state-core/.../InMemoryCheckpointStore.java` implements the state API contract in `tech.kayys.andalus.state.checkpoint`; state-core tests exercise save and handoff behavior.
+- The two same-FQN contracts in `andalus-engine` and `andalus-runtime-spi` remain separate from those two in-memory implementations. The existing contract map records Runtime `AgentExecutionService` injection of the runtime-SPI contract, but the complete Runtime writer/reader and persisted-payload map has not been independently reproduced in this follow-up.
+
+**Migration implication:** do not treat the execution API and state API stores as duplicates merely because both are named `CheckpointStore`; their packages and payload semantics differ. The immediate collision to eliminate is the shared FQN between engine snapshot storage and runtime AgentContext storage. Before changing either, identify whether engine snapshots are still actively written/read, and map the runtime AgentContext snapshot lifecycle and serialization format. Then choose adapters or an explicitly versioned replacement without losing resume/recovery behavior.
