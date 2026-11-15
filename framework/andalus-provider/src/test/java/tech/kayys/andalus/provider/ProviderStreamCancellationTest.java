@@ -4,8 +4,8 @@ import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
 import java.util.List;
+import java.util.concurrent.CancellationException;
 import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -46,7 +46,7 @@ class ProviderStreamCancellationTest {
         assertTrue(handle.cancel());
         assertTrue(interrupted.await(2, TimeUnit.SECONDS));
         assertTrue(handle.isCancelled());
-        assertThrows(ExecutionException.class,
+        assertThrows(CancellationException.class,
                 () -> handle.completion().toCompletableFuture().get(2, TimeUnit.SECONDS));
         assertFalse(handle.cancel(), "only the first cancellation request should be accepted");
     }
