@@ -26,6 +26,37 @@ public interface AgentToolExecutor {
     CompletionStage<AgentDecision> execute(ToolInvocation invocation);
 
     /**
+     * Executes a tool with an execution-scoped cooperative cancellation signal.
+     *
+     * <p>Implementations that can interrupt queued or active tool work should override
+     * this method and propagate the signal to their execution context. The default
+     * implementation checks cancellation before dispatch and after completion, but
+     * cannot interrupt an already-running implementation of {@link #execute}.</p>
+     *
+     * @param invocation the requested tool invocation
+     * @param cancellation execution-scoped cancellation signal
+     * @return future containing the tool decision
+     */
+    default CompletionStage<AgentDecision> execute(
+            ToolInvocation invocation,
+            tech.kayys.andalus.tool.CancellationToken cancellation) {
+        if (cancellation != null && cancellation.isCancellationRequested()) {
+            return CompletableFuture.failedFuture(
+                    new java.util.concurrent.CancellationException("Execution cancelled before tool dispatch."));
+        }
+        CompletionStage<AgentDecision> result = execute(invocation);
+        if (cancellation == null) {
+            return result;
+        }
+        return result.thenApply(decision -> {
+            if (cancellation.isCancellationRequested()) {
+                throw new java.util.concurrent.CancellationException("Execution cancelled during tool execution.");
+            }
+            return decision;
+        });
+    }
+
+    /**
      * Executes multiple independent tool invocations in parallel.
      * If any invocation requires approval, the whole batch pauses.
      *
