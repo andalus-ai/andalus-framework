@@ -34,6 +34,10 @@ public abstract class BaseReActAgent implements Agent {
     protected Path workspace;
 
     protected tech.kayys.andalus.tool.ToolContext toolContext;
+
+    /** Cooperative cancellation signal shared with the owning execution. */
+    protected tech.kayys.andalus.tool.CancellationToken cancellationToken =
+            tech.kayys.andalus.tool.CancellationToken.none();
     
     protected BudgetedContextCompiler contextCompiler;
     protected ContextPlanner contextPlanner;
@@ -136,6 +140,13 @@ public abstract class BaseReActAgent implements Agent {
 
     public void setToolExecutor(ToolExecutorBridge toolExecutor) {
         this.toolExecutor = toolExecutor;
+    }
+
+    /** Sets the execution-scoped cancellation signal. */
+    public void setCancellationToken(tech.kayys.andalus.tool.CancellationToken cancellationToken) {
+        this.cancellationToken = cancellationToken != null
+                ? cancellationToken
+                : tech.kayys.andalus.tool.CancellationToken.none();
     }
 
     public void setToolContext(
