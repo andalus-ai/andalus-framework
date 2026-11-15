@@ -97,4 +97,19 @@ class AnpSecurityMapperTest {
                 Optional.empty()
         ));
     }
+
+    @Test
+    void rejectsValidSignatureWhenKeyBelongsToDifferentDid() {
+        AnpHttpSignature signature = authenticator.sign(METHOD, PATH, HOST, keyPair);
+
+        assertThrows(SecurityException.class, () -> mapper.map(
+                DidWbaIdentity.parse("did:wba:attacker.example:agent"),
+                METHOD,
+                PATH,
+                HOST,
+                signature,
+                "tenant-a",
+                Optional.empty()
+        ));
+    }
 }
