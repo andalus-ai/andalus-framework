@@ -242,3 +242,35 @@ The actual flow is:
 - In `DefaultAgentExecution`, the checkpoint bridge saves context to the legacy store while `DefaultExecutionStateStore` saves a separate lifecycle checkpoint. Verify ordering and failure handling when one write succeeds and the other fails.
 
 These are source-level observations. No Runtime tests or process-restart integration tests were executed during this audit.
+
+
+### 9.10 Runtime lifecycle and cancellation audit — current main branch
+
+The current Runtime source contains an explicit lifecycle state machine and tests:
+
+- `ExecutionLifecycleRules` defines allowed status transitions, including terminal `COMPLETED` and `CANCELLED` states.
+- `DefaultExecutionStateStore.transitionStatus` performs an atomic per-execution map compute, checks the expected current state and validates the transition.
+- `DurableAgentLifecycleTest` tests allowed/invalid transitions, compare-and-set behavior, checkpoint sequencing, and basic pause/resume/cancel state changes.
+
+However, the implementation has important gaps not covered by those tests:
+
+1. **Failure transition bypass:** `DefaultExecutionStateStore.fail` directly writes `FAILED` without calling `ExecutionLifecycleRules.requireTransition`. It only preserves `CANCELLED` and `COMPLETED`. This allows transitions that the state machine otherwise rejects (for example PENDING → FAILED) and means the rule table is not the single enforcement point.
+2. **Unconditional status restore:** `changeStatus` writes any supplied status without transition validation. This may be needed for checkpoint hydration, but should be named/scoped as restore/hydration rather than exposed as a general lifecycle mutation.
+3. **Pause does not suspend work:** `DefaultAgentExecution.pause` writes checkpoints and changes status, but does not signal or suspend the active ReAct/model/tool operation. Work can continue after the status becomes PAUSED.
+4. **Cancel does not cancel work:** `cancel` changes status only; it does not propagate a cancellation token/interruption to the model stream, tool executor, or ReAct loop. A running callback can continue after cancellation.
+5. **Terminal callback conflict:** `DefaultExecutionStateStore.complete` validates transitions. If a cancelled execution later receives the asynchronous `onDone` callback, completion attempts CANCELLED → COMPLETED, which is forbidden and can throw from the callback path. The future-completion behavior for that race is not covered by the inspected tests.
+6. **Resume is not a continuation primitive:** `DefaultAgentExecution.resume` changes PAUSED → RUNNING but does not restart the suspended loop (and pause does not actually suspend it). `AgentExecutionService.resume` reconstructs from the legacy AgentContext checkpoint, calls `resume`, and returns the execution. The actual continuation semantics therefore need explicit definition and tests.
+7. **Completion/failure race:** callbacks can race with cancel/pause or one another; the status field and future completion must have one terminal-state arbitration mechanism. Current code uses a volatile status plus separate state-store transitions and does not visibly centralize callback completion.
+8. **Checkpoint dual-write atomicity:** the ReAct bridge calls the lifecycle checkpoint path and legacy AgentContext store sequentially. If one succeeds and the other fails, the stores diverge. No transaction/outbox/reconciliation contract is visible in the inspected path.
+
+**Recommended lifecycle contract before implementation:**
+
+- A cancellation token/deadline must flow from invocation through model streaming, tool execution and specialist loops.
+- Pause must be explicitly defined as cooperative pause-at-safe-point, not a status flag; if unsupported for a given provider/tool, report that limitation rather than claiming paused execution.
+- Resume must restore a versioned checkpoint and continue from a defined phase/iteration, or be renamed to indicate status reactivation only.
+- All status changes, including fail and completion, must pass through one transition arbiter with exactly one terminal outcome.
+- Separate checkpoint hydration from live lifecycle transitions.
+- Define atomicity/reconciliation for the two checkpoint writes, preferably by choosing one authoritative checkpoint record and deriving secondary views/events from it.
+- Add deterministic race tests for cancel-vs-complete, cancel-vs-tool-return, pause-vs-complete, duplicate callbacks, failure from each state, and restart/resume across a process boundary.
+
+These are source-level findings and recommendations. The relevant tests were inspected but not executed.
