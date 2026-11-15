@@ -4,6 +4,7 @@ import tech.kayys.andalus.agent.AndalusAgentListener;
 import tech.kayys.andalus.provider.ChatMessage;
 import tech.kayys.andalus.provider.StreamEvent;
 import tech.kayys.andalus.provider.ToolSpec;
+import tech.kayys.andalus.provider.ProviderStreamHandle;
 import tech.kayys.andalus.tool.Tool;
 import tech.kayys.andalus.tool.ToolInvocation;
 import tech.kayys.andalus.tool.ToolResult;
@@ -17,6 +18,10 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.CancellationException;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
@@ -93,10 +98,8 @@ public class ReActAgent extends BaseReActAgent {
         AtomicReference<String> currentToolName = new AtomicReference<>();
 
         try {
-            provider.streamChat(history, effectiveSystemPrompt, toolSpecs, 0.7, 4096, event -> {
-                // Provider.streamChat is blocking and has no cancellation handle today.
-                // Ignore subsequent events after cancellation; the provider call itself
-                // may continue until its implementation returns or its request times out.
+            ProviderStreamHandle stream = provider.streamChatCancellable(
+                    history, effectiveSystemPrompt, toolSpecs, 0.7, 4096, event -> {
                 if (stopIfCancelled(listener)) {
                     return;
                 }
@@ -115,6 +118,33 @@ public class ReActAgent extends BaseReActAgent {
                     listener.onDone(stopEvent.reason());
                 }
             });
+
+            // Polling keeps this synchronous agent API compatible while allowing
+            // the execution thread to interrupt the provider worker on cancellation.
+            while (true) {
+                if (stopIfCancelled(listener)) {
+                    stream.cancel();
+                    return;
+                }
+                try {
+                    stream.completion().toCompletableFuture().get(50, TimeUnit.MILLISECONDS);
+                    break;
+                } catch (TimeoutException waiting) {
+                    // Re-check the execution-scoped cancellation signal.
+                } catch (ExecutionException failed) {
+                    Throwable cause = failed.getCause();
+                    if (cause instanceof CancellationException && stopIfCancelled(listener)) {
+                        return;
+                    }
+                    if (cause instanceof IOException io) {
+                        throw io;
+                    }
+                    if (cause instanceof InterruptedException interrupted) {
+                        throw interrupted;
+                    }
+                    throw new IOException("Provider stream failed.", cause);
+                }
+            }
             stopIfCancelled(listener);
         } catch (IOException | InterruptedException e) {
             Thread.currentThread().interrupt();
