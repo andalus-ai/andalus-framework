@@ -274,3 +274,92 @@ However, the implementation has important gaps not covered by those tests:
 - Add deterministic race tests for cancel-vs-complete, cancel-vs-tool-return, pause-vs-complete, duplicate callbacks, failure from each state, and restart/resume across a process boundary.
 
 These are source-level findings and recommendations. The relevant tests were inspected but not executed.
+
+
+## 10. Follow-up reactor and integration-boundary inventory — 2026-11-15
+
+This section supersedes earlier provisional module-count statements where they differ. Counts below are derived from the current default-branch aggregator POMs after removing XML comments; they describe declared active reactor entries, not proof that every module builds or is publishable.
+
+### 10.1 Active Maven reactor topology
+
+| Repository / aggregator | Active entries | Parent/compiler baseline | Notes |
+|---|---:|---|---|
+| `andalus-framework` root | 1 | `andalus-framework-build:0.0.1`, Java release 25 | Root delegates to nested `framework` aggregator |
+| `andalus-framework/framework` | 57 | Parent `andalus-framework-build:0.0.1`, Java release 25 | 57 active module declarations; earlier source-audit note saying 54 is superseded |
+| `andalus` root | 24 | `andalus-parent:0.0.1`, Java release 25 | 24 active module declarations; three additional declarations are commented out |
+
+The Framework aggregator's 57 active module entries include, among others:
+
+- Agent and domain-neutral orchestration: `andalus-agent`, `andalus-orchestration`, `andalus-workflow`, `andalus-skill`, `andalus-taskqueue-postgres`.
+- Extension and capability infrastructure: `andalus-extension`, `andalus-plugin`, `andalus-spi`, `andalus-registry`, `andalus-provider`.
+- Execution and state: `andalus-execution-api`, `andalus-execution-core`, `andalus-state-api`, `andalus-state-core`, `andalus-engine`, `andalus-runtime-spi`.
+- Communication and interoperability: `andalus-communication-api`, `andalus-communication-core`, `andalus-protocol-local`, `andalus-a2a`, `andalus-anp`, `andalus-mcp`.
+- Security, governance and observability: `andalus-security-api`, `andalus-security-core`, `andalus-governance`, `andalus-observability`, `andalus-observability-otel`, `andalus-resilience`.
+
+This is a first-pass grouping by module name. Each module still needs classification by actual public API, source imports, dependency edges and runtime consumers before any module is moved or split.
+
+### 10.2 Compatibility facts currently verified from POMs
+
+| Dimension | Framework | Runtime | Assessment |
+|---|---|---|---|
+| Java compiler release | 25 | 25 | Aligned at the declared compiler-release level; minimum supported JDK and CI runtime still need verification |
+| Project version | 0.0.1 | 0.0.1 | Same declared version string does not prove the artifacts came from compatible commits |
+| Quarkus BOM | Imported by Framework root and nested Framework aggregator | Imported by Runtime parent | Framework dependency-management exposure needs evaluation; runtime Quarkus version observed as 3.32.2 |
+| Framework artifact consumption | Publishes standalone Framework artifacts | Runtime Core directly consumes Framework artifacts using `${project.version}` | Runtime build requires the matching Framework artifacts installed/resolvable first |
+| Build topology | Standalone Framework reactor | Standalone Runtime reactor; Framework is not a nested module | Build order and exact Framework commit must be recorded for reproducibility |
+
+The earlier Java 21 versus Java 25 concern should be stated precisely: the currently inspected Framework and Runtime parent POMs both set compiler release 25. Any Java 21+ README claim is therefore not an established compatibility promise. Do not lower the baseline until the source, dependencies, CI matrix and intended consumers are tested.
+
+### 10.3 Extension architecture: confirmed concepts, not yet one verified lifecycle
+
+The source tree contains distinct concepts that must remain distinct:
+
+- Extension metadata and generic extension types in `andalus-extension`.
+- Plugin contracts and lifecycle/loader abstractions in `andalus-spi` and `andalus-plugin`.
+- Runtime plugin loading and management types in `andalus-plugin`.
+- Agent descriptors in both `andalus-core` and `andalus-communication-api`.
+- Tool contracts and invocation types in `andalus-tool`.
+- Execution invocation contracts in `andalus-execution-api`.
+- Protocol-specific communication registries and projections.
+
+This confirms that the implementation surface is broader than the earlier simplified module list. It does not yet establish which plugin lifecycle path is used by the production Runtime for every extension type. M1 must not select or replace a lifecycle path until registrations, service-loader declarations, CDI wiring, runtime consumers and tests have been traced end-to-end.
+
+### 10.4 Current POM-level risks requiring evidence before refactoring
+
+1. `andalus-plugin-spi` declares Quarkus Core, Mutiny and JBoss Logging. Confirm which are used by public SPI signatures versus implementation classes before separating artifacts.
+2. `andalus-spi` declares Mutiny, Jackson Databind and YAML. Inspect API signatures and downstream consumers before reducing dependencies.
+3. Framework root and nested aggregator both import Quarkus BOM. Determine whether the nested import is redundant and whether consumers of portable artifacts inherit any unwanted dependency-management assumptions.
+4. Runtime Core directly depends on several Framework modules, including `andalus-runtime-spi`, `andalus-engine`, `andalus-plugin-spi`, `andalus-spi`, `andalus-harness` and `andalus-a2a`. These edges need module classification and a dependency tree before they can be called unnecessary or cyclic.
+5. The Runtime root POM contains commented-out modules with explicit build reasons. They are not active reactor entries and must not be counted as current build coverage.
+
+### 10.5 Integration contract decision for first-party products
+
+For Cifr, Farabi and future independent products, the default integration should be a direct, typed Java adapter when the same-process JDK/dependency constraints are satisfied. The product owns its domain agent loop and state. Andalus owns generic invocation/delegation lifecycle and orchestration.
+
+The contract should be transport-neutral and include:
+
+- Stable invocation ID and correlation/trace context.
+- Server-validated principal and tenant identity.
+- Explicit capability grants and policy reference (discovery never grants authority).
+- Typed input/output schema references and version.
+- Deadline, resource budget and cancellation handle.
+- Progress/event stream and terminal result.
+- Idempotency key and retry classification.
+- Artifact references and declared durability/resume capability.
+
+For sidecar and remote execution, define adapters that preserve these semantics over IPC/gRPC/HTTP. MCP/A2A remain optional protocol projections, not the internal Java API.
+
+### 10.6 M0 completion status
+
+| Work item | Status | Evidence / remaining gap |
+|---|---|---|
+| Enumerate active reactor entries | Partial | Active counts and top-level groups verified from aggregator POMs; full per-module source/dependency classification remains |
+| Inspect key dependency declarations | Partial | Selected POMs inspected; full dependency tree and cycle analysis not run |
+| Identify duplicate public contracts | Partial | Existing ADRs and inventories identify context/checkpoint overlaps; complete cross-repository FQN scan remains |
+| Map plugin/agent/tool registration | Partial | Types and modules identified; full Runtime registration-to-invocation trace remains |
+| Verify Runtime/Framework compatibility | Partial | Parent compiler release/version/BOM and selected Runtime Core dependencies inspected; clean build and exact artifact provenance remain |
+| Verify lifecycle and recovery semantics | Partial | Existing ADRs and targeted source findings exist; conformance/race/restart tests not run here |
+| Build and test both repositories | Not run | Requires repository checkout and Maven/JDK execution |
+| Approve public contract ownership and migration policy | Pending | Requires completion of evidence map and review of compatibility impact |
+
+**M0 remains in progress.** No new public API, module split, dependency change or lifecycle implementation should be started solely from this inventory. The next engineering task is to complete the registration/invocation trace and dependency graph from a clean checkout, then approve the smallest M1 change set.
