@@ -205,3 +205,40 @@ The current evidence supports this provisional direction:
 5. Treat `SnapshotManager` as a local snapshot utility, not as durable recovery. Either explicitly scope it as such or implement it over a durable port with well-defined consistency and retention behavior.
 
 The Runtime main-branch source paths searched during this follow-up did not resolve to the older `runtime/andalus-runtime-core/.../AgentExecutionService.java` path recorded in the prior consumer map. The current Runtime repository layout has changed; its current AgentContext checkpoint implementation must be rediscovered from the live module tree before making claims about active writes/reads. The earlier Runtime consumer-map row is therefore historical evidence, not a freshly verified current-main call path.
+
+
+### 9.8 Current Runtime main-branch checkpoint flow — freshly verified
+
+The Runtime repository's recursive main-branch tree was inspected (3,860 entries; GitHub did not mark the tree truncated). This resolved the earlier stale path issue and confirms the active source locations:
+
+- `runtime/andalus-runtime-core/.../execution/AgentExecutionService.java`
+- `DefaultAgentExecution.java`
+- `DefaultExecutionStateStore.java`
+- Runtime-local `ExecutionCheckpointStore`, `ExecutionCheckpoint`, and `InMemoryExecutionCheckpointStore`
+- Runtime-local `InMemoryCheckpointStore` implementing the Framework runtime-SPI `CheckpointStore` for `AgentContext`.
+
+The actual flow is:
+
+1. `AgentExecutionService.create/resume` injects the Framework runtime-SPI `CheckpointStore` and passes it to `DefaultAgentExecution`.
+2. `DefaultAgentExecution` constructs `DefaultExecutionStateStore` with both stores. If no Runtime `ExecutionCheckpointStore` CDI bean is available, it silently creates a new `InMemoryExecutionCheckpointStore`.
+3. `DefaultExecutionStateStore.checkpoint(executionId, context)` creates a Runtime-local `ExecutionCheckpoint` containing status, phase, attempt, iteration and `AgentContext`, saves it to Runtime's `ExecutionCheckpointStore`, and updates its in-memory execution state.
+4. The ReAct checkpoint bridge also saves the `AgentContext` to the older Framework runtime-SPI `CheckpointStore`. The completion and pause paths likewise save through the legacy store.
+5. `AgentExecutionService.resume` reads the latest `AgentContext` from the legacy store. It does not load the latest Runtime `ExecutionCheckpoint` as the source of the resumed context; the new store is used by `DefaultAgentExecution` to initialize status if a checkpoint is found.
+
+**Confirmed architecture issue:** two checkpoint paths are written during execution, but resume is anchored on the legacy AgentContext store. The newer Runtime execution checkpoint captures useful lifecycle metadata but is not currently the authoritative resume source. The Runtime `ExecutionCheckpointStore` is also a different type from Framework's `andalus-execution-api` checkpoint port and has a different payload/API. The Framework and Runtime each therefore contain their own execution checkpoint model/port.
+
+**Durability caveat:** the Runtime's inspected default `InMemoryExecutionCheckpointStore` and `InMemoryCheckpointStore` are process-local. No durable implementation was confirmed in the inspected runtime module. Thus neither default path alone establishes crash-safe resume across process restart.
+
+**Migration implication:** do not simply replace the legacy store with the new one. First decide the canonical resume envelope and define a conversion/compatibility strategy. A sound target is likely one Runtime-owned lifecycle/resume port backed by the Framework's portable execution checkpoint contract (or an explicitly versioned adapter), with the domain-specific `AgentContext` payload serialized as a versioned payload. Keep cache references and event-ledger semantics explicit; they are currently associated with the legacy AgentContext store and separate event ledger.
+
+### 9.9 Runtime checkpoint flow risks to test
+
+- `DefaultAgentExecution` constructs a default in-memory execution checkpoint store when no injected store is available, which can mask missing durable configuration.
+- `AgentExecutionService.resume` requires the legacy AgentContext store even when a newer execution checkpoint exists.
+- The new execution checkpoint's context is not used by `resume`; status restoration and context restoration follow different stores.
+- The Runtime `ExecutionCheckpoint` record contains `AgentContext` directly, unlike Framework's portable immutable byte-payload plus manifest contract. This creates serialization and schema-evolution coupling to the agent model.
+- The Runtime `InMemoryExecutionCheckpointStore` appends to a per-execution list but does not enforce unique checkpoint IDs, monotonic sequence, or idempotent writes. It is not equivalent to the Framework execution API's stronger atomic/sequence contract.
+- The Runtime legacy `InMemoryCheckpointStore` stores AgentContext references and cache entry IDs separately; the cache reference map records only the latest non-empty cache IDs and is not versioned alongside each history entry. Recovery consistency between context and cache needs explicit tests.
+- In `DefaultAgentExecution`, the checkpoint bridge saves context to the legacy store while `DefaultExecutionStateStore` saves a separate lifecycle checkpoint. Verify ordering and failure handling when one write succeeds and the other fails.
+
+These are source-level observations. No Runtime tests or process-restart integration tests were executed during this audit.
