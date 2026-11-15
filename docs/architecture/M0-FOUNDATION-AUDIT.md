@@ -178,3 +178,30 @@ The current Framework source search confirms:
 - The two same-FQN contracts in `andalus-engine` and `andalus-runtime-spi` remain separate from those two in-memory implementations. The existing contract map records Runtime `AgentExecutionService` injection of the runtime-SPI contract, but the complete Runtime writer/reader and persisted-payload map has not been independently reproduced in this follow-up.
 
 **Migration implication:** do not treat the execution API and state API stores as duplicates merely because both are named `CheckpointStore`; their packages and payload semantics differ. The immediate collision to eliminate is the shared FQN between engine snapshot storage and runtime AgentContext storage. Before changing either, identify whether engine snapshots are still actively written/read, and map the runtime AgentContext snapshot lifecycle and serialization format. Then choose adapters or an explicitly versioned replacement without losing resume/recovery behavior.
+
+
+### 9.6 Engine snapshot path: current source behavior and defects
+
+The direct source inspection of `andalus-engine` clarifies that the engine snapshot path is not merely an unused interface:
+
+- `SnapshotManager` creates and retains `ExecutionSnapshot` instances in local `ConcurrentHashMap` instances. This is process-local memory, not durable persistence, and is not an implementation of the engine `CheckpointStore` interface.
+- Repository code search found no implementation or call site for the engine `CheckpointStore` interface beyond its declaration; this is a targeted search result, not proof that no reflective/external consumer exists.
+- The engine `CheckpointStore.getLatest(UUID)` default implementation returns `null`, which is unsafe as a meaningful default for a recovery port.
+- `ExecutionSnapshot.Builder.build()` currently constructs a new snapshot using only execution ID and state. It silently ignores the builder's supplied snapshot ID and creation timestamp. `SnapshotManager.createSnapshot` sets both fields on the builder, so the resulting object does not preserve the requested ID/time.
+- `SnapshotManager` stores each execution's history in mutable `ArrayList` values inside a `ConcurrentHashMap`; the map does not make those lists thread-safe. Concurrent snapshot creation/deletion/retention for the same execution can race.
+- Snapshot retention removes entries from the global snapshot map while iterating and then edits per-execution history lists. Its concurrency behavior and retention correctness need dedicated tests.
+- `ExecutionState` carries node status/results and variables, but it is not equivalent to the richer `ExecutionCheckpoint` envelope (attempt, sequence, payload bytes, manifest integrity and metadata).
+
+**Implication:** there are currently at least three different execution recovery concepts: (a) engine in-memory snapshots managed by `SnapshotManager`, (b) a declared but apparently unimplemented engine persistence port, and (c) the execution-core checkpoint envelope with an in-memory store used by recovery/mobility. These should not be collapsed until the intended runtime semantics and payload mapping are agreed. The immediate defects in builder correctness and thread-safety should be tracked as implementation bugs independently of the naming collision.
+
+### 9.7 Updated checkpoint audit conclusion
+
+The current evidence supports this provisional direction:
+
+1. Keep `andalus-execution-api` as the candidate durable execution checkpoint port; it already defines atomic append, strictly increasing sequence, immutable payload and manifest-integrity requirements.
+2. Keep `andalus-state-api` as a separate state/provenance checkpoint abstraction unless a specific consumer proves the semantics are redundant.
+3. Do not use the engine's current `CheckpointStore` as a persistence API without fixing its incomplete default behavior and defining an actual adapter.
+4. Rename/move the runtime-SPI `AgentContext` store to a non-colliding runtime-owned type only after the current Runtime branch's implementation, CDI injection and serialization path are verified.
+5. Treat `SnapshotManager` as a local snapshot utility, not as durable recovery. Either explicitly scope it as such or implement it over a durable port with well-defined consistency and retention behavior.
+
+The Runtime main-branch source paths searched during this follow-up did not resolve to the older `runtime/andalus-runtime-core/.../AgentExecutionService.java` path recorded in the prior consumer map. The current Runtime repository layout has changed; its current AgentContext checkpoint implementation must be rediscovered from the live module tree before making claims about active writes/reads. The earlier Runtime consumer-map row is therefore historical evidence, not a freshly verified current-main call path.
