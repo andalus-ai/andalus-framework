@@ -40,6 +40,8 @@ public class AgentBuilder {
     private tech.kayys.andalus.agent.react.BaseReActAgent.ToolExecutorBridge toolExecutorBridge;
     private tech.kayys.andalus.agent.react.BaseReActAgent.CheckpointBridge checkpointBridge;
     private String checkpointExecutionId;
+    private tech.kayys.andalus.tool.CancellationToken cancellationToken =
+            tech.kayys.andalus.tool.CancellationToken.none();
 
     private AgentBuilder(String type) {
         this.type = type;
@@ -113,6 +115,13 @@ public class AgentBuilder {
         return this;
     }
 
+    public AgentBuilder withCancellationToken(tech.kayys.andalus.tool.CancellationToken cancellationToken) {
+        this.cancellationToken = cancellationToken != null
+                ? cancellationToken
+                : tech.kayys.andalus.tool.CancellationToken.none();
+        return this;
+    }
+
     public AgentBuilder withToolExecutor(tech.kayys.andalus.agent.react.BaseReActAgent.ToolExecutorBridge bridge) {
         this.toolExecutorBridge = bridge;
         return this;
@@ -148,6 +157,7 @@ public class AgentBuilder {
         
         if (agent instanceof tech.kayys.andalus.agent.react.BaseReActAgent base) {
             base.setWorkspace(workspace);
+            base.setCancellationToken(cancellationToken);
             if (contextCompiler != null && tokenBudget != null) {
                 base.setContextCompiler(contextCompiler, contextPlanner, tokenBudget);
             }
