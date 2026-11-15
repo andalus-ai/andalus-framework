@@ -91,3 +91,57 @@ A proposed decision record captures the separation of invocation and graph execu
 ## 8. Scope and limitations
 
 This is a targeted source map, not a complete static-analysis report. The repository search connector did not provide a reliable complete code-reference index for these queries. All "not yet confirmed" items must be resolved by local grep/IDE indexing or a full source checkout before destructive API changes.
+
+
+## 9. Runtime checkpoint and lifecycle source audit (2026-11-15)
+
+This section records a targeted, line-by-line inspection of the current Runtime main-branch sources available through the GitHub file API. It supersedes earlier assumptions only where the exact source below was inspected. It is not a complete repository-wide reference graph: a local checkout, global symbol search, resolved dependency tree and test execution were unavailable in this environment.
+
+### Confirmed runtime source paths
+
+| Runtime source | Confirmed behavior | Consequence |
+|---|---|---|
+| `runtime/andalus-runtime-core/src/main/java/tech/kayys/andalus/execution/AgentExecutionService.java` | Injects the legacy `CheckpointStore`; separately discovers optional `ExecutionCheckpointStore`. `resume(executionId)` loads `Optional<AgentContext>` from the legacy store and fails if absent. | The runtime's resume payload remains anchored to the legacy AgentContext store, not the newer execution checkpoint record. |
+| `runtime/andalus-runtime-core/src/main/java/tech/kayys/andalus/execution/DefaultAgentExecution.java` | Uses the supplied `ExecutionCheckpointStore`, but substitutes `InMemoryExecutionCheckpointStore` when none is injected. Constructor loads a checkpoint only to initialize status. | Missing durable-store configuration can be silently masked by process-local storage. The newer checkpoint is not currently the authoritative AgentContext restoration path. |
+| Same `DefaultAgentExecution.java` | `pause()` writes a runtime execution checkpoint and legacy AgentContext checkpoint, then transitions status to PAUSED. `resume()` only transitions PAUSED to RUNNING. `cancel()` only transitions status to CANCELLED. | Pause does not suspend an in-flight model/tool/ReAct operation; resume does not itself restart the loop; cancel does not visibly propagate a cancellation signal to active work. These methods currently implement status/checkpoint controls, not full cooperative lifecycle control. |
+| Same `DefaultAgentExecution.java` | The asynchronous ReAct completion callback calls `stateStore.complete`; the error callback calls `stateStore.fail`. | Completion/cancellation and callback races require explicit arbitration and deterministic tests. |
+| `runtime/andalus-runtime-core/src/main/java/tech/kayys/andalus/execution/DefaultExecutionStateStore.java` | `transitionStatus` validates via `ExecutionLifecycleRules.requireTransition` and checks expected state inside `ConcurrentHashMap.compute`. | The expected-state transition path is guarded. |
+| Same `DefaultExecutionStateStore.java` | `changeStatus` writes status without transition validation; `fail` directly writes FAILED except when already CANCELLED or COMPLETED. | Separate restore/hydration semantics from live transitions; route live failure through the same transition arbiter. |
+| Same `DefaultExecutionStateStore.java` | `checkpoint(executionId, context)` creates and saves a Runtime `ExecutionCheckpoint` containing status, phase, attempt, iteration and AgentContext; updates the in-memory state checkpoint ID; emits a checkpoint event. | Runtime execution checkpoint records are lifecycle-aware, but their AgentContext payload and storage contract remain Runtime-owned. |
+| `runtime/andalus-runtime-core/pom.xml` | Runtime-core directly depends on `andalus-execution-api`, `andalus-runtime-spi` and `andalus-engine`. | The runtime compile graph includes the Framework execution API, legacy runtime SPI and engine artifact together. A resolved classpath check is still needed to establish duplicate-FQN behavior in practice. |
+
+### Recovery-path conclusion
+
+The inspected implementation has two checkpoint write paths with different payloads:
+
+1. Runtime `ExecutionCheckpointStore`: stores an `ExecutionCheckpoint` carrying execution lifecycle metadata and an `AgentContext` payload.
+2. Framework runtime-SPI `CheckpointStore`: stores and loads `AgentContext` directly and is the source read by `AgentExecutionService.resume`.
+
+The newer store is used to initialize status when a checkpoint is present, but the resume service does not load its AgentContext as the resumed context. The default newer store is in-memory when no CDI implementation is supplied. Therefore the inspected default path does not establish crash-safe resume across process restarts.
+
+The two stores are written sequentially from lifecycle/checkpoint paths; no atomic cross-store transaction or reconciliation protocol is visible in the inspected methods. A partial write can leave the two representations inconsistent.
+
+### Lifecycle findings and required tests
+
+- `pause` is currently checkpoint-plus-status transition, not a safe-point pause protocol.
+- `resume` is currently status reactivation, not demonstrated continuation of the suspended ReAct loop.
+- `cancel` changes status but does not visibly cancel the active provider stream, tool invocation or loop.
+- `fail` bypasses the lifecycle transition validator; `changeStatus` is unguarded and should be restricted to explicit restoration/hydration.
+- A late asynchronous completion after cancellation must not overwrite or throw against the terminal outcome. Completion, failure and cancellation need one atomic terminal-outcome arbiter.
+- Checkpoint dual-write ordering and partial-failure behavior need explicit policy; prefer one authoritative checkpoint write with secondary projections/events derived from it.
+
+Before changing public contracts or deleting either store, add deterministic tests for: cancel-vs-complete; cancel-vs-tool-return; pause-vs-complete; duplicate/late callbacks; failure from every lifecycle state; checkpoint write failure at each stage; restart/resume from persisted data; and concurrent/duplicate checkpoint writes.
+
+### Framework context ownership correction
+
+The current Framework source already contains `GraphExecutionContext`; the graph engine APIs consume that distinct type. Invocation-scoped `ExecutionContext` remains in `andalus-execution-api` and is implemented by `DefaultExecutionContext` in `andalus-execution-core`. Earlier inventory rows in this document that name `framework/andalus-engine/.../execution/ExecutionContext.java` are stale and should be read as historical inventory, not the current source declaration. Do not perform the graph-context rename a second time. The remaining work is a complete consumer/compatibility scan and reconciliation of all inventory/ADR references.
+
+### Evidence and limitations
+
+Inspected directly in the current Runtime main branch:
+- `runtime/andalus-runtime-core/src/main/java/tech/kayys/andalus/execution/AgentExecutionService.java`
+- `runtime/andalus-runtime-core/src/main/java/tech/kayys/andalus/execution/DefaultAgentExecution.java`
+- `runtime/andalus-runtime-core/src/main/java/tech/kayys/andalus/execution/DefaultExecutionStateStore.java`
+- `runtime/andalus-runtime-core/pom.xml`
+
+The environment could not resolve `github.com` for a local clone. The GitHub file API allowed inspection of these known paths, but not a complete checkout or exhaustive source search. No Maven dependency tree, clean build, or tests were run. This document therefore records confirmed defects/risks in the inspected methods and leaves full-repository completeness, binary compatibility and runtime behavior under integration tests as open verification items.
