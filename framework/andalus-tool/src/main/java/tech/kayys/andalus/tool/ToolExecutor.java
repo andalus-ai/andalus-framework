@@ -46,6 +46,36 @@ public interface ToolExecutor {
         }
     }
 
+    /**
+     * Blocking adapter that preserves the execution-scoped cancellation signal.
+     * Implementations with cancellable asynchronous work receive the same token
+     * through the three-argument execute method.
+     */
+    default ToolResult executeBlocking(
+            ToolInvocation invocation,
+            ToolExecutionContext context,
+            CancellationToken cancellation) {
+        if (cancellation != null && cancellation.isCancellationRequested()) {
+            return ToolResult.canceled(invocation.invocationIdentifier());
+        }
+        try {
+            return execute(invocation, context, cancellation).get();
+        } catch (InterruptedException interrupted) {
+            if (cancellation != null) cancellation.cancel();
+            Thread.currentThread().interrupt();
+            return ToolResult.canceled(invocation.invocationIdentifier());
+        } catch (java.util.concurrent.CancellationException cancelled) {
+            return ToolResult.canceled(invocation.invocationIdentifier());
+        } catch (Exception failure) {
+            Throwable cause = failure.getCause() != null ? failure.getCause() : failure;
+            if (cause instanceof java.util.concurrent.CancellationException) {
+                return ToolResult.canceled(invocation.invocationIdentifier());
+            }
+            return ToolResult.failure(invocation.invocationIdentifier(),
+                    cause.getMessage(), Duration.ZERO, invocation.name());
+        }
+    }
+
     static ToolExecutor synchronous(BiFunction<ToolInvocation, ToolContext, ToolResult> syncFn) {
         return (inv, ctx) -> CompletableFuture.completedFuture(syncFn.apply(inv, ctx));
     }
