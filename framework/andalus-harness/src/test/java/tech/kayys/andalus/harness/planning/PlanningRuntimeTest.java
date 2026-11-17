@@ -286,6 +286,8 @@ class PlanningRuntimeTest {
         assertThat(runtime.revisionPolicy())
                 .isEqualTo(PlanRevisionPolicy.ALLOW_COMPLETED_STEP_REPLACEMENT);
         assertThat(runtime.revisionHistory().revisions(original.id())).hasSize(1);
+        assertThat(runtime.revisionHistory().revisions(original.id()).get(0).revisionPolicy())
+                .isEqualTo(PlanRevisionPolicy.ALLOW_COMPLETED_STEP_REPLACEMENT);
     }
 
     @Test
