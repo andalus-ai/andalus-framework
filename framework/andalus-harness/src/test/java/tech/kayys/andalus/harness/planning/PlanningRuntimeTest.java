@@ -257,6 +257,46 @@ class PlanningRuntimeTest {
     }
 
     @Test
+    void planRevision_canExplicitlyReplaceCompletedWork() {
+        AgentPlan original = singleStepPlan();
+        PlanExecutionFeedback completed = new PlanExecutionFeedback(
+                original.steps().get(0).id(),
+                PlanExecutionFeedback.Outcome.SUCCEEDED,
+                "Completed",
+                Instant.now(),
+                Map.of());
+        PlanStep replacement = PlanStep.of("Reassess the goal under changed requirements");
+        AgentPlan revised = new AgentPlan(
+                original.id(), original.executionId(), original.goalId(), 1L,
+                PlanStatus.PROPOSED, List.of(replacement), original.createdAt(), Map.of());
+
+        PlannerRegistry registry = new PlannerRegistry();
+        registry.register(revisionPlannerReturning(revised));
+        DefaultPlanningRuntime runtime = new DefaultPlanningRuntime(
+                registry,
+                new DefaultPlanValidator(),
+                new InMemoryPlanRevisionHistory(),
+                PlanRevisionPolicy.ALLOW_COMPLETED_STEP_REPLACEMENT);
+
+        PlanningResult result = runtime.revisePlan(new PlanRevisionRequest(
+                original, decisionContext, "requirements changed", Map.of(), List.of(completed)))
+                .toCompletableFuture().join();
+
+        assertThat(result.isSuccess()).isTrue();
+        assertThat(runtime.revisionPolicy())
+                .isEqualTo(PlanRevisionPolicy.ALLOW_COMPLETED_STEP_REPLACEMENT);
+        assertThat(runtime.revisionHistory().revisions(original.id())).hasSize(1);
+    }
+
+    @Test
+    void planRevisionPolicy_defaultsToPreservingCompletedSteps() {
+        DefaultPlanningRuntime runtime = new DefaultPlanningRuntime(new PlannerRegistry());
+
+        assertThat(runtime.revisionPolicy())
+                .isEqualTo(PlanRevisionPolicy.PRESERVE_COMPLETED_STEPS);
+    }
+
+    @Test
     void planRevision_rejectsMutationOfCompletedStep() {
         AgentPlan original = singleStepPlan();
         PlanStep completedStep = original.steps().get(0);
