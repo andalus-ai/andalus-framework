@@ -160,7 +160,7 @@ public class DefaultPlanningRuntime implements PlanningRuntime {
         }
 
         revisionHistory.append(PlanRevisionRecord.of(
-                currentPlan, revisedPlan, request.revisionReason(), request.feedback()));
+                currentPlan, revisedPlan, request.revisionReason(), request.feedback(), revisionPolicy));
         return validated;
     }
 
