@@ -4,6 +4,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.smallrye.mutiny.Uni;
+import tech.kayys.andalus.tool.CancellationToken;
 
 import java.io.IOException;
 import java.net.URI;
@@ -31,14 +32,15 @@ final class McpHttpJsonRpcClient {
         this.mapper = mapper;
     }
 
-    Uni<McpHttpJsonRpcResponse> request(
-            Map<String, Object> context,
-            String method,
-            Map<String, Object> params) {
-        return send(context, jsonRpcRequest(method, params));
+    Uni<McpHttpJsonRpcResponse> request(Map<String, Object> context, String method, Map<String, Object> params) {
+        return request(context, method, params, null);
     }
 
-    private Uni<McpHttpJsonRpcResponse> send(Map<String, Object> context, Map<String, Object> payload) {
+    Uni<McpHttpJsonRpcResponse> request(Map<String, Object> context, String method, Map<String, Object> params, CancellationToken cancellation) {
+        return send(context, jsonRpcRequest(method, params), cancellation);
+    }
+
+    private Uni<McpHttpJsonRpcResponse> send(Map<String, Object> context, Map<String, Object> payload, CancellationToken cancellation) {
         Instant startedAt = Instant.now();
         Optional<String> endpoint = endpoint(context);
         if (endpoint.isEmpty()) {
@@ -53,8 +55,16 @@ final class McpHttpJsonRpcClient {
             return Uni.createFrom().failure(error);
         }
 
-        return Uni.createFrom().completionStage(httpClient.sendAsync(request, HttpResponse.BodyHandlers.ofString()))
-                .map(response -> toResponse(response, startedAt));
+        if (cancellation != null && cancellation.isCancellationRequested()) {
+            return Uni.createFrom().failure(new java.util.concurrent.CancellationException("MCP HTTP request cancelled before dispatch."));
+        }
+        java.util.concurrent.CompletableFuture<HttpResponse<String>> responseFuture =
+                httpClient.sendAsync(request, HttpResponse.BodyHandlers.ofString());
+        CancellationToken.CancellationRegistration registration = cancellation == null
+                ? () -> { }
+                : cancellation.onCancel(() -> responseFuture.cancel(true));
+        responseFuture.whenComplete((response, error) -> registration.close());
+        return Uni.createFrom().completionStage(responseFuture).map(response -> toResponse(response, startedAt));
     }
 
     private HttpRequest buildRequest(
