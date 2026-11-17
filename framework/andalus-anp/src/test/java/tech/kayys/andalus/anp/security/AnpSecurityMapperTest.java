@@ -8,6 +8,13 @@ import tech.kayys.andalus.anp.auth.AnpHttpSignature;
 import tech.kayys.andalus.anp.identity.AnpIdentityKeyPair;
 import tech.kayys.andalus.anp.identity.DidWbaIdentity;
 import tech.kayys.andalus.anp.identity.InMemoryAnpKeyStore;
+import tech.kayys.andalus.anp.identity.DidWbaDocument;
+import tech.kayys.andalus.anp.identity.DidWbaResolver;
+import tech.kayys.andalus.anp.identity.DidWbaVerificationMethod;
+import tech.kayys.andalus.anp.identity.RegisteredDidWbaKeyResolver;
+import java.util.Base64;
+import java.util.List;
+import java.util.Map;
 import tech.kayys.andalus.security.propagation.SecurityContextSnapshot;
 
 import java.security.KeyPair;
@@ -38,9 +45,22 @@ class AnpSecurityMapperTest {
                 generated.getPublic().getEncoded()
         );
         keyStore.storeKey("agent1", keyPair);
+        DidWbaResolver didResolver = new DidWbaResolver();
+        byte[] encoded = keyPair.publicKeyBytes();
+        byte[] rawPublicKey = java.util.Arrays.copyOfRange(encoded, encoded.length - 32, encoded.length);
+        didResolver.register(new DidWbaDocument(
+                "did:wba:example.com:agent1",
+                List.of(DidWbaVerificationMethod.jwk(keyPair.keyId(), "did:wba:example.com:agent1", Map.of(
+                        "kty", "OKP",
+                        "crv", "Ed25519",
+                        "x", Base64.getUrlEncoder().withoutPadding().encodeToString(rawPublicKey)
+                ))),
+                List.of("#key-1"),
+                Map.of()
+        ));
         mapper = new AnpSecurityMapper(
                 new AnpPrincipalResolver(),
-                new AnpAuthVerifier(keyStore)
+                new AnpAuthVerifier(keyStore, new RegisteredDidWbaKeyResolver(didResolver))
         );
     }
 
