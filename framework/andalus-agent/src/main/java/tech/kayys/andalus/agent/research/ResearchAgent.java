@@ -50,6 +50,7 @@ public class ResearchAgent extends BaseReActAgent {
 
     @Override
     public void send(String userInput, AndalusAgentListener listener) {
+        throwIfCancelled();
         if (memory != null) memory.addMessage(ChatMessage.userText(userInput));
 
         // Phase 1: Decompose
@@ -65,6 +66,7 @@ public class ResearchAgent extends BaseReActAgent {
         listener.onTextDelta("\n[Research] Phase 3: Synthesizing report\n");
         String report = runTextPhase(basePrompt() + SYNTHESIZE_SUFFIX, listener, "Synthesis");
 
+        throwIfCancelled();
         listener.onDone("stop");
     }
 
@@ -73,7 +75,7 @@ public class ResearchAgent extends BaseReActAgent {
     private String runTextPhase(String systemP, AndalusAgentListener listener, String label) {
         StringBuilder buf = new StringBuilder();
         try {
-            provider.streamChat(currentHistory(), systemP, List.of(), 0.3, 2048, event -> {
+            streamChatCancellable(currentHistory(), systemP, List.of(), 0.3, 2048, event -> {
                 if (event instanceof StreamEvent.TextDelta td) {
                     listener.onTextDelta(td.text());
                     buf.append(td.text());
@@ -113,6 +115,7 @@ public class ResearchAgent extends BaseReActAgent {
         subQueries = subQueries.stream().limit(MAX_SUB_QUERIES).collect(Collectors.toList());
 
         for (int i = 0; i < subQueries.size(); i++) {
+            throwIfCancelled();
             String query = subQueries.get(i);
             listener.onTextDelta("\n  [Research] Retrieving sub-query " + (i + 1) + ": " + query + "\n");
 
@@ -126,7 +129,7 @@ public class ResearchAgent extends BaseReActAgent {
             }
 
             try {
-                provider.streamChat(currentHistory(), basePrompt() +
+                streamChatCancellable(currentHistory(), basePrompt() +
                     "\nAnswer this specific research sub-query using your retrieval tools: " + query,
                     specs, 0.3, 2048, event -> {
                     if (event instanceof StreamEvent.TextDelta td) {
@@ -156,6 +159,7 @@ public class ResearchAgent extends BaseReActAgent {
     // ── Helpers ───────────────────────────────────────────────────────────────
 
     private void invokeTool(StreamEvent.ToolUseEnd toolEnd, String toolName, AndalusAgentListener listener) {
+        if (isCancellationRequested()) return;
         if (toolName == null) return;
         Tool tool = tools.stream().filter(t -> t.descriptor().name().equals(toolName))
             .findFirst().orElse(null);
@@ -164,7 +168,7 @@ public class ResearchAgent extends BaseReActAgent {
         ToolInvocation inv = buildInvocation(toolName, args);
         try {
             ToolResult result = toolExecutor != null
-                ? toolExecutor.executeViaPolicy(inv, () -> safeDirect(tool, inv))
+                ? toolExecutor.executeViaPolicy(inv, () -> safeDirect(tool, inv), cancellationToken)
                 : safeDirect(tool, inv);
             listener.onToolResult(toolEnd.id(), toolName, result);
             if (memory != null) {
@@ -179,7 +183,7 @@ public class ResearchAgent extends BaseReActAgent {
     }
 
     private ToolResult safeDirect(Tool tool, ToolInvocation inv) {
-        try { return tool.execute(inv, null).get(); }
+        try { return tool.execute(inv, null, cancellationToken).get(); }
         catch (Exception ex) { throw new RuntimeException(ex); }
     }
 

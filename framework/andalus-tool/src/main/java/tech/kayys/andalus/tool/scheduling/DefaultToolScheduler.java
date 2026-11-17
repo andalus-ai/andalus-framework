@@ -55,7 +55,7 @@ public class DefaultToolScheduler implements ToolScheduler, AutoCloseable {
                     future.complete(ToolResult.canceled(invocation.invocationIdentifier()));
                     return;
                 }
-                ToolResult result = executor.executeBlocking(invocation, context);
+                ToolResult result = executor.executeBlocking(invocation, context, cancellationToken);
                 timeoutTask.cancel(true);
                 future.complete(result);
             } catch (CancellationException ce) {

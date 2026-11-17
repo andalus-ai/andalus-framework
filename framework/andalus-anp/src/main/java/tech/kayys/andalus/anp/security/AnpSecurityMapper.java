@@ -74,4 +74,16 @@ public final class AnpSecurityMapper {
 
         return new SecurityContextSnapshot(principal, tenant, delegation, attributes);
     }
+
+    /**
+     * ANP key identifiers are DID URLs. Require the key URL to be scoped to the
+     * exact caller DID before accepting a cryptographically valid signature.
+     */
+    private boolean keyBelongsToCaller(DidWbaIdentity callerDid, AnpHttpSignature signature) {
+        String keyId = signature.keyId();
+        String expectedPrefix = callerDid.raw() + "#";
+        return keyId.startsWith(expectedPrefix)
+                && keyId.length() > expectedPrefix.length()
+                && !keyId.substring(expectedPrefix.length()).isBlank();
+    }
 }

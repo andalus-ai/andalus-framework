@@ -43,6 +43,13 @@ public class CompositeMcpToolClient implements McpToolClient {
     }
 
     @Override
+    public Uni<McpToolCallResult> callTool(McpToolInvocation invocation, tech.kayys.andalus.tool.CancellationToken cancellation) {
+        Object transport = invocation.context().get(McpTransportContext.KEY_TRANSPORT_TYPE);
+        if (McpTransportType.STDIO.name().equalsIgnoreCase(String.valueOf(transport))) return stdioClient.callTool(invocation, cancellation);
+        return httpClient.callTool(invocation, cancellation);
+    }
+
+    @Override
     public Uni<Void> disconnect(String serverId) {
         return Uni.combine().all().unis(
             httpClient.disconnect(serverId),

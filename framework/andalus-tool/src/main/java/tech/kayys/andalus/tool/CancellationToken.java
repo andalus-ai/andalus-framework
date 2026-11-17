@@ -9,6 +9,17 @@ public interface CancellationToken {
 
     void cancel();
 
+    /** Register a prompt cancellation observer; close the registration when no longer needed. */
+    default CancellationRegistration onCancel(Runnable action) {
+        if (isCancellationRequested()) action.run();
+        return () -> { };
+    }
+
+    @FunctionalInterface
+    interface CancellationRegistration extends AutoCloseable {
+        @Override void close();
+    }
+
     static CancellationToken create() {
         return new DefaultCancellationToken();
     }

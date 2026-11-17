@@ -60,7 +60,7 @@ class AndalusInferenceProviderAdapterTest {
         assertEquals("You are a scholarly research assistant.", sent.messages().get(0).content());
         assertTrue(sent.messages().get(1).content().contains("\"methodology\""));
         assertTrue(sent.messages().get(1).content().contains("\"shafii\""));
-        assertTrue(sent.messages().get(1).content().contains("\"methodologyId\":\"shafii\""));
+        assertTrue(sent.messages().get(1).content().contains("\"version\":\"1\""));
         assertEquals(75, sent.metadata().get(AndalusInferenceProviderAdapter.REASONING_BUDGET_KEY));
         assertFalse(sent.metadata().containsKey("private.application.attribute"));
     }

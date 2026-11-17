@@ -30,3 +30,20 @@ The `capability` package defines framework-level discovery contracts:
 Profiles describe advertised functionality only. They do not grant permission
 to invoke an agent. Runtime implementations must independently resolve agent
 availability and enforce delegation authorization before execution.
+
+
+## Live runtime registration
+
+The `capability` package also defines `AgentRuntimeRegistrationStore`, a
+persistence-neutral contract for live runtime ownership. It separates a
+logical agent profile from individual runtime instances and defines atomic
+acquire/takeover, lease renewal, readiness publication, and fenced revocation.
+
+A store implementation is responsible for authoritative expiry decisions and
+durable monotonic fencing generations. Distributed implementations should use
+their shared persistence clock rather than a caller's JVM clock. The framework
+contract does not prescribe JDBC, a schema, CDI, or a database vendor.
+
+A registration is an availability signal, not an invocation permission.
+Consumers must still apply tenant isolation and authorization before invoking
+an advertised agent.
