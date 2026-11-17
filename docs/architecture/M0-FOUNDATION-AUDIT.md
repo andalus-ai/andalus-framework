@@ -363,3 +363,118 @@ For sidecar and remote execution, define adapters that preserve these semantics 
 | Approve public contract ownership and migration policy | Pending | Requires completion of evidence map and review of compatibility impact |
 
 **M0 remains in progress.** No new public API, module split, dependency change or lifecycle implementation should be started solely from this inventory. The next engineering task is to complete the registration/invocation trace and dependency graph from a clean checkout, then approve the smallest M1 change set.
+
+
+## 11. Source-level registration and invocation trace — 2026-11-17
+
+This section records a source-level trace of the current default branches. It is not a claim that the repositories were built or that every production wiring path was exercised.
+
+### 11.1 Plugin discovery → installation → registration → lifecycle
+
+The Framework currently has two plugin discovery/loading mechanisms:
+
+- `ServiceLoaderPluginLoader` discovers `tech.kayys.andalus.spi.plugin.Plugin` implementations from the application classpath.
+- `RuntimePluginLoader` loads one external JAR through a child `URLClassLoader`, discovers providers with `ServiceLoader`, requires exactly one `Plugin` implementation, validates it and returns a `RuntimePluginHandle`.
+
+The managed JAR path is:
+
+1. `RuntimePluginManager.install(Path)` asks `RuntimePluginLoader` to load the JAR.
+2. It stores the resulting handle in its own concurrent map.
+3. It registers the plugin only when the injected `PluginRegistry` is an instance of `DefaultPluginRegistry`.
+4. `enable(id)` delegates to `PluginLifecycleManager.enablePlugin(id)`.
+5. `DefaultPluginLifecycleManager` resolves dependency order, creates a `PluginContext`, and calls plugin initialization/start hooks; disable follows the corresponding stop lifecycle.
+6. Uninstall best-effort disables, unregisters from the registry, removes the handle and closes its classloader.
+
+**Confirmed composition defect:** `PluginRegistry` exposes lookup and unregistration but has no registration method. `RuntimePluginManager.install()` therefore relies on `instanceof DefaultPluginRegistry`. If a different implementation is injected, the handle is retained but the plugin is not registered through the abstraction; the lifecycle manager then cannot reliably resolve it from that registry. The same concrete-type coupling appears in capability registration.
+
+### 11.2 Plugin → capability discovery → capability registration → invocation
+
+The Framework has a distinct capability path:
+
+- `PluginCapabilityDiscovery` discovers capabilities exposed by a plugin.
+- `PluginCapabilityRegistrar` writes them to `CapabilityRegistry`.
+- `DefaultCapabilityRegistry` indexes capabilities by capability ID and provider ID.
+- Resolver, health manager and router components select a provider and capability for invocation.
+
+The existing `PluginJarCapabilityLifecycleIntegrationTest` is useful evidence, but its wiring is caller-managed: it constructs a `PluginCapabilityRegistrar`, calls `register(plugin)` explicitly, performs resolution/health/routing/invocation, then explicitly calls `unregister(plugin)` before disabling and uninstalling.
+
+**Confirmed lifecycle gap:** `RuntimePluginManager` does not own or invoke `PluginCapabilityRegistrar`. Plugin installation/activation therefore does not automatically compose capability registration, and plugin disable/uninstall does not automatically guarantee capability teardown. The integration test proves the pieces can work together when manually orchestrated; it does not prove that the runtime owns the full lifecycle.
+
+**Confirmed abstraction defect:** `PluginCapabilityRegistrar` only mutates the registry when it is a `DefaultCapabilityRegistry`. With another `CapabilityRegistry` implementation, registration silently returns an empty result rather than registering capabilities or rejecting the unsupported operation.
+
+### 11.3 Agent registration and discovery
+
+The source exposes several intentionally different agent-related concepts:
+
+- `tech.kayys.andalus.core.AgentDescriptor` is a resource/definition descriptor with inputs, outputs, tags, categories, capabilities and permissions.
+- `tech.kayys.andalus.communication.api.AgentDescriptor` is documented as the protocol-neutral communication descriptor projected into A2A/ANP representations.
+- `AgentContractRegistry` in the harness owns agent contract registration.
+- `LocalAgentRegistry` / `DefaultLocalAgentRegistry` and `A2AAgentRegistry` are communication/protocol registries.
+- The Runtime repository also contains `runtime/andalus-runtime/.../AgentRegistry`, a thin `GenericRegistry<AgentDefinition>` specialization.
+
+These descriptors are not interchangeable duplicates: they represent resource/definition metadata versus externally communicable agent identity/capabilities/endpoints. They do, however, need explicit mapping and ownership documentation.
+
+**Trace result:** the inspected Runtime `AgentRegistry` is only a generic definition registry. The inspected Framework communication registries are protocol-facing. No single end-to-end production path was established in this pass from plugin-provided agent implementation through canonical agent registration, discovery, authorization and invocation. That path remains an M0 evidence item rather than a reason to add another registry.
+
+### 11.4 Tool registration → authorization → execution
+
+The Framework tool contract currently includes:
+
+- `ToolRegistry` for tool lookup, capability queries and provider registration.
+- `ToolProvider` for tool descriptors and executors.
+- `ToolExecutionContext` for execution ID, cancellation, logging, artifacts and contextual data.
+- `AgentToolExecutionContext` in `andalus-runtime-spi` for execution identity, tenant/user/principal, roles, budget, constraints and attributes.
+- Separate governance contracts such as `ToolPolicyProvider`, `ToolPolicyRegistry` and `ToolPermissionContext`.
+
+The execution identity contract explicitly rejects wildcard roles and prevents anonymous executions from carrying roles. This is a useful foundation for the rule that tool discovery must not grant authority.
+
+**Trace result:** the public tool registry/provider and execution-context contracts are present, but this pass did not establish one complete Runtime call chain from provider registration through policy evaluation and authorized invocation for every tool implementation. In particular, the generic `ToolExecutionContext` and security-oriented `AgentToolExecutionContext` are separate types; their adapter/propagation boundary must be documented and tested. Do not merge them merely because both are named execution contexts.
+
+### 11.5 Execution context propagation
+
+At least three scopes are visible and should remain distinct until their consumers are mapped:
+
+1. Agent/tool execution identity and policy snapshot: `AgentToolExecutionContext`.
+2. Tool invocation operational context: `ToolExecutionContext`.
+3. Plugin capability invocation context: `tech.kayys.andalus.plugin.execution.ExecutionContext` and capability-specific `CapabilityInvocationContext`.
+
+The Framework also has a broader `execution-api` contract and an `execution-core` implementation. A canonical execution envelope may eventually connect these scopes, but it must not erase their different responsibilities. The bridge should explicitly propagate validated identity, tenant, correlation, deadline/budget, cancellation and artifact references, while domain-specific authorization remains with the owning product/runtime policy boundary.
+
+### 11.6 M0 findings and smallest M1 direction
+
+The trace supports the following conclusions:
+
+1. **Do not add another registry.** Retain plugin, capability, agent-definition, contract and protocol-specific registries where their responsibilities differ.
+2. **Make registration polymorphic.** Add the missing registration operation to the appropriate SPI contract (or introduce a narrowly scoped registrar SPI) so runtime managers do not branch on concrete in-memory implementations.
+3. **Compose plugin lifecycle with capability lifecycle.** A single runtime-managed activation/deactivation path should register capabilities after successful initialization and roll them back on activation failure; deactivation/uninstall should remove provider registrations reliably.
+4. **Keep discovery separate from authorization.** Capability/tool/agent metadata is discoverability, not permission. Invocation must evaluate the current validated principal and product/runtime policy.
+5. **Define explicit context adapters.** Map execution identity/policy context into tool and capability invocation contexts without relying on ambient thread-local state or mutable application-scoped fields.
+6. **Map agent projection explicitly.** Keep definition/resource descriptors distinct from communication descriptors, with a tested mapper and one clearly identified source of truth for each field.
+7. **Add lifecycle conformance tests.** Cover alternate registry implementations, failed activation rollback, duplicate IDs, capability teardown, plugin classloader closure, authorization denial, cancellation/deadline propagation and agent discovery/invocation.
+
+Recommended M1 scope is therefore a narrow SPI/composition correction and tests, not a broad module split or replacement architecture. Before changing public interfaces, inspect downstream implementors and compatibility policy; no implementation change is made by this audit update.
+
+### 11.7 Evidence and limitations
+
+Primary source files inspected on the current default branches include:
+
+- Framework: `RuntimePluginLoader`, `RuntimePluginManager`, `DefaultPluginLifecycleManager`, `Plugin`, `PluginRegistry`, `DefaultPluginRegistry`, `PluginCapabilityRegistrar`, `DefaultCapabilityRegistry`, `PluginJarCapabilityLifecycleIntegrationTest`.
+- Framework: `ToolRegistry`, `ToolProvider`, `ToolExecutionContext`, `DefaultToolExecutionContext`, `AgentToolExecutionContext`, both `AgentDescriptor` types.
+- Runtime: `AgentRegistry` and the older `DefaultPluginWrapper` implementation.
+
+The source-level trace is partial: full CDI wiring, all Runtime consumers, all tool implementations, full agent registration/invocation, complete dependency graph and cross-repository duplicate-FQN scan remain open. Maven builds and tests were not run. The integration test was read, not executed. M0 therefore remains in progress.
+
+
+### 11.8 Registry implementor and capability-contract inventory
+
+A repository-wide GitHub code-search pass for direct `implements` declarations found:
+
+- `PluginRegistry`: only `DefaultPluginRegistry` is a production implementation in the Framework search results. Other matches were lifecycle classes, documentation or tests. The SPI therefore has a single concrete implementation visible in this repository, but the public contract should still support third-party persistence/distributed implementations.
+- `CapabilityRegistry`: there are at least two different contracts with separate implementations:
+  - `tech.kayys.andalus.spi.capability.CapabilityRegistry`, implemented by plugin `DefaultCapabilityRegistry` and consumed by plugin/harness capability routing.
+  - `tech.kayys.andalus.execution.conformance.CapabilityRegistry`, implemented by `execution.core.conformance.DefaultCapabilityRegistry` and storing `CapabilityDescriptor` values keyed by `CapabilityId`.
+- These two capability registries are not interchangeable: one indexes executable capability providers and provider ownership; the other indexes execution-conformance descriptors. Do not merge them or reuse one as a substitute without a separately designed adapter and explicit semantic mapping.
+- The Framework search found no production class directly implementing `ToolRegistry`; the search result was the README only. The current contract has provider registration, but the implementation/consumer wiring must be located in Runtime or confirmed absent. This is a concrete gap to close before changing tool SPI.
+- The Runtime repository search found no direct `PluginRegistry` implementation. Its older `DefaultPluginWrapper` is a plugin object, not a registry; Runtime `AgentRegistry` is a separate generic registry for `AgentDefinition`.
+
+The search index may lag the default branch and searches for literal `implements` do not find indirect implementations, subclasses or dependency-injected adapters. Treat this as an inventory lead, not proof of global absence. Before M1 edits, inspect all source imports/consumers and run a clean source scan from a checkout.
