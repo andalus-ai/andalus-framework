@@ -14,9 +14,12 @@ public record PlanExecutionFeedback(
         Instant observedAt,
         Map<String, Object> attributes
 ) {
+    /** Observed terminal state of a plan step at the time feedback is produced. */
     public enum Outcome {
+        SUCCEEDED,
         FAILED,
-        BLOCKED
+        BLOCKED,
+        SKIPPED
     }
 
     public PlanExecutionFeedback {
