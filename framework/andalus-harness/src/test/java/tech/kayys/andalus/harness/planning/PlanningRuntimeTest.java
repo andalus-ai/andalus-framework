@@ -233,6 +233,99 @@ class PlanningRuntimeTest {
         assertThat(result.reason()).contains("exactly one");
     }
 
+    @Test
+    void planRevision_rejectsRemovalOfCompletedStep() {
+        AgentPlan original = singleStepPlan();
+        PlanExecutionFeedback completed = new PlanExecutionFeedback(
+                original.steps().get(0).id(),
+                PlanExecutionFeedback.Outcome.SUCCEEDED,
+                "Completed",
+                Instant.now(),
+                Map.of());
+        AgentPlan revised = new AgentPlan(
+                original.id(), original.executionId(), original.goalId(), 1L,
+                PlanStatus.PROPOSED, List.of(), original.createdAt(), Map.of());
+
+        PlannerRegistry registry = new PlannerRegistry();
+        registry.register(revisionPlannerReturning(revised));
+        PlanningResult result = new DefaultPlanningRuntime(registry).revisePlan(
+                new PlanRevisionRequest(original, decisionContext, "continue", Map.of(), List.of(completed)))
+                .toCompletableFuture().join();
+
+        assertThat(result.status()).isEqualTo(PlanningStatus.INVALID);
+        assertThat(result.reason()).contains("Completed step").contains("missing");
+    }
+
+    @Test
+    void planRevision_canExplicitlyReplaceCompletedWork() {
+        AgentPlan original = singleStepPlan();
+        PlanExecutionFeedback completed = new PlanExecutionFeedback(
+                original.steps().get(0).id(),
+                PlanExecutionFeedback.Outcome.SUCCEEDED,
+                "Completed",
+                Instant.now(),
+                Map.of());
+        PlanStep replacement = PlanStep.of("Reassess the goal under changed requirements");
+        AgentPlan revised = new AgentPlan(
+                original.id(), original.executionId(), original.goalId(), 1L,
+                PlanStatus.PROPOSED, List.of(replacement), original.createdAt(), Map.of());
+
+        PlannerRegistry registry = new PlannerRegistry();
+        registry.register(revisionPlannerReturning(revised));
+        DefaultPlanningRuntime runtime = new DefaultPlanningRuntime(
+                registry,
+                new DefaultPlanValidator(),
+                new InMemoryPlanRevisionHistory(),
+                PlanRevisionPolicy.ALLOW_COMPLETED_STEP_REPLACEMENT);
+
+        PlanningResult result = runtime.revisePlan(new PlanRevisionRequest(
+                original, decisionContext, "requirements changed", Map.of(), List.of(completed)))
+                .toCompletableFuture().join();
+
+        assertThat(result.isSuccess()).isTrue();
+        assertThat(runtime.revisionPolicy())
+                .isEqualTo(PlanRevisionPolicy.ALLOW_COMPLETED_STEP_REPLACEMENT);
+        assertThat(runtime.revisionHistory().revisions(original.id())).hasSize(1);
+        assertThat(runtime.revisionHistory().revisions(original.id()).get(0).revisionPolicy())
+                .isEqualTo(PlanRevisionPolicy.ALLOW_COMPLETED_STEP_REPLACEMENT);
+    }
+
+    @Test
+    void planRevisionPolicy_defaultsToPreservingCompletedSteps() {
+        DefaultPlanningRuntime runtime = new DefaultPlanningRuntime(new PlannerRegistry());
+
+        assertThat(runtime.revisionPolicy())
+                .isEqualTo(PlanRevisionPolicy.PRESERVE_COMPLETED_STEPS);
+    }
+
+    @Test
+    void planRevision_rejectsMutationOfCompletedStep() {
+        AgentPlan original = singleStepPlan();
+        PlanStep completedStep = original.steps().get(0);
+        PlanExecutionFeedback completed = new PlanExecutionFeedback(
+                completedStep.id(),
+                PlanExecutionFeedback.Outcome.SUCCEEDED,
+                "Completed",
+                Instant.now(),
+                Map.of());
+        PlanStep altered = new PlanStep(
+                completedStep.id(), "Changed after completion", completedStep.taskId(),
+                completedStep.dependsOn(), completedStep.expectedOutcome(),
+                completedStep.completionCriteria(), completedStep.metadata());
+        AgentPlan revised = new AgentPlan(
+                original.id(), original.executionId(), original.goalId(), 1L,
+                PlanStatus.PROPOSED, List.of(altered), original.createdAt(), Map.of());
+
+        PlannerRegistry registry = new PlannerRegistry();
+        registry.register(revisionPlannerReturning(revised));
+        PlanningResult result = new DefaultPlanningRuntime(registry).revisePlan(
+                new PlanRevisionRequest(original, decisionContext, "continue", Map.of(), List.of(completed)))
+                .toCompletableFuture().join();
+
+        assertThat(result.status()).isEqualTo(PlanningStatus.INVALID);
+        assertThat(result.reason()).contains("was modified");
+    }
+
     private Planner revisionPlannerReturning(AgentPlan plan) {
         return new Planner() {
             @Override public String id() { return "revision-planner"; }
