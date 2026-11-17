@@ -463,3 +463,18 @@ Primary source files inspected on the current default branches include:
 - Runtime: `AgentRegistry` and the older `DefaultPluginWrapper` implementation.
 
 The source-level trace is partial: full CDI wiring, all Runtime consumers, all tool implementations, full agent registration/invocation, complete dependency graph and cross-repository duplicate-FQN scan remain open. Maven builds and tests were not run. The integration test was read, not executed. M0 therefore remains in progress.
+
+
+### 11.8 Registry implementor and capability-contract inventory
+
+A repository-wide GitHub code-search pass for direct `implements` declarations found:
+
+- `PluginRegistry`: only `DefaultPluginRegistry` is a production implementation in the Framework search results. Other matches were lifecycle classes, documentation or tests. The SPI therefore has a single concrete implementation visible in this repository, but the public contract should still support third-party persistence/distributed implementations.
+- `CapabilityRegistry`: there are at least two different contracts with separate implementations:
+  - `tech.kayys.andalus.spi.capability.CapabilityRegistry`, implemented by plugin `DefaultCapabilityRegistry` and consumed by plugin/harness capability routing.
+  - `tech.kayys.andalus.execution.conformance.CapabilityRegistry`, implemented by `execution.core.conformance.DefaultCapabilityRegistry` and storing `CapabilityDescriptor` values keyed by `CapabilityId`.
+- These two capability registries are not interchangeable: one indexes executable capability providers and provider ownership; the other indexes execution-conformance descriptors. Do not merge them or reuse one as a substitute without a separately designed adapter and explicit semantic mapping.
+- The Framework search found no production class directly implementing `ToolRegistry`; the search result was the README only. The current contract has provider registration, but the implementation/consumer wiring must be located in Runtime or confirmed absent. This is a concrete gap to close before changing tool SPI.
+- The Runtime repository search found no direct `PluginRegistry` implementation. Its older `DefaultPluginWrapper` is a plugin object, not a registry; Runtime `AgentRegistry` is a separate generic registry for `AgentDefinition`.
+
+The search index may lag the default branch and searches for literal `implements` do not find indirect implementations, subclasses or dependency-injected adapters. Treat this as an inventory lead, not proof of global absence. Before M1 edits, inspect all source imports/consumers and run a clean source scan from a checkout.
