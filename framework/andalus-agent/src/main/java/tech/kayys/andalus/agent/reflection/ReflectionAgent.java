@@ -50,6 +50,7 @@ public class ReflectionAgent extends BaseReActAgent {
 
     @Override
     public void send(String userInput, AndalusAgentListener listener) {
+        throwIfCancelled();
         if (memory != null) memory.addMessage(ChatMessage.userText(userInput));
 
         // Generate initial answer
@@ -59,6 +60,7 @@ public class ReflectionAgent extends BaseReActAgent {
 
         // Critique-Refine loop
         for (int round = 1; round <= maxRounds; round++) {
+            throwIfCancelled();
             listener.onTextDelta("\n[Reflection] Round " + (round + 1) + ": Critiquing\n");
             String critique = runCritique(listener);
             if (critique == null) return;
@@ -75,6 +77,7 @@ public class ReflectionAgent extends BaseReActAgent {
             }
         }
 
+        throwIfCancelled();
         listener.onDone("stop");
     }
 
@@ -86,7 +89,7 @@ public class ReflectionAgent extends BaseReActAgent {
         List<ToolSpec> specs = buildToolSpecs();
 
         try {
-            provider.streamChat(currentHistory(), basePrompt(), specs, 0.7, 4096, event -> {
+            streamChatCancellable(currentHistory(), basePrompt(), specs, 0.7, 4096, event -> {
                 if (event instanceof StreamEvent.TextDelta td) {
                     listener.onTextDelta(td.text());
                     buf.append(td.text());
@@ -113,7 +116,7 @@ public class ReflectionAgent extends BaseReActAgent {
     private String runCritique(AndalusAgentListener listener) {
         StringBuilder buf = new StringBuilder();
         try {
-            provider.streamChat(currentHistory(), basePrompt() + CRITIQUE_SUFFIX,
+            streamChatCancellable(currentHistory(), basePrompt() + CRITIQUE_SUFFIX,
                 List.of(), 0.3, 2048, event -> {
                 if (event instanceof StreamEvent.TextDelta td) {
                     listener.onTextDelta(td.text());
@@ -133,6 +136,7 @@ public class ReflectionAgent extends BaseReActAgent {
     // ── Helpers ───────────────────────────────────────────────────────────────
 
     private void invokeTool(StreamEvent.ToolUseEnd toolEnd, String toolName, AndalusAgentListener listener) {
+        if (isCancellationRequested()) return;
         if (toolName == null) return;
         Tool tool = tools.stream().filter(t -> t.descriptor().name().equals(toolName))
             .findFirst().orElse(null);
