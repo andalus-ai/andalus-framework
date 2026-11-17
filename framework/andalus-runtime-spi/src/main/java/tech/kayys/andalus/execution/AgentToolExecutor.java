@@ -51,6 +51,27 @@ public interface AgentToolExecutor {
     }
 
     /**
+     * Executes a tool with both immutable execution identity and cooperative
+     * cancellation. Context-aware implementations should override this method
+     * when dispatch itself is asynchronous or cancellable.
+     */
+    default CompletionStage<AgentDecision> execute(
+            ToolInvocation invocation,
+            AgentToolExecutionContext context,
+            tech.kayys.andalus.tool.CancellationToken cancellation) {
+        if (cancellation != null && cancellation.isCancellationRequested()) {
+            return CompletableFuture.failedFuture(
+                    new java.util.concurrent.CancellationException("Execution cancelled before tool dispatch."));
+        }
+        return execute(invocation, context).thenApply(decision -> {
+            if (cancellation != null && cancellation.isCancellationRequested()) {
+                throw new java.util.concurrent.CancellationException("Execution cancelled during tool execution.");
+            }
+            return decision;
+        });
+    }
+
+    /**
      * Executes a tool with an execution-scoped cooperative cancellation signal.
      *
      * <p>Implementations that can interrupt queued or active tool work should override
