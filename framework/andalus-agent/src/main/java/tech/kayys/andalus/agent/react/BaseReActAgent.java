@@ -70,6 +70,24 @@ public abstract class BaseReActAgent implements Agent {
     public interface ToolExecutorBridge {
         /** Returns a ToolResult or throws on failure. */
         ToolResult executeViaPolicy(ToolInvocation invocation, Supplier<ToolResult> directFallback) throws Exception;
+
+        /**
+         * Cancellation-aware policy execution hook. Policy executors should override
+         * this method to propagate cancellation into queued or active governed work.
+         */
+        default ToolResult executeViaPolicy(
+                ToolInvocation invocation,
+                Supplier<ToolResult> directFallback,
+                tech.kayys.andalus.tool.CancellationToken cancellation) throws Exception {
+            if (cancellation != null && cancellation.isCancellationRequested()) {
+                throw new java.util.concurrent.CancellationException("Tool execution cancelled before dispatch.");
+            }
+            ToolResult result = executeViaPolicy(invocation, directFallback);
+            if (cancellation != null && cancellation.isCancellationRequested()) {
+                throw new java.util.concurrent.CancellationException("Tool execution cancelled.");
+            }
+            return result;
+        }
     }
 
     /** Functional bridge for saving a checkpoint after each step. */

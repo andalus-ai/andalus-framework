@@ -145,7 +145,7 @@ public class ReflectionAgent extends BaseReActAgent {
         ToolInvocation inv = buildInvocation(toolName, args);
         try {
             ToolResult result = toolExecutor != null
-                ? toolExecutor.executeViaPolicy(inv, () -> safeDirect(tool, inv))
+                ? toolExecutor.executeViaPolicy(inv, () -> safeDirect(tool, inv), cancellationToken)
                 : safeDirect(tool, inv);
             listener.onToolResult(toolEnd.id(), toolName, result);
             if (memory != null) {
@@ -160,7 +160,7 @@ public class ReflectionAgent extends BaseReActAgent {
     }
 
     private ToolResult safeDirect(Tool tool, ToolInvocation inv) {
-        try { return tool.execute(inv, null).get(); }
+        try { return tool.execute(inv, null, cancellationToken).get(); }
         catch (Exception ex) { throw new RuntimeException(ex); }
     }
 
