@@ -26,6 +26,31 @@ public interface AgentToolExecutor {
     CompletionStage<AgentDecision> execute(ToolInvocation invocation);
 
     /**
+     * Evaluates and executes a tool invocation using the immutable context of
+     * the owning agent execution.
+     *
+     * <p>Context-aware implementations must use this context for policy
+     * evaluation, tenant-aware cache keys, budget accounting and audit events.
+     * They must not recover identity from mutable executor fields or thread
+     * locals. The default preserves source and binary compatibility for
+     * existing implementations; implementations requiring identity isolation
+     * should override this method.</p>
+     *
+     * @param invocation requested tool invocation
+     * @param context immutable execution-scoped identity and policy snapshot
+     * @return future containing the tool decision
+     */
+    default CompletionStage<AgentDecision> execute(
+            ToolInvocation invocation,
+            AgentToolExecutionContext context) {
+        if (context == null) {
+            return CompletableFuture.failedFuture(
+                    new IllegalArgumentException("AgentToolExecutionContext is required"));
+        }
+        return execute(invocation);
+    }
+
+    /**
      * Executes a tool with an execution-scoped cooperative cancellation signal.
      *
      * <p>Implementations that can interrupt queued or active tool work should override
