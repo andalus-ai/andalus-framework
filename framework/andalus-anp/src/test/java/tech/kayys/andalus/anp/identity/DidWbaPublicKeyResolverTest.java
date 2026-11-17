@@ -67,4 +67,38 @@ class DidWbaPublicKeyResolverTest {
         assertThrows(SecurityException.class,
                 () -> DidWbaPublicKeyResolver.resolveAuthenticationKey(document, KEY_ID));
     }
+    @Test
+    void resolvesEd25519Base58BtcMultibaseKey() throws Exception {
+        KeyPair pair = KeyPairGenerator.getInstance("Ed25519").generateKeyPair();
+        byte[] encoded = pair.getPublic().getEncoded();
+        byte[] raw = java.util.Arrays.copyOfRange(encoded, encoded.length - 32, encoded.length);
+        byte[] multicodec = new byte[34];
+        multicodec[0] = (byte) 0xed;
+        multicodec[1] = 0x01;
+        System.arraycopy(raw, 0, multicodec, 2, raw.length);
+        String multibase = "z" + encodeBase58(multicodec);
+        DidWbaDocument document = new DidWbaDocument(DID,
+                List.of(DidWbaVerificationMethod.ed25519(KEY_ID, DID, multibase)),
+                List.of("#auth-1"), Map.of());
+
+        assertArrayEquals(encoded,
+                DidWbaPublicKeyResolver.resolveAuthenticationKey(document, KEY_ID).getEncoded());
+    }
+
+    private static String encodeBase58(byte[] input) {
+        final String alphabet = "123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz";
+        java.math.BigInteger value = new java.math.BigInteger(1, input);
+        StringBuilder result = new StringBuilder();
+        while (value.signum() > 0) {
+            java.math.BigInteger[] division = value.divideAndRemainder(java.math.BigInteger.valueOf(58));
+            result.append(alphabet.charAt(division[1].intValue()));
+            value = division[0];
+        }
+        for (byte item : input) {
+            if (item != 0) break;
+            result.append('1');
+        }
+        return result.reverse().toString();
+    }
+
 }
