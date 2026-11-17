@@ -18,18 +18,33 @@ public class DefaultPlanningRuntime implements PlanningRuntime {
     private final PlannerRegistry registry;
     private final PlanValidator validator;
     private final PlanRevisionHistory revisionHistory;
+    private final PlanRevisionPolicy revisionPolicy;
 
     public DefaultPlanningRuntime(
             PlannerRegistry registry,
             PlanValidator validator,
             PlanRevisionHistory revisionHistory
     ) {
+        this(registry, validator, revisionHistory, PlanRevisionPolicy.PRESERVE_COMPLETED_STEPS);
+    }
+
+    /**
+     * Creates a runtime with an explicit policy for replacing previously completed work.
+     */
+    public DefaultPlanningRuntime(
+            PlannerRegistry registry,
+            PlanValidator validator,
+            PlanRevisionHistory revisionHistory,
+            PlanRevisionPolicy revisionPolicy
+    ) {
         if (registry == null) throw new IllegalArgumentException("registry must not be null");
         if (validator == null) throw new IllegalArgumentException("validator must not be null");
         if (revisionHistory == null) throw new IllegalArgumentException("revisionHistory must not be null");
+        if (revisionPolicy == null) throw new IllegalArgumentException("revisionPolicy must not be null");
         this.registry = registry;
         this.validator = validator;
         this.revisionHistory = revisionHistory;
+        this.revisionPolicy = revisionPolicy;
     }
 
     /** Convenience constructor using the default validator and process-local revision history. */
@@ -45,6 +60,11 @@ public class DefaultPlanningRuntime implements PlanningRuntime {
     /** Exposes the configured history store for inspection and operational integration. */
     public PlanRevisionHistory revisionHistory() {
         return revisionHistory;
+    }
+
+    /** Returns the configured completed-step continuity policy. */
+    public PlanRevisionPolicy revisionPolicy() {
+        return revisionPolicy;
     }
 
     @Override
@@ -130,8 +150,17 @@ public class DefaultPlanningRuntime implements PlanningRuntime {
             return validated;
         }
 
+        PlanRevisionReconciliation reconciliation =
+                new PlanRevisionReconciler().reconcile(request, revisedPlan);
+        if (revisionPolicy == PlanRevisionPolicy.PRESERVE_COMPLETED_STEPS
+                && !reconciliation.consistent()) {
+            return PlanningResult.invalid(
+                    "Plan revision continuity check failed: "
+                            + String.join("; ", reconciliation.errors()));
+        }
+
         revisionHistory.append(PlanRevisionRecord.of(
-                currentPlan, revisedPlan, request.revisionReason(), request.feedback()));
+                currentPlan, revisedPlan, request.revisionReason(), request.feedback(), revisionPolicy));
         return validated;
     }
 
