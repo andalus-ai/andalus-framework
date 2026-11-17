@@ -11,7 +11,7 @@ The framework currently exposes four checkpoint-store contracts with overlapping
 
 | Artifact | Fully qualified name | Payload / responsibility |
 |---|---|---|
-| `andalus-engine` | `tech.kayys.andalus.execution.CheckpointStore` | Stores and restores engine `ExecutionSnapshot` values |
+| `andalus-engine` (before migration) | `tech.kayys.andalus.execution.CheckpointStore` | Stores and restores engine `ExecutionSnapshot` values |
 | `andalus-runtime-spi` | `tech.kayys.andalus.execution.CheckpointStore` | Saves and loads runtime `AgentContext` values |
 | `andalus-execution-api` | `tech.kayys.andalus.execution.checkpoint.CheckpointStore` | Stores `ExecutionCheckpoint` records by checkpoint and execution ID |
 | `andalus-state-api` | `tech.kayys.andalus.state.checkpoint.CheckpointStore` | Stores state-layer `Checkpoint` records |
@@ -24,7 +24,7 @@ The runtime currently uses two recovery paths with different payloads and purpos
 
 1. **Execution checkpoint records:** Treat `andalus-execution-api`'s `tech.kayys.andalus.execution.checkpoint.CheckpointStore` as the preferred framework-facing port for durable execution checkpoint records. It should own checkpoint identity, lookup, per-execution history and latest-checkpoint retrieval.
 2. **Generic state checkpoints:** Keep `andalus-state-api`'s `tech.kayys.andalus.state.checkpoint.CheckpointStore` scoped to state-layer snapshots. It is not an alias for the execution checkpoint port; state checkpoints may have different identity, consistency and lifecycle requirements.
-3. **Engine snapshot contract:** The engine must not publish a second `tech.kayys.andalus.execution.CheckpointStore`. Replace its dependency with the execution checkpoint port or a distinctly named engine-specific adapter contract only if engine snapshot semantics cannot be represented by the execution checkpoint model.
+3. **Engine snapshot contract:** The engine must not publish a second `tech.kayys.andalus.execution.CheckpointStore`. The engine-local port is now proposed as `tech.kayys.andalus.engine.snapshot.EngineSnapshotStore`, preserving the distinct `ExecutionSnapshot` payload without colliding with Runtime-SPI. A later design decision may replace it with an adapter over `ExecutionCheckpoint` only after proving a lossless mapping.
 4. **AgentContext recovery:** The runtime-SPI contract must move out of the colliding `tech.kayys.andalus.execution` package and receive a name that states its payload and scope (for example, `AgentContextSnapshotStore` in a runtime-owned package). It may remain as a compatibility adapter while the runtime migrates to the canonical execution checkpoint flow.
 5. **No payload conflation:** Do not assume `ExecutionSnapshot`, `AgentContext`, `ExecutionCheckpoint` and state `Checkpoint` are interchangeable. Define explicit mapping/serialization boundaries and document which data each recovery path guarantees.
 6. **No same-FQN compatibility alias:** A deprecated alias with the colliding `tech.kayys.andalus.execution.CheckpointStore` FQN is not an acceptable migration strategy. Any compatibility bridge must use a distinct package and type name.
@@ -75,4 +75,4 @@ Rejected as a default architecture. Parallel paths create uncertainty about whic
 
 ## Current implementation status
 
-This ADR records a proposed ownership model and investigation checklist. No checkpoint interface, payload model or runtime recovery path has been changed by this document. The migration remains blocked on the repository-wide consumer map, payload/serialization comparison, recovery-flow tests and clean framework/runtime builds.
+This ADR records a proposed ownership model and investigation checklist. A source-level migration proposal now renames the unused engine-local `CheckpointStore` declaration to `EngineSnapshotStore` and changes its latest lookup to `Optional`; it does not alter checkpoint payload models or runtime recovery paths. The change must be reviewed as a public API rename and validated by CI. The broader migration remains blocked on the repository-wide consumer map, payload/serialization comparison, recovery-flow tests and clean framework/runtime builds.
