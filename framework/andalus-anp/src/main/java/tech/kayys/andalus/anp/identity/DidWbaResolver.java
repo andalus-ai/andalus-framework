@@ -49,6 +49,16 @@ public final class DidWbaResolver {
         registry.put(document.id(), document);
     }
 
+
+    /**
+     * Looks up a document registered through the trusted local registration boundary.
+     * This method never invokes the optional remote fetcher.
+     */
+    public Optional<DidWbaDocument> findRegistered(DidWbaIdentity identity) {
+        Objects.requireNonNull(identity, "identity");
+        return Optional.ofNullable(registry.get(identity.raw()));
+    }
+
     /**
      * Resolves locally first, then optionally fetches from the DID-derived HTTPS URL.
      * Remote documents are validated but not automatically cached or trusted for enrollment.
