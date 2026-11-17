@@ -478,3 +478,52 @@ A repository-wide GitHub code-search pass for direct `implements` declarations f
 - The Runtime repository search found no direct `PluginRegistry` implementation. Its older `DefaultPluginWrapper` is a plugin object, not a registry; Runtime `AgentRegistry` is a separate generic registry for `AgentDefinition`.
 
 The search index may lag the default branch and searches for literal `implements` do not find indirect implementations, subclasses or dependency-injected adapters. Treat this as an inventory lead, not proof of global absence. Before M1 edits, inspect all source imports/consumers and run a clean source scan from a checkout.
+
+
+## 12. M1.1 consumer and composition-boundary follow-up — 2026-11-17
+
+This follow-up narrows the source trace using the actual inherited registry contracts and direct consumers. It also corrects two over-broad statements in section 11.
+
+### 12.1 Corrections to the initial inventory
+
+- `PluginRegistry` does not declare `register(Plugin)`; it does declare a default `unregister(String)`. `DefaultPluginRegistry.register(Plugin)` is therefore an implementation-specific operation, which explains the concrete-type check in `RuntimePluginManager`. The gap is confirmed.
+- `ToolRegistry` extends the generic `Registry<Tool>`, and that parent contract already declares `register(T)`, `unregister(ResourceId)`, lookup and enumeration operations. It is incorrect to describe ToolRegistry as lacking a registration method. The actual question is whether a production implementation is wired and used, not whether the SPI can express registration.
+- `ToolCatalog` is a separate provider-oriented abstraction with `register(ToolProvider)`, `unregister(ToolProvider)`, discovery and provider lookup. `DefaultToolCatalog` is a concrete implementation. It is not the same abstraction as the resource-oriented `ToolRegistry`.
+- The executable plugin capability registry (`tech.kayys.andalus.spi.capability.CapabilityRegistry`) does not declare mutation operations. Its `DefaultCapabilityRegistry` adds `register(capabilityId, providerId, capability)` and unregister methods. `PluginCapabilityRegistrar` consequently depends on that concrete implementation. This is a confirmed SPI gap, unlike the generic ToolRegistry contract.
+- The execution-conformance `CapabilityRegistry` is a third semantic surface already identified above: it registers `CapabilityDescriptor` values and is unrelated to provider-owned executable capability instances.
+
+### 12.2 Direct consumer trace
+
+- `AgentBuilder` accepts a `ToolRegistry`, and only queries `getToolsByCapability` when required capabilities have been supplied. It also accepts explicit tools independently. This demonstrates a direct agent-construction consumer of the resource-oriented ToolRegistry.
+- `ToolCatalog` has its own default in-memory provider list. Its registration/discovery API is internally coherent, but this pass did not find a proven adapter from ToolCatalog providers into AgentBuilder's ToolRegistry.
+- `HarnessRuntime` is currently an empty placeholder interface; it does not provide a shared ToolRegistry or other runtime services.
+- `RuntimePluginManager` appears only in its implementation and Framework tests in the indexed source search; no direct use was found in the Runtime repository. This is not proof that no indirect/CDI wiring exists, but the current evidence does not establish that the JAR plugin manager is the production Runtime's composition root.
+- `PluginCapabilityRegistrar` appears in its implementation and Framework integration tests, not in a Runtime consumer in the indexed search. The existing integration test manually sequences install, capability registration, capability routing/invocation, capability unregistration and plugin shutdown.
+- The Runtime repository search found no direct references to Framework `ToolRegistry`, `ToolProvider` or `AgentToolExecutionContext`. This is a bounded search result, not a clean-checkout import graph; indirect wiring, reflection, CDI producers and shaded/renamed types remain to be checked.
+
+### 12.3 M1.1 decisions
+
+The next implementation should not begin by expanding all SPIs. First establish which composition root is authoritative:
+
+1. Trace Runtime CDI producers, injection points and startup wiring for plugin management, capability routing, tool catalogs/registries and agent construction.
+2. Determine whether `RuntimePluginManager` is intended as the supported external-JAR path or only a standalone Framework utility.
+3. Select one supported tool-provider-to-agent-tool path, or document the two independent catalogs if both are intentionally supported.
+4. Only then add the minimal SPI operations needed for alternate implementations:
+   - plugin registration on `PluginRegistry`, with duplicate-ID semantics;
+   - provider-owned executable capability register/unregister on the executable capability SPI, preserving provider identity;
+   - no new registration method on `ToolRegistry` until its inherited `Registry<Tool>` contract and the ToolCatalog distinction have been reconciled.
+5. Make plugin activation transactional across plugin lifecycle and capability registration: initialize/start successfully, register capabilities, and roll back both on any failure. Deactivation must stop invocation admission, unregister provider capabilities, then stop the plugin in a defined order.
+6. Preserve the security boundary: tool/capability catalog membership is discoverability only. Every invocation still needs current principal, tenant and policy evaluation.
+
+### 12.4 Remaining M1.1 evidence
+
+The following cannot be established from the source files and indexed searches inspected so far:
+
+- Complete CDI bean graph and producer/injection wiring in the Runtime.
+- Complete transitive dependency/import graph for the two independent Maven reactors.
+- Whether a production ToolRegistry implementation is provided indirectly or by an external dependency.
+- Runtime agent discovery and invocation path from registered definitions/contracts to actual agent execution.
+- Whether the Framework's plugin JAR loading is enabled/configured in the deployed Runtime.
+- Clean-checkout duplicate-FQN scan, Maven dependency tree, build and tests.
+
+M1.1 is therefore **partially complete**. The evidence is sufficient to define the next narrow investigation, but not yet sufficient to edit public SPI signatures safely.
