@@ -18,7 +18,10 @@ public final class InMemoryAnpKeyStore implements AnpKeyStore {
     private final Set<String> revokedKeyIds = ConcurrentHashMap.newKeySet();
 
     @Override
-    public Optional<AnpIdentityKeyPair> getKey(String keyId) {
+    public synchronized Optional<AnpIdentityKeyPair> getKey(String keyId) {
+        if (keyId == null || keyId.isBlank() || revokedKeyIds.contains(keyId)) {
+            return Optional.empty();
+        }
         return Optional.ofNullable(keysById.get(keyId));
     }
 
