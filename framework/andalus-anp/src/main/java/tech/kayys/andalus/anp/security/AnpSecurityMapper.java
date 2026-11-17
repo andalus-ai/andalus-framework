@@ -51,6 +51,12 @@ public final class AnpSecurityMapper {
         Objects.requireNonNull(signature, "signature");
         Objects.requireNonNull(delegation, "delegation");
 
+        String callerKeyPrefix = callerDid.raw() + "#";
+        if (!signature.keyId().startsWith(callerKeyPrefix)
+                || signature.keyId().length() == callerKeyPrefix.length()) {
+            throw new SecurityException("ANP signing key does not belong to the claimed caller DID");
+        }
+
         if (!authVerifier.verify(method, path, host, signature)) {
             throw new SecurityException("ANP request signature verification failed");
         }
