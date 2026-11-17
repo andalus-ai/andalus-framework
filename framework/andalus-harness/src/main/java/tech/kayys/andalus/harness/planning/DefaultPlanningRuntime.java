@@ -130,6 +130,14 @@ public class DefaultPlanningRuntime implements PlanningRuntime {
             return validated;
         }
 
+        PlanRevisionReconciliation reconciliation =
+                new PlanRevisionReconciler().reconcile(request, revisedPlan);
+        if (!reconciliation.consistent()) {
+            return PlanningResult.invalid(
+                    "Plan revision continuity check failed: "
+                            + String.join("; ", reconciliation.errors()));
+        }
+
         revisionHistory.append(PlanRevisionRecord.of(
                 currentPlan, revisedPlan, request.revisionReason(), request.feedback()));
         return validated;
