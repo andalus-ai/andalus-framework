@@ -527,3 +527,51 @@ The following cannot be established from the source files and indexed searches i
 - Clean-checkout duplicate-FQN scan, Maven dependency tree, build and tests.
 
 M1.1 is therefore **partially complete**. The evidence is sufficient to define the next narrow investigation, but not yet sufficient to edit public SPI signatures safely.
+
+
+## 13. Runtime CDI and startup-wiring trace — 2026-11-17
+
+This section records the next bounded investigation against the current Runtime default branch. It follows the M1.1 decision to identify the actual composition points before changing Framework SPIs.
+
+### 13.1 Confirmed Quarkus CDI producer surface
+
+The current Runtime tree contains the following producer classes relevant to execution and backend composition:
+
+- `runtime/andalus-runtime/.../quarkus/BackendProducer` exposes `InferenceBackend` and `WorkflowBackend` as application-scoped CDI beans. It calls the static `BackendRegistry.initialize()`, then resolves the default backend through static registry methods. Initialization exceptions are logged and swallowed before resolution continues.
+- `runtime/andalus-runtime/.../quarkus/AgentClientProducer` injects those two backend interfaces and produces an application-scoped `AgentClient` using `AgentConfig.defaults()`.
+- `runtime/andalus-runtime-core/.../execution/a2a/DurableA2AIntegrationProducer` and `.../execution/event/observability/ObservabilityPublisherProducer` are additional Runtime Core producer entry points; their full dependency graphs still need inspection.
+- The REST API has its own producer set: `ExecutionProducer`, `SecurityProducer`, `StateProducer` and `AnpProducer`. These provide API/runtime services independently of the backend producer pair.
+
+This is a distributed CDI composition surface, not yet evidence of one central runtime extension manager. The producer classes show that CDI can compose selected services, but the inspected set does not establish plugin JAR installation, executable capability registration, ToolCatalog-to-ToolRegistry adaptation, or agent-definition registration as part of application startup.
+
+### 13.2 Execution runtime entry point
+
+- `DefaultAndalusRuntime` in `andalus-runtime-core` is `@ApplicationScoped`, injects `ExecutionEngine`, and delegates execution to `executionEngine.executeAgent(agent, context)`. It maps the resulting `ExecutionResult` to `AgentResponse`.
+- This class is a runtime execution facade, not a plugin or tool composition root. Its constructor creates resource metadata; it does not register plugins, capabilities, tools or agent definitions.
+- Runtime `AgentRegistry` remains a thin `GenericRegistry<AgentDefinition>` specialization. The inspected class has no CDI annotation, producer, startup observer or direct execution integration.
+- `AndalusAgentRunner` injects `AgentExecutionService`, but the runner module is not an authoritative startup path for the main Runtime reactor: the Runtime parent POM comments out `andalus-agent-runner` with the documented reason that it is not a Quarkus application module.
+
+### 13.3 Startup and discovery evidence
+
+The Runtime repository tree contains ServiceLoader descriptors for backend providers (Gamelan and Gollek), as well as node/tool/provider descriptors in feature modules. This establishes classpath-level provider discovery surfaces for those specific SPIs. It does not establish that Framework `Plugin` JAR loading is enabled in the deployed Runtime:
+
+- Backend providers are discovered through the static `BackendRegistry` path used by `BackendProducer`.
+- Tool-related ServiceLoader descriptors include several distinct provider interfaces (for example `tech.kayys.andalus.tool.ToolProvider`, `tech.kayys.andalus.tools.spi.Tool` and Gamelan `ExecutorPlugin`). These are not interchangeable contracts.
+- The Runtime tree contains no Quarkus extension `BuildStep`/recorder module or central plugin startup observer in the targeted file inventory. Absence from this targeted inventory is not proof that no indirect or external startup hook exists.
+- The Framework `RuntimePluginManager` and `PluginCapabilityRegistrar` still have no demonstrated direct Runtime consumer in the searches performed for sections 11–12.
+
+### 13.4 Composition and compatibility risks now visible
+
+1. **Backend composition is static-registry based.** CDI exposes a default backend, but the producer delegates discovery and selection to static `BackendRegistry` methods. This is a separate mechanism from Framework `PluginRegistry` and executable `CapabilityRegistry`.
+2. **There are multiple service-provider ecosystems.** BackendProvider, node providers, ToolProvider, tools.spi.Tool and Gamelan ExecutorPlugin each have separate discovery contracts. A future integration must use explicit adapters rather than treating all discovered providers as generic plugins or tools.
+3. **CDI composition is fragmented across modules.** Runtime, Runtime Core and REST API each provide their own producer classes. A complete bean graph requires inspecting all producer method signatures, qualifiers, scopes, alternatives and injection sites; this pass has not done that.
+4. **Version coordinates need immediate reconciliation.** The inspected `runtime/andalus-runtime/pom.xml` inherits parent version `1.0.0-SNAPSHOT`, while `runtime/andalus-runtime-core/pom.xml` inherits `0.0.1`. The latter pins Framework dependencies to `${project.version}`. This is a concrete mismatch in the current source and means the Runtime reactor's artifact/version topology cannot be assumed coherent from module names alone. Resolve whether this reflects an intentional reactor split, stale POM, or active build defect before dependency graph/build conclusions.
+5. **Default security producer needs review before reuse.** The REST `SecurityProducer` supplies a `DelegationPolicy` that returns `true` for every invocation. This is a permissive default and must not be interpreted as the policy boundary for domain-product integration or exposed as production authorization without a surrounding authenticated-principal and policy enforcement layer.
+
+### 13.5 M1.1 conclusion and next evidence
+
+The current source evidence does **not** justify adding a new generic extension manager or changing the Framework registry SPIs yet. It does establish that the main Runtime currently has at least two composition styles: CDI producers backed by static ServiceLoader registries (backend path), and application-scoped execution services wired through CDI (execution path). The external-JAR plugin lifecycle/capability path remains unconnected in the inspected Runtime sources.
+
+Next, complete a producer/injection matrix across Runtime Core, Runtime, REST API and runtime feature modules; inspect the two additional Runtime Core producers and all API producers; trace the concrete `ExecutionEngine` and `AgentExecutionService` bean implementations; and reconcile the parent/version mismatch. Only after that should we decide whether to integrate the existing Framework plugin lifecycle into the Runtime, or document classpath ServiceLoader providers as the supported extension mechanism and keep external-JAR installation as a separate optional facility.
+
+**Limitations:** this is GitHub source inspection only. No Maven build, dependency tree, Quarkus Arc bean validation, startup test, CDI injection test or ServiceLoader runtime test was run. The Runtime/Framework compatibility matrix and M0 exit criteria remain open.
