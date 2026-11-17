@@ -3,16 +3,15 @@ package tech.kayys.andalus.anp.auth;
 import tech.kayys.andalus.anp.identity.AnpIdentityKeyPair;
 import tech.kayys.andalus.anp.identity.AnpKeyStore;
 
-import javax.crypto.Mac;
-import javax.crypto.spec.SecretKeySpec;
 import java.nio.charset.StandardCharsets;
-import java.security.MessageDigest;
+import java.security.KeyFactory;
+import java.security.PublicKey;
+import java.security.Signature;
+import java.security.spec.X509EncodedKeySpec;
 import java.util.Objects;
 import java.util.Optional;
 
-/**
- * Verifies inbound ANP HTTP signatures against registered agent public keys.
- */
+/** Verifies inbound ANP HTTP signatures against active registered Ed25519 public keys. */
 public final class AnpAuthVerifier {
 
     private final AnpKeyStore keyStore;
@@ -22,7 +21,8 @@ public final class AnpAuthVerifier {
     }
 
     /**
-     * Verifies an incoming request signature.
+     * Verifies an incoming request. Unknown algorithms, algorithm/key mismatches,
+     * revoked keys, and malformed public-key encodings are rejected.
      */
     public boolean verify(
             String method,
@@ -31,26 +31,31 @@ public final class AnpAuthVerifier {
             AnpHttpSignature signature) {
 
         Objects.requireNonNull(signature, "signature");
-
-        Optional<AnpIdentityKeyPair> keyOpt = keyStore.getKey(signature.keyId());
+        Optional<AnpIdentityKeyPair> keyOpt = keyStore.getActiveKey(signature.keyId());
         if (keyOpt.isEmpty()) {
             return false;
         }
 
         AnpIdentityKeyPair key = keyOpt.get();
-        String canonical = AnpAuthenticator.buildCanonicalString(method, path, host);
-        byte[] expected = computeExpected(canonical.getBytes(StandardCharsets.UTF_8), key);
-
-        return MessageDigest.isEqual(expected, signature.signatureBytes());
-    }
-
-    private byte[] computeExpected(byte[] data, AnpIdentityKeyPair keyPair) {
+        final String algorithm;
         try {
-            Mac mac = Mac.getInstance("HmacSHA256");
-            mac.init(new SecretKeySpec(keyPair.privateKeyBytes(), "HmacSHA256"));
-            return mac.doFinal(data);
+            algorithm = AnpAuthenticator.normalizeAlgorithm(signature.algorithm());
+            if (!algorithm.equalsIgnoreCase(key.algorithm())) {
+                return false;
+            }
+            if (key.publicKeyBytes() == null || key.publicKeyBytes().length == 0) {
+                return false;
+            }
+
+            PublicKey publicKey = KeyFactory.getInstance("Ed25519")
+                    .generatePublic(new X509EncodedKeySpec(key.publicKeyBytes()));
+            Signature verifier = Signature.getInstance(algorithm);
+            verifier.initVerify(publicKey);
+            verifier.update(AnpAuthenticator.buildCanonicalString(method, path, host)
+                    .getBytes(StandardCharsets.UTF_8));
+            return verifier.verify(signature.signatureBytes());
         } catch (Exception e) {
-            return new byte[0];
+            return false;
         }
     }
 }
