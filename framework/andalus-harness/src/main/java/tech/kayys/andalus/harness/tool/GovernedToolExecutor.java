@@ -193,9 +193,6 @@ public class GovernedToolExecutor {
         }
 
         // 5. Tool Resolution
-        if (cancellation.isCancellationRequested()) {
-            return ToolResult.canceled(invocationId);
-        }
         ToolResolutionContext resolutionContext = new ToolResolutionContext(
                 context != null ? context.identity() : null,
                 context != null ? context.resources() : null,
@@ -213,9 +210,6 @@ public class GovernedToolExecutor {
         }
 
         // 6. Input validation
-        if (cancellation.isCancellationRequested()) {
-            return ToolResult.canceled(invocationId);
-        }
         if (!inputValidator.validate(intent.arguments(), descriptor.toolInputSchema())) {
             return ToolResult.failure(invocationId, "Input validation failed against schema for tool: " + descriptor.name(), Duration.ZERO, "validator");
         }
