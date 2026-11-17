@@ -8,6 +8,7 @@ import java.security.KeyFactory;
 import java.security.PublicKey;
 import java.security.Signature;
 import java.security.spec.X509EncodedKeySpec;
+import java.security.MessageDigest;
 import java.util.Objects;
 import java.util.Optional;
 
@@ -15,9 +16,23 @@ import java.util.Optional;
 public final class AnpAuthVerifier {
 
     private final AnpKeyStore keyStore;
+    private final AnpDidKeyResolver didKeyResolver;
 
+    /**
+     * Compatibility constructor for deployments that have not enabled DID-document
+     * key binding. Production inbound authentication should use the resolver overload.
+     */
     public AnpAuthVerifier(AnpKeyStore keyStore) {
+        this(keyStore, null);
+    }
+
+    /**
+     * Creates a verifier that requires the active key-store key to match the key
+     * authorized by a trusted DID document.
+     */
+    public AnpAuthVerifier(AnpKeyStore keyStore, AnpDidKeyResolver didKeyResolver) {
         this.keyStore = Objects.requireNonNull(keyStore, "keyStore");
+        this.didKeyResolver = didKeyResolver;
     }
 
     /**
@@ -49,6 +64,13 @@ public final class AnpAuthVerifier {
 
             PublicKey publicKey = KeyFactory.getInstance("Ed25519")
                     .generatePublic(new X509EncodedKeySpec(key.publicKeyBytes()));
+            if (didKeyResolver != null) {
+                Optional<PublicKey> didKey = didKeyResolver.resolveAuthenticationKey(signature.keyId());
+                if (didKey.isEmpty()
+                        || !MessageDigest.isEqual(publicKey.getEncoded(), didKey.get().getEncoded())) {
+                    return false;
+                }
+            }
             Signature verifier = Signature.getInstance(algorithm);
             verifier.initVerify(publicKey);
             verifier.update(AnpAuthenticator.buildCanonicalString(method, path, host)
