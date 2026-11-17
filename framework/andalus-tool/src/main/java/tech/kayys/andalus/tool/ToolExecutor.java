@@ -9,6 +9,31 @@ public interface ToolExecutor {
 
     CompletableFuture<ToolResult> execute(ToolInvocation invocation, ToolContext context);
 
+    /**
+     * Executes through this executor with cooperative cancellation.
+     * Implementations that own asynchronous work should override this method
+     * and propagate the token into the dispatched operation.
+     */
+    default CompletableFuture<ToolResult> execute(
+            ToolInvocation invocation,
+            ToolContext context,
+            CancellationToken cancellation) {
+        if (cancellation != null && cancellation.isCancellationRequested()) {
+            return CompletableFuture.failedFuture(
+                    new java.util.concurrent.CancellationException("Tool execution cancelled before dispatch."));
+        }
+        CompletableFuture<ToolResult> result = execute(invocation, context);
+        if (cancellation == null) {
+            return result;
+        }
+        return result.thenApply(value -> {
+            if (cancellation.isCancellationRequested()) {
+                throw new java.util.concurrent.CancellationException("Tool execution cancelled.");
+            }
+            return value;
+        });
+    }
+
     default ToolResult executeBlocking(ToolInvocation invocation, ToolContext context) {
         try {
             return execute(invocation, context).get();

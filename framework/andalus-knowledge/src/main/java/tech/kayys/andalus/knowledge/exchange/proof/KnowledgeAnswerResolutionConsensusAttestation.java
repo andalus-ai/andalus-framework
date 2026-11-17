@@ -23,7 +23,6 @@ import tech.kayys.andalus.knowledge.exchange.sync.*;
 import tech.kayys.andalus.knowledge.exchange.federation.*;
 import tech.kayys.andalus.knowledge.exchange.routing.*;
 import tech.kayys.andalus.knowledge.exchange.fusion.*;
-import tech.kayys.andalus.knowledge.exchange.coverage.*;
 import tech.kayys.andalus.knowledge.exchange.gap.*;
 import tech.kayys.andalus.knowledge.exchange.attribution.*;
 import tech.kayys.andalus.knowledge.exchange.contradiction.*;

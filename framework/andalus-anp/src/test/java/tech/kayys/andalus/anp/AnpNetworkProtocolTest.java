@@ -21,7 +21,8 @@ import tech.kayys.andalus.security.propagation.SecurityContextSnapshot;
 import tech.kayys.andalus.security.tenant.TenantContext;
 
 import java.net.URI;
-import java.nio.charset.StandardCharsets;
+import java.security.KeyPair;
+import java.security.KeyPairGenerator;
 import java.util.Map;
 import java.util.Optional;
 
@@ -33,13 +34,16 @@ class AnpNetworkProtocolTest {
     private AnpClient anpClient;
 
     @BeforeEach
-    void setUp() {
+    void setUp() throws Exception {
         InMemoryAnpKeyStore keyStore = new InMemoryAnpKeyStore();
         AnpAuthenticator auth = new AnpAuthenticator();
         AnpMetaProtocolNegotiator meta = new AnpMetaProtocolNegotiator();
 
-        byte[] secret = "test-secret-key-32bytes-long!!".getBytes(StandardCharsets.UTF_8);
-        AnpIdentityKeyPair key = new AnpIdentityKeyPair("key-1", "hmac-sha256", secret, secret);
+        KeyPair generated = KeyPairGenerator.getInstance("Ed25519").generateKeyPair();
+        AnpIdentityKeyPair key = new AnpIdentityKeyPair(
+                "key-1", "Ed25519",
+                generated.getPrivate().getEncoded(),
+                generated.getPublic().getEncoded());
         keyStore.storeKey("sender-agent", key);
 
         anpClient = new AnpClient(keyStore, auth, meta);
