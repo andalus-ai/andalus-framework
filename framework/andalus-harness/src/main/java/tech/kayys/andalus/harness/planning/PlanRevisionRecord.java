@@ -18,7 +18,8 @@ public record PlanRevisionRecord(
         AgentPlan previousPlan,
         AgentPlan revisedPlan,
         List<PlanExecutionFeedback> feedback,
-        Instant recordedAt
+        Instant recordedAt,
+        PlanRevisionPolicy revisionPolicy
 ) {
     public PlanRevisionRecord {
         Objects.requireNonNull(planId, "planId is required");
@@ -36,6 +37,22 @@ public record PlanRevisionRecord(
         reason = reason == null ? "" : reason;
         feedback = feedback == null ? List.of() : List.copyOf(feedback);
         recordedAt = recordedAt == null ? Instant.now() : recordedAt;
+        Objects.requireNonNull(revisionPolicy, "revisionPolicy is required");
+    }
+
+    /** Backwards-compatible constructor using strict completed-step preservation. */
+    public PlanRevisionRecord(
+            PlanId planId,
+            long fromRevision,
+            long toRevision,
+            String reason,
+            AgentPlan previousPlan,
+            AgentPlan revisedPlan,
+            List<PlanExecutionFeedback> feedback,
+            Instant recordedAt
+    ) {
+        this(planId, fromRevision, toRevision, reason, previousPlan, revisedPlan,
+                feedback, recordedAt, PlanRevisionPolicy.PRESERVE_COMPLETED_STEPS);
     }
 
     public static PlanRevisionRecord of(
@@ -44,8 +61,19 @@ public record PlanRevisionRecord(
             String reason,
             List<PlanExecutionFeedback> feedback
     ) {
+        return of(previousPlan, revisedPlan, reason, feedback,
+                PlanRevisionPolicy.PRESERVE_COMPLETED_STEPS);
+    }
+
+    public static PlanRevisionRecord of(
+            AgentPlan previousPlan,
+            AgentPlan revisedPlan,
+            String reason,
+            List<PlanExecutionFeedback> feedback,
+            PlanRevisionPolicy revisionPolicy
+    ) {
         return new PlanRevisionRecord(
                 previousPlan.id(), previousPlan.revision(), revisedPlan.revision(),
-                reason, previousPlan, revisedPlan, feedback, Instant.now());
+                reason, previousPlan, revisedPlan, feedback, Instant.now(), revisionPolicy);
     }
 }
