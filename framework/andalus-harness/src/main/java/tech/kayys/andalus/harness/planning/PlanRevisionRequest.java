@@ -10,13 +10,17 @@ import java.util.stream.Collectors;
 
 /**
  * Request payload for revising an existing plan based on new observations or changed constraints.
+ *
+ * <p>The request includes derived, advisory step guidance so incremental planners
+ * can preserve successful work and focus on failed or dependency-affected steps.</p>
  */
 public record PlanRevisionRequest(
         AgentPlan currentPlan,
         DecisionContext context,
         String revisionReason,
         Map<String, Object> attributes,
-        List<PlanExecutionFeedback> feedback
+        List<PlanExecutionFeedback> feedback,
+        PlanRevisionGuidance replanningGuidance
 ) {
     public PlanRevisionRequest {
         Objects.requireNonNull(currentPlan, "currentPlan is required");
@@ -35,6 +39,26 @@ public record PlanRevisionRequest(
                         "Feedback references a step that is not part of the current plan: " + observation.stepId());
             }
         }
+        PlanReplanningAssessment assessment = new PlanReplanningAnalyzer()
+                .analyze(currentPlan, feedback);
+        PlanRevisionGuidance expectedGuidance = PlanRevisionGuidance.from(currentPlan, assessment);
+        if (replanningGuidance == null) {
+            replanningGuidance = expectedGuidance;
+        } else if (!replanningGuidance.equals(expectedGuidance)) {
+            throw new IllegalArgumentException(
+                    "replanningGuidance must match the current plan and execution feedback.");
+        }
+    }
+
+    /** Backwards-compatible constructor for callers that provide feedback only. */
+    public PlanRevisionRequest(
+            AgentPlan currentPlan,
+            DecisionContext context,
+            String revisionReason,
+            Map<String, Object> attributes,
+            List<PlanExecutionFeedback> feedback
+    ) {
+        this(currentPlan, context, revisionReason, attributes, feedback, null);
     }
 
     /** Backwards-compatible constructor for revisions without execution feedback. */
@@ -44,6 +68,6 @@ public record PlanRevisionRequest(
             String revisionReason,
             Map<String, Object> attributes
     ) {
-        this(currentPlan, context, revisionReason, attributes, List.of());
+        this(currentPlan, context, revisionReason, attributes, List.of(), null);
     }
 }
