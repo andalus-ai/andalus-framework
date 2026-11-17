@@ -59,10 +59,13 @@ public final class McpSkillAdapter implements AgentSkill {
                     }
                     return successOutput(result, durationMs);
                 })
-                .onFailure().recoverWithItem(error -> failureOutput(
-                        error.getMessage() == null ? error.getClass().getSimpleName() : error.getMessage(),
-                        System.currentTimeMillis() - startedAt,
-                        Map.of()));
+                .onFailure().recoverWithItem(error -> {
+                    if (error instanceof java.util.concurrent.CancellationException) throw (java.util.concurrent.CancellationException) error;
+                    return failureOutput(
+                            error.getMessage() == null ? error.getClass().getSimpleName() : error.getMessage(),
+                            System.currentTimeMillis() - startedAt,
+                            Map.of());
+                });
     }
 
     private Map<String, Object> successOutput(McpToolCallResult result, long durationMs) {
