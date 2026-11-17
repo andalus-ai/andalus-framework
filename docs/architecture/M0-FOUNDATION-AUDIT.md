@@ -575,3 +575,79 @@ The current source evidence does **not** justify adding a new generic extension 
 Next, complete a producer/injection matrix across Runtime Core, Runtime, REST API and runtime feature modules; inspect the two additional Runtime Core producers and all API producers; trace the concrete `ExecutionEngine` and `AgentExecutionService` bean implementations; and reconcile the parent/version mismatch. Only after that should we decide whether to integrate the existing Framework plugin lifecycle into the Runtime, or document classpath ServiceLoader providers as the supported extension mechanism and keep external-JAR installation as a separate optional facility.
 
 **Limitations:** this is GitHub source inspection only. No Maven build, dependency tree, Quarkus Arc bean validation, startup test, CDI injection test or ServiceLoader runtime test was run. The Runtime/Framework compatibility matrix and M0 exit criteria remain open.
+
+
+## 14. Execution-engine and agent-execution wiring trace — 2026-11-17
+
+This section follows the CDI/startup inventory and traces the main Runtime execution path from the top-level runtime facade to model and tool execution. Findings are based on direct source inspection of the current Runtime default branch.
+
+### 14.1 Confirmed CDI execution chain
+
+The main agent execution path is implemented as follows:
+
+1. `DefaultAndalusRuntime` is `@ApplicationScoped` and injects `ExecutionEngine`.
+2. `DefaultExecutionEngine` is `@ApplicationScoped` and implements `ExecutionEngine`; it injects `AgentExecutionService`.
+3. `DefaultExecutionEngine.executeAgent(...)` extracts the prompt from `GraphExecutionContext`, creates a default `ExecutionBudget`, calls `executionService.create(agent, request, budget)`, and invokes `executeSync()`.
+4. `AgentExecutionService` is `@ApplicationScoped`. It assembles a `DefaultAgentExecution` with checkpoint stores, `AgentToolExecutor`, discovered `Provider` beans, model router, context planner, optional memory/cache/event services and a tool execution context.
+5. `DefaultAgentToolExecutor` is `@ApplicationScoped`; it discovers `Tool` beans and optional guardrail, policy, cache and event-ledger services through CDI `Instance<T>` injection.
+6. `DefaultAgentExecution` builds the ReAct agent, routes to a selected model provider, bridges tool execution through the executor/policy path and persists agent context through the checkpoint bridge.
+
+This establishes a real CDI-managed agent execution path. It is separate from Framework's external-JAR `RuntimePluginManager` lifecycle and does not by itself prove that plugin-provided agents/tools are registered into these CDI collections.
+
+### 14.2 Required and optional CDI dependencies
+
+The inspected source identifies these important bean requirements:
+
+| Contract / implementation | Composition evidence | Notes |
+|---|---|---|
+| `ExecutionEngine` / `DefaultExecutionEngine` | Concrete implementation is `@ApplicationScoped` | Injected by `DefaultAndalusRuntime`; no separate producer needed in the inspected path |
+| `AgentExecutionService` | Concrete class is `@ApplicationScoped` | Injected by `DefaultExecutionEngine` |
+| `CheckpointStore` (AgentContext snapshots) / `InMemoryCheckpointStore` | Concrete implementation is `@ApplicationScoped` | Separate from the execution API checkpoint store produced by REST `ExecutionProducer` |
+| `ExecutionCheckpointStore` / `InMemoryExecutionCheckpointStore` | Concrete implementation is `@ApplicationScoped` | Optional CDI `Instance` in `AgentExecutionService` |
+| `AgentToolExecutor` / `DefaultAgentToolExecutor` | Concrete implementation is `@ApplicationScoped` | Required injection in `AgentExecutionService` |
+| `ToolBudgetLedger` | Concrete class is `@ApplicationScoped` | Required injection in `AgentExecutionService`; defaults to unlimited budget when no configured budget exists |
+| `Provider` | Injected as `Instance<Provider>` and enumerated at execution creation | The inspected Runtime provider implementations are plain classes with constructor-supplied configuration; no CDI producer/bean registration for them was found in the targeted Runtime tree |
+| `ModelRouter`, `RuntimeContextPlanner` | Optional CDI instances with in-code fallbacks | Falls back to `DefaultModelRouter` and `DefaultRuntimeContextPlanner` |
+| `MemoryManager`, `ExecutionCache`, `EventLedger`, `ExecutionCheckpointStore`, `ContextProvider` | Optional CDI instances | Absence is tolerated for these optional integrations |
+| `Tool` | Enumerated through `Instance<Tool>` in `DefaultAgentToolExecutor` | Tool classes must be CDI beans or otherwise produced; ServiceLoader entries for other tool interfaces do not automatically satisfy this injection |
+
+The two checkpoint families must remain explicit. `AgentExecutionService` uses the same-package AgentContext-oriented `CheckpointStore` and `InMemoryCheckpointStore`; REST `ExecutionProducer` produces the separate `tech.kayys.andalus.execution.checkpoint.CheckpointStore` for execution-core recovery. The latter producer does not satisfy the former injection merely because both simple names are `CheckpointStore`.
+
+### 14.3 Model-provider wiring gap
+
+- `AgentExecutionService` collects every CDI-managed `Provider` bean into a list and passes it to `DefaultAgentExecution`.
+- The inspected `runtime/andalus-runtime-provider` classes (`AndalusProvider`, `AnthropicProvider`, `OpenAiProvider`, `DemoProvider`) are plain provider implementations with explicit constructor configuration; they are not annotated CDI beans.
+- The targeted Runtime tree search found no `Provider` producer or provider factory that turns configured provider instances into CDI beans.
+- Separately, `BackendProducer` exposes `InferenceBackend` and `WorkflowBackend` from the static `BackendRegistry`. Those backend interfaces are not the `tech.kayys.andalus.provider.Provider` contract consumed by the ReAct execution path.
+
+**Conclusion:** there are two distinct inference integration surfaces: the ReAct `Provider`/model-router path and the backend `InferenceBackend` ServiceLoader path. The source inspected does not show an adapter connecting them, nor a configuration-to-CDI-provider composition path for the former. Do not assume that registering a `BackendProvider` makes a ReAct `Provider` available.
+
+### 14.4 Caller identity is dropped by the default runtime facade
+
+This is a significant context-propagation gap:
+
+- `AgentExecutionService.create(..., tenantId, userId, roles)` supports an explicit authenticated caller context and rejects roles when no user identity is supplied.
+- However, `DefaultExecutionEngine.executeAgent(...)` calls only the three-argument `create(agent, request, budget)` overload. That overload delegates with null tenant/user and an empty role set.
+- `DefaultAndalusRuntime.executeSync(agent, request)` constructs a graph context from the request and calls `ExecutionEngine.executeAgent`; its public method signature carries no principal, tenant, role, capability or policy context.
+- Consequently, the default `AndalusRuntime` facade path constructs an anonymous tool execution context even when an upstream product may have authenticated the caller, unless the caller bypasses this facade and invokes the explicit `AgentExecutionService` overload through another integration.
+
+**Required direction:** introduce a trusted invocation context at the runtime boundary (or a separate overload that accepts one), populate it only from host-validated authentication/authorization context, and propagate it unchanged through `DefaultAndalusRuntime` → `ExecutionEngine` → `AgentExecutionService` → tool/capability contexts. Never accept principal or roles from model-generated prompt variables. Preserve the current anonymous overload for standalone use, with explicit semantics.
+
+### 14.5 Execution-path correctness and policy questions
+
+- `DefaultExecutionEngine` currently extracts the prompt and creates a fresh default budget; it does not propagate a caller-provided budget or security context from `GraphExecutionContext`.
+- `DefaultAgentExecution` builds the ReAct agent with `withAutoApproveTools(true)`; its listener also approves tool permission callbacks automatically in the inspected headless execution path. This must be reconciled with the policy bridge and tool policy evaluator before the path is treated as safe for untrusted or multi-tenant deployments. Approval UX and authorization policy must remain distinct.
+- `DefaultAgentToolExecutor` contains the intended tool pipeline (tool resolution, argument validation, budget checks, policy evaluation, optional guardrails, circuit breaker, retry and timeout). The complete policy-provider default behavior and production bean presence still require a separate focused audit.
+- `DefaultExecutionEngine` catches execution exceptions and maps them to a failed `ExecutionResult`, while the top-level facade maps results to `AgentResponse`. Conformance tests should verify failure identity, cancellation, timeout, budget and policy-denial propagation through the complete facade path.
+
+### 14.6 Narrow implementation sequence
+
+Before changing the public Framework plugin SPI, the next implementation work should be:
+
+1. Decide and document one supported model-provider composition path. Either make configured `Provider` implementations CDI-discoverable through a deliberate provider factory/producer, or adapt the existing backend registry to the ReAct provider contract. Do not conflate the two contracts.
+2. Add a trusted invocation-context contract to the Runtime entry path and propagate tenant/principal/roles/budget/correlation/deadline/cancellation. Keep the anonymous convenience API explicit.
+3. Make tool auto-approval a deliberate deployment policy, not a hard-coded behavior for general server execution. Ensure policy denial cannot be bypassed by an approval callback.
+4. Add Quarkus integration tests that boot the actual CDI container and prove required beans resolve, provider selection works, tools are discovered, caller identity reaches policy evaluation, and absent optional beans degrade as documented.
+5. Reconcile the Runtime parent version mismatch already recorded in section 13 before claiming reactor compatibility.
+
+**Limitations:** this is source inspection and targeted tree search. No Maven build, Quarkus startup, Arc bean validation, ServiceLoader runtime test, provider API call or end-to-end execution test was run. The provider-bean absence conclusion is bounded to the inspected Runtime tree and must be verified with a clean-checkout bean/import scan before being treated as a repository-wide proof.
