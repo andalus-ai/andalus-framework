@@ -243,7 +243,8 @@ public class ReActAgent extends BaseReActAgent {
                 try {
                     return tool.execute(
                             invocation,
-                            toolContext
+                            toolContext,
+                            cancellationToken
                     ).get();
                 } catch (Exception e) {
                     throw new RuntimeException(e);
@@ -251,7 +252,7 @@ public class ReActAgent extends BaseReActAgent {
             });
         }
         // Fallback: direct execution (no policy, no retry, no CB).
-        return tool.execute(invocation, toolContext).get();
+        return tool.execute(invocation, toolContext, cancellationToken).get();
     }
 
     // -------------------------------------------------------------------------
