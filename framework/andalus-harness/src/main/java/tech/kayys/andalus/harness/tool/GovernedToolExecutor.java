@@ -88,12 +88,22 @@ public class GovernedToolExecutor {
         Objects.requireNonNull(intent, "intent cannot be null");
         ToolInvocationId invocationId = ToolInvocationId.generate();
 
+        CancellationToken cancellation = context != null && context.cancellation() != null
+                ? context.cancellation()
+                : CancellationToken.none();
+        if (cancellation.isCancellationRequested()) {
+            return ToolResult.canceled(invocationId);
+        }
+
         // 1. Event: Tool requested
         if (eventConsumer != null) {
             eventConsumer.accept(ToolEvent.of(invocationId, ToolEventType.TOOL_REQUESTED, Map.of("capability", intent.capability())));
         }
 
         // 2. Capability verification
+        if (cancellation.isCancellationRequested()) {
+            return ToolResult.canceled(invocationId);
+        }
         if (capabilityScope != null) {
             var capDecision = capabilityScope.evaluate(CapabilityRequest.of(
                     intent.capability(),
@@ -108,6 +118,9 @@ public class GovernedToolExecutor {
         HarnessAction action = DefaultHarnessAction.of("tool", intent.capability(), null, intent.arguments().asMap(), ActionMetadata.readOnly());
 
         // 3. Policy evaluation
+        if (cancellation.isCancellationRequested()) {
+            return ToolResult.canceled(invocationId);
+        }
         if (policyChain != null) {
             PolicyContext policyContext = (context instanceof PolicyContext pc) ? pc : new PolicyContext() {
                 @Override
@@ -159,6 +172,9 @@ public class GovernedToolExecutor {
         }
 
         // 4. Budget reservation
+        if (cancellation.isCancellationRequested()) {
+            return ToolResult.canceled(invocationId);
+        }
         BudgetReservation reservation = null;
         if (budgetManager != null) {
             try {
@@ -177,6 +193,9 @@ public class GovernedToolExecutor {
         }
 
         // 5. Tool Resolution
+        if (cancellation.isCancellationRequested()) {
+            return ToolResult.canceled(invocationId);
+        }
         ToolResolutionContext resolutionContext = new ToolResolutionContext(
                 context != null ? context.identity() : null,
                 context != null ? context.resources() : null,
@@ -194,6 +213,9 @@ public class GovernedToolExecutor {
         }
 
         // 6. Input validation
+        if (cancellation.isCancellationRequested()) {
+            return ToolResult.canceled(invocationId);
+        }
         if (!inputValidator.validate(intent.arguments(), descriptor.toolInputSchema())) {
             return ToolResult.failure(invocationId, "Input validation failed against schema for tool: " + descriptor.name(), Duration.ZERO, "validator");
         }
@@ -218,9 +240,13 @@ public class GovernedToolExecutor {
         Instant start = Instant.now();
         ToolResult rawResult;
         try {
-            rawResult = executor.executeBlocking(invocation, context);
+            rawResult = executor.executeBlocking(invocation, context, cancellation);
         } catch (Throwable t) {
             rawResult = ToolResult.failure(invocationId, t.getMessage() != null ? t.getMessage() : t.getClass().getSimpleName(), Duration.between(start, Instant.now()), descriptor.name());
+        }
+
+        if (cancellation.isCancellationRequested() && rawResult.status() == ToolResultStatus.SUCCESS) {
+            rawResult = ToolResult.canceled(invocationId);
         }
 
         Duration duration = Duration.between(start, Instant.now());
@@ -234,6 +260,9 @@ public class GovernedToolExecutor {
         }
 
         // 8. Output validation & truncation
+        if (cancellation.isCancellationRequested() && rawResult.status() == ToolResultStatus.SUCCESS) {
+            rawResult = ToolResult.canceled(invocationId);
+        }
         ToolResult validatedResult = outputValidator.validate(rawResult, context);
 
         // 9. Journal completion
