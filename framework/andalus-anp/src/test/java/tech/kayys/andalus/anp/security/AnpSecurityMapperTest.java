@@ -10,7 +10,8 @@ import tech.kayys.andalus.anp.identity.DidWbaIdentity;
 import tech.kayys.andalus.anp.identity.InMemoryAnpKeyStore;
 import tech.kayys.andalus.security.propagation.SecurityContextSnapshot;
 
-import java.nio.charset.StandardCharsets;
+import java.security.KeyPair;
+import java.security.KeyPairGenerator;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -26,15 +27,15 @@ class AnpSecurityMapperTest {
     private AnpIdentityKeyPair keyPair;
 
     @BeforeEach
-    void setUp() {
+    void setUp() throws Exception {
         authenticator = new AnpAuthenticator();
         InMemoryAnpKeyStore keyStore = new InMemoryAnpKeyStore();
-        byte[] secret = "test-secret-key-material-32bytes!".getBytes(StandardCharsets.UTF_8);
+        KeyPair generated = KeyPairGenerator.getInstance("Ed25519").generateKeyPair();
         keyPair = new AnpIdentityKeyPair(
                 "did:wba:example.com:agent1#key-1",
-                "hmac-sha256",
-                secret,
-                secret
+                "Ed25519",
+                generated.getPrivate().getEncoded(),
+                generated.getPublic().getEncoded()
         );
         keyStore.storeKey("agent1", keyPair);
         mapper = new AnpSecurityMapper(
