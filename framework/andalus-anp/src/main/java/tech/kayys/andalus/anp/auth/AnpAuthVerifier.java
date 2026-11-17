@@ -10,9 +10,7 @@ import java.security.MessageDigest;
 import java.util.Objects;
 import java.util.Optional;
 
-/**
- * Verifies inbound ANP HTTP signatures against registered agent public keys.
- */
+/** Verifies inbound ANP HTTP signatures against active registered signing keys. */
 public final class AnpAuthVerifier {
 
     private final AnpKeyStore keyStore;
@@ -21,9 +19,7 @@ public final class AnpAuthVerifier {
         this.keyStore = Objects.requireNonNull(keyStore, "keyStore");
     }
 
-    /**
-     * Verifies an incoming request signature.
-     */
+    /** Revoked or unsupported key-store entries are rejected before cryptographic verification. */
     public boolean verify(
             String method,
             String path,
@@ -32,7 +28,7 @@ public final class AnpAuthVerifier {
 
         Objects.requireNonNull(signature, "signature");
 
-        Optional<AnpIdentityKeyPair> keyOpt = keyStore.getKey(signature.keyId());
+        Optional<AnpIdentityKeyPair> keyOpt = keyStore.getActiveKey(signature.keyId());
         if (keyOpt.isEmpty()) {
             return false;
         }
