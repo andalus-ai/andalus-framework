@@ -57,8 +57,8 @@ class AnpHttpSignatureTest {
         keyStore.revokeKey(keyPair.keyId());
 
         assertFalse(verifier.verify("POST", "/message", "example.com", sig));
-        assertTrue(keyStore.getKey(keyPair.keyId()).isPresent(),
-                "Revocation need not delete retained key material");
+        assertTrue(keyStore.getKey(keyPair.keyId()).isEmpty(),
+                "Revoked key material must not be exposed through the key-store API");
         assertTrue(keyStore.getActiveKey(keyPair.keyId()).isEmpty());
         assertTrue(keyStore.getAgentKeyId("agent1").isEmpty());
     }
