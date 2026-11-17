@@ -20,7 +20,7 @@ The execution API documentation says invalid lifecycle transitions should be rej
 
 | Contract | Definition | Confirmed implementation | Notes |
 |---|---|---|---|
-| Engine snapshot store | `framework/andalus-engine/.../execution/CheckpointStore.java` | No implementation confirmed in the inspected tree paths | Saves/restores engine `ExecutionSnapshot`; `getLatest` default returns null |
+| Engine snapshot store | `framework/andalus-engine/.../engine/snapshot/EngineSnapshotStore.java` | No implementation confirmed in the inspected tree paths | Saves/restores engine `ExecutionSnapshot`; distinct FQN; `getLatest` returns `Optional` derived from `list()` by default |
 | Execution checkpoint store | `framework/andalus-execution-api/.../execution/checkpoint/CheckpointStore.java` | `framework/andalus-execution-core/.../checkpoint/InMemoryExecutionCheckpointStore.java` | Stores execution checkpoint with attempt, sequence, payload and manifest |
 | State checkpoint store | `framework/andalus-state-api/.../state/checkpoint/CheckpointStore.java` | `framework/andalus-state-core/.../InMemoryCheckpointStore.java` | Stores state/context/artifact/provenance envelope |
 | AgentContext checkpoint store | `framework/andalus-runtime-spi/.../execution/CheckpointStore.java` | No framework-repository implementation confirmed in inspected paths; runtime repo has an implementation | Legacy/runtime-specific contract for AgentContext snapshots |
@@ -40,7 +40,7 @@ The ADR should decide whether one is the canonical durable execution envelope an
 - Runtime-core directly declares dependencies on `andalus-execution-api`, `andalus-runtime-spi` and `andalus-engine`.
 - `andalus-engine` declares its own same-package graph `ExecutionContext` and `ExecutionEngine` contract.
 - `andalus-execution-core` depends on `andalus-execution-api` and provides the invocation-context implementation.
-- The duplicate `ExecutionContext` FQN is therefore a cross-artifact concern, not two declarations in one source module.
+- The duplicate `ExecutionContext` FQN was a cross-artifact concern, not two declarations in one source module. The separate engine/runtime `CheckpointStore` FQN collision was removed by renaming the engine-local port to `EngineSnapshotStore` under `tech.kayys.andalus.engine.snapshot`.
 
 A resolved Maven dependency tree and clean build are required to establish the actual compiler/classloader behavior.
 
@@ -82,7 +82,7 @@ A proposed decision record captures the separation of invocation and graph execu
 ## 7. Recommended decisions before source migration
 
 1. Name the graph context distinctly, e.g. `GraphExecutionContext`, and reserve `ExecutionContext` for invocation-level context only if that ownership decision is approved.
-2. Resolve checkpoint ownership and recovery semantics using ADR-0002; do not conflate engine snapshots, execution checkpoint envelopes, state checkpoints and AgentContext snapshots.
+2. Continue resolving checkpoint ownership and recovery semantics using ADR-0002; do not conflate engine snapshots, execution checkpoint envelopes, state checkpoints and AgentContext snapshots. The engine-local port has been given a distinct FQN; its runtime implementation and migration compatibility remain unverified.
 3. Deprecate old contracts only after adapters and compatibility tests exist.
 4. Enforce lifecycle transitions in `DefaultExecutionContext`.
 5. Make checkpoint sequence writes atomic per execution and define duplicate/idempotency behavior.
