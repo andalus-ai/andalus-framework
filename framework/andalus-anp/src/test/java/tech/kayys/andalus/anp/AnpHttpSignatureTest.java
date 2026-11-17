@@ -38,28 +38,55 @@ class AnpHttpSignatureTest {
     @Test
     void signsAndVerifiesValidRequest() {
         AnpHttpSignature sig = authenticator.sign("POST", "/message", "example.com", keyPair);
-
         assertNotNull(sig);
         assertEquals("did:wba:example.com:agent1#key-1", sig.keyId());
-
-        boolean valid = verifier.verify("POST", "/message", "example.com", sig);
-        assertTrue(valid, "Signature should be valid for authentic request");
+        assertTrue(verifier.verify("POST", "/message", "example.com", sig));
     }
 
     @Test
     void rejectsTamperedPathOrMethod() {
         AnpHttpSignature sig = authenticator.sign("POST", "/message", "example.com", keyPair);
+        assertFalse(verifier.verify("GET", "/message", "example.com", sig));
+        assertFalse(verifier.verify("POST", "/tampered", "example.com", sig));
+        assertFalse(verifier.verify("POST", "/message", "otherhost.com", sig));
+    }
 
-        assertFalse(verifier.verify("GET", "/message", "example.com", sig), "Method tamper should fail");
-        assertFalse(verifier.verify("POST", "/tampered", "example.com", sig), "Path tamper should fail");
-        assertFalse(verifier.verify("POST", "/message", "otherhost.com", sig), "Host tamper should fail");
+    @Test
+    void revokedKeyCannotAuthenticateAnAlreadySignedRequest() {
+        AnpHttpSignature sig = authenticator.sign("POST", "/message", "example.com", keyPair);
+        keyStore.revokeKey(keyPair.keyId());
+
+        assertFalse(verifier.verify("POST", "/message", "example.com", sig));
+        assertTrue(keyStore.getKey(keyPair.keyId()).isPresent(),
+                "Revocation need not delete retained key material");
+        assertTrue(keyStore.getActiveKey(keyPair.keyId()).isEmpty());
+        assertTrue(keyStore.getAgentKeyId("agent1").isEmpty());
+    }
+
+    @Test
+    void revokedKeyIdCannotBeReactivatedButRotationWithNewIdWorks() {
+        keyStore.revokeKey(keyPair.keyId());
+        assertThrows(IllegalStateException.class, () -> keyStore.storeKey("agent1", keyPair));
+
+        byte[] rotatedSecret = "rotated-test-secret-material-32b".getBytes(StandardCharsets.UTF_8);
+        AnpIdentityKeyPair rotated = new AnpIdentityKeyPair(
+                "did:wba:example.com:agent1#key-2",
+                "hmac-sha256",
+                rotatedSecret,
+                rotatedSecret
+        );
+        keyStore.storeKey("agent1", rotated);
+
+        assertEquals(rotated.keyId(), keyStore.getAgentKeyId("agent1").orElseThrow());
+        AnpHttpSignature rotatedSignature =
+                authenticator.sign("POST", "/message", "example.com", rotated);
+        assertTrue(verifier.verify("POST", "/message", "example.com", rotatedSignature));
     }
 
     @Test
     void signatureHeaderRoundTrip() {
         AnpHttpSignature sig = authenticator.sign("POST", "/message", "example.com", keyPair);
         String header = sig.toHeaderValue();
-
         AnpHttpSignature parsed = AnpHttpSignature.parseHeader(header);
         assertEquals(sig.keyId(), parsed.keyId());
         assertEquals(sig.algorithm(), parsed.algorithm());
