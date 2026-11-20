@@ -77,7 +77,7 @@ class PlanRevisionDiffCalculatorTest {
     }
 
     private static AgentPlan plan(long revision, List<PlanStep> steps) {
-        return new AgentPlan(PlanId.generate(), "execution", Optional.empty(), revision,
+        return new AgentPlan(PlanId.of("plan"), "execution", Optional.empty(), revision,
                 PlanStatus.PROPOSED, steps, Instant.EPOCH, Map.of());
     }
 
