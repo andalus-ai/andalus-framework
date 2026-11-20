@@ -651,3 +651,49 @@ Before changing the public Framework plugin SPI, the next implementation work sh
 5. Reconcile the Runtime parent version mismatch already recorded in section 13 before claiming reactor compatibility.
 
 **Limitations:** this is source inspection and targeted tree search. No Maven build, Quarkus startup, Arc bean validation, ServiceLoader runtime test, provider API call or end-to-end execution test was run. The provider-bean absence conclusion is bounded to the inspected Runtime tree and must be verified with a clean-checkout bean/import scan before being treated as a repository-wide proof.
+
+
+## 15. Tool policy enforcement and approval-bridge correction
+
+A focused trace of DefaultAgentToolExecutor, DefaultToolPolicyEvaluator, the built-in policies and the ReAct bridge found both a real bypass and important limits to the existing approval model.
+
+### 15.1 Confirmed policy pipeline
+
+- DefaultAgentToolExecutor.execute(invocation, context, cancellation) resolves the CDI Tool, performs its lightweight required-field validation, builds ToolPermissionContext and PolicyEvaluationContext from the immutable execution context, then evaluates policy before guardrails, budget reservation, cache lookup or actual tool execution.
+- DefaultToolPolicyEvaluator is an @ApplicationScoped bean. It discovers ToolPolicy beans, sorts them by priority, short-circuits on deny, combines approval decisions, and treats a policy exception as DENY.
+- Two built-in CDI policies are present:
+  - CapabilityLevelPolicy (priority 10) denies SHELL and SYSTEM tools unless the caller has the corresponding explicit approval role.
+  - WriteApprovalGatePolicy (priority 20) requires approval for WRITE and higher capabilities unless an explicit write-auto-approved role (or wildcard role) is present.
+- The ReAct execution path has no in-loop approval-resume mechanism. ToolPolicyBridge correctly treats WaitForApproval as a refusal rather than executing the tool; the current synchronous execution cannot safely pause for a human approver and later resume that exact invocation.
+
+### 15.2 Bypass found and corrected in Runtime
+
+DefaultAgentExecution contained two consecutive policy-bridge initializations. The first created ToolPolicyBridge, but a second conditional lambda followed it and was intended to replace it. That lambda's switch sent unknown decisions—including WaitForApproval—to directFallback, which executes the tool directly and bypasses the governed executor. The checked-in source also had the conditional expression detached from its assignment, making the block syntactically invalid Java.
+
+The Runtime correction:
+1. Removes the duplicate conditional lambda and keeps one ToolPolicyBridge.
+2. Makes the bridge call AgentToolExecutor.execute(invocation, context, cancellation) so the immutable tenant/user/roles/budget context reaches the policy evaluator; the former bridge overload omitted that context.
+3. Keeps direct fallback available only for an explicit AgentDecision.ExecuteTool.
+4. Rejects WaitForApproval, Fail, and unknown decisions without invoking direct fallback.
+5. Extends ToolPolicyBridgeTest to assert that approval-required and unexpected decisions do not execute the fallback, and that the exact execution context is passed to the governed executor.
+
+Runtime commits:
+- d7bf314289d7b3d74c4cdae68ecc71705364e1f9 — preserve execution context in tool policy bridge.
+- 574499abb06f4b29b808d4b3a7408a5ce3201fc — enforce tool approval decisions in agent execution.
+- 0be0d06481222010bd6d72a071df7704f1ef8e35 — test policy bridge identity and approval handling.
+
+### 15.3 Remaining policy and approval design gaps
+
+- DefaultAgentToolExecutor.evaluatePolicy returns ALLOW when its ToolPolicyEvaluator CDI instance is absent or unsatisfied. DefaultToolPolicyEvaluator normally exists in the Runtime core bean archive, but manually constructed/partially wired executors can silently become fail-open. Production composition should require the evaluator or use an explicit, named standalone policy mode; absence must not silently mean unrestricted access.
+- DefaultToolPolicyEvaluator with zero discovered ToolPolicy beans returns ALLOW. The built-in policies are CDI beans in Runtime core, but packaged deployments must verify that they are actually included and discovered.
+- DefaultAgentExecution still enables ReAct permission auto-approval and its listener approves the ReAct UI permission callback. After the bridge correction this does not override a ToolPolicyEvaluator DENY or WaitForApproval, because every tool call still passes through the governed executor. It is nevertheless an approval-UX shortcut, not an authorization mechanism, and should be made explicit/configurable before exposing the runtime to untrusted callers.
+- The built-in policy capability level is inferred from tool-name prefixes in DefaultAgentToolExecutor, not from a trusted capability registry or a signed/validated tool descriptor. A renamed or poorly classified tool may receive the wrong policy level. Capability classification should move to trusted tool metadata/registry semantics.
+- WriteApprovalGatePolicy can return RequireApproval, but this execution path cannot collect approval and resume. It therefore fails the call safely; a future resumable approval workflow needs a durable pending invocation, approver identity, expiry, replay/idempotency protection and re-evaluation at resume time.
+- AgentToolExecutionContext rejects wildcard roles, so the wildcard bypass branches in the built-in policies are not reachable through the standard immutable execution-context constructor. Standalone behavior should be represented by an explicit trusted execution mode, not by adding a wildcard role.
+
+### 15.4 Verification status and next work
+
+- Source changes and tests were committed directly to the Runtime repository's default branch; no PR was opened.
+- GitHub source fetches verified the corrected bridge, caller-context propagation and added tests.
+- Maven compilation and tests have not been run in this environment. In particular, Quarkus CDI discovery, the policy bean set in the packaged application, and end-to-end ReAct tool invocation still require runtime verification.
+- Next bounded work: make policy-evaluator absence explicit and fail-safe; replace name-prefix capability inference with trusted metadata; then add Quarkus integration tests proving built-in policies are discovered and enforced through the actual ReAct execution path.
