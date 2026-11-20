@@ -46,7 +46,7 @@ class StdioMcpToolClientMultiplexingTest {
         Thread.sleep(75);
         cancellation.cancel();
         assertThatThrownBy(() -> cancelled.get(5, TimeUnit.SECONDS))
-            .hasCauseInstanceOf(java.util.concurrent.CancellationException.class);
+            .isInstanceOf(java.util.concurrent.CancellationException.class);
 
         McpToolCallResult afterCancellation = client.callTool(
             McpToolInvocation.of(tool, Map.of("label", "still-alive", "delayMs", 1)))
