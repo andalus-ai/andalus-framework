@@ -56,6 +56,22 @@ class PlanRevisionDiffCalculatorTest {
     }
 
     @Test
+    void revisionRecordRetainsTheCalculatedDiffAndPolicy() {
+        AgentPlan previous = plan(0, List.of(step("done", "Completed")));
+        AgentPlan revised = plan(1, List.of(step("new", "Replacement work")));
+        List<PlanExecutionFeedback> feedback = List.of(
+                feedback("done", PlanExecutionFeedback.Outcome.SUCCEEDED));
+
+        PlanRevisionRecord record = PlanRevisionRecord.of(previous, revised, "requirements changed",
+                feedback, PlanRevisionPolicy.ALLOW_COMPLETED_STEP_REPLACEMENT);
+
+        assertEquals(PlanRevisionPolicy.ALLOW_COMPLETED_STEP_REPLACEMENT, record.revisionPolicy());
+        assertEquals(List.of(id("new")), record.diff().addedStepIds());
+        assertEquals(List.of(id("done")), record.diff().removedStepIds());
+        assertEquals(List.of(id("done")), record.diff().replacedCompletedStepIds());
+    }
+
+    @Test
     void rejectsDuplicateStepIdsAndFeedbackForUnknownSteps() {
         AgentPlan duplicate = plan(0, List.of(step("same", "One"), step("same", "Two")));
         AgentPlan valid = plan(1, List.of(step("same", "One")));
