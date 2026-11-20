@@ -176,9 +176,7 @@ public final class StdioMcpToolClient implements McpToolClient {
                     }
                 });
             try {
-                if (cancellation != null && cancellation.isCancellationRequested())
-                    throw new CancellationException("STDIO MCP request cancelled before write.");
-                writeMessage(request);
+                writeRequestIfPending(request, id, response, cancellation);
                 return response.get();
             } catch (ExecutionException e) {
                 Throwable cause = e.getCause();
@@ -208,13 +206,30 @@ public final class StdioMcpToolClient implements McpToolClient {
             writeMessage(notification);
         }
 
+        private void writeRequestIfPending(Map<String, Object> request, String id,
+                                           CompletableFuture<Map<String, Object>> response,
+                                           CancellationToken cancellation) throws IOException {
+            synchronized (writer) {
+                if (closed || !process.isAlive()) throw unavailableFailure();
+                if (pending.get(id) != response ||
+                    (cancellation != null && cancellation.isCancellationRequested())) {
+                    throw new CancellationException("STDIO MCP request cancelled before write.");
+                }
+                writeMessageLocked(request);
+            }
+        }
+
         private void writeMessage(Map<String, Object> message) throws IOException {
             synchronized (writer) {
                 if (closed || !process.isAlive()) throw unavailableFailure();
-                writer.write(mapper.writeValueAsString(message));
-                writer.newLine();
-                writer.flush();
+                writeMessageLocked(message);
             }
+        }
+
+        private void writeMessageLocked(Map<String, Object> message) throws IOException {
+            writer.write(mapper.writeValueAsString(message));
+            writer.newLine();
+            writer.flush();
         }
 
         private void readResponses() {
