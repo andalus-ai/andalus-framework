@@ -818,3 +818,42 @@ Runtime policy documentation was updated to accurately describe matching approva
 No adapter was added in this audit step because the legacy SPI source/artifact contract is not present in the inspected Runtime repository tree, and the two tool interfaces have materially different execution/context signatures. Implementing a guessed bridge here would risk breaking binary/source compatibility or bypassing governance. The next implementation task is to locate/confirm the canonical legacy SPI artifact contract and add the adapter at the correct module boundary.
 
 No builds or tests were run for this section.
+
+
+## 19. Legacy tool SPI contract resolution
+
+### Source-level result
+
+The adapter implementation was deliberately paused until the exact legacy interface could be verified. The repository-tree inspection establishes:
+
+- The andalus repository contains the OS and MCP implementations importing tech.kayys.andalus.tools.spi.Tool, ToolContext, and ToolResult.
+- andalus-tool-os/pom.xml declares dependencies on tech.kayys.andalus:andalus-tool:0.0.1 and tech.kayys.andalus:andalus-spi:0.0.1.
+- The checked-in andalus tree does not contain source files for the tech.kayys.andalus.tools.spi package or the andalus-tool / andalus-spi source modules that provide those coordinates.
+- The checked-in andalus-framework tree contains tech.kayys.andalus.spi.tool.Tool, but this is not the imported legacy package. Its API is materially different: it exposes getId(), getDescription(), and execute(Object); it does not define the map/context/result contract used by the legacy tools.
+- The governed API is a separate third contract: tech.kayys.andalus.tool.Tool, which accepts ToolInvocation, ToolContext, and optional CancellationToken, and returns CompletableFuture<ToolResult>.
+
+The checked-in OS implementation confirms the legacy execution shape at its call sites: id(), name(), description(), inputSchema(), and execute(Map<String,Object>, ToolContext) returning legacy ToolResult. The MCP implementation additionally exposes an asynchronous executeAsync(...) returning Mutiny Uni<ToolResult>. These observations are useful but do not replace the canonical interface definition, especially for context fields, result metadata, exceptions, cancellation, and binary compatibility.
+
+### Adapter decision
+
+Do not implement the bridge against the similarly named Framework tech.kayys.andalus.spi.tool.Tool interface, and do not copy/recreate the missing legacy API from implementation call sites.
+
+The adapter should live in a dedicated integration module that can depend on both the canonical legacy SPI artifact and the governed Framework tool API, without pulling legacy dependencies into Framework core. The exact module and dependency versions remain undecided until the legacy artifact source is located.
+
+### Required input to unblock implementation
+
+Locate the source repository or provide the source/JAR for the exact published artifacts:
+
+- tech.kayys.andalus:andalus-tool:0.0.1
+- tech.kayys.andalus:andalus-spi:0.0.1
+
+The artifact must include the canonical definitions of tech.kayys.andalus.tools.spi.Tool, ToolContext, and ToolResult, plus any related schema and async execution contracts. Once available, inspect their full semantics and then implement the adapter with trusted registration-time profiles and governed CDI registration.
+
+### Verification
+
+- Confirmed the legacy imports and call sites in BashTool and McpTool.
+- Confirmed the OS module's declared dependency coordinates and versions.
+- Confirmed neither checked-in repository tree contains the legacy package source.
+- Confirmed the Framework's similarly named tech.kayys.andalus.spi.tool.Tool is a different interface.
+- No source changes to runtime tool execution were made; no speculative adapter was introduced.
+- No Maven build or tests were run.
