@@ -20,13 +20,34 @@ public final class InMemoryPlanRevisionHistory implements PlanRevisionHistory {
     @Override
     public void append(PlanRevisionRecord record) {
         Objects.requireNonNull(record, "record is required");
+        compareAndAppend(record, record.fromRevision());
+    }
+
+    @Override
+    public void compareAndAppend(PlanRevisionRecord record, long expectedCurrentRevision) {
+        Objects.requireNonNull(record, "record is required");
         records.compute(record.planId(), (id, existing) -> {
             List<PlanRevisionRecord> updated = existing == null
                     ? new ArrayList<>() : new ArrayList<>(existing);
+            long actualCurrentRevision = updated.isEmpty()
+                    ? -1L : updated.get(updated.size() - 1).toRevision();
+
+            if (expectedCurrentRevision != record.fromRevision()) {
+                throw new PlanRevisionConflictException(
+                        id, expectedCurrentRevision, actualCurrentRevision,
+                        "expected revision must match the record's fromRevision");
+            }
             if (!updated.isEmpty()) {
                 PlanRevisionRecord latest = updated.get(updated.size() - 1);
-                if (record.fromRevision() != latest.toRevision()) {
-                    throw new IllegalStateException("Revision history is not contiguous for plan " + id);
+                if (actualCurrentRevision != expectedCurrentRevision) {
+                    throw new PlanRevisionConflictException(
+                            id, expectedCurrentRevision, actualCurrentRevision,
+                            "another revision was already appended");
+                }
+                if (!latest.revisedPlan().equals(record.previousPlan())) {
+                    throw new PlanRevisionConflictException(
+                            id, expectedCurrentRevision, actualCurrentRevision,
+                            "previous plan snapshot differs from the latest accepted plan");
                 }
             }
             updated.add(record);
