@@ -9,6 +9,8 @@ package tech.kayys.andalus.harness.planning;
  */
 public final class PlanRevisionConflictException extends RuntimeException {
 
+    private static final long serialVersionUID = 1L;
+
     private final PlanId planId;
     private final long expectedCurrentRevision;
     private final long actualCurrentRevision;
