@@ -37,6 +37,7 @@ public interface PlanRevisionHistory {
                                 == query.completedWorkReplaced())
                 .toList();
     }
+
     /**
      * Return one stable page of revision records.
      *
