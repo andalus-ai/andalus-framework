@@ -14,6 +14,24 @@ public interface PlanRevisionHistory {
     /** Append an accepted revision record. */
     void append(PlanRevisionRecord record);
 
+
+    /**
+     * Atomically append a revision only if the stored current revision matches
+     * {@code expectedCurrentRevision}.
+     *
+     * <p>Implementations must perform the comparison and append as one atomic
+     * storage operation. They must reject duplicate or stale transitions with
+     * {@link PlanRevisionConflictException}. The expected revision must equal
+     * {@code record.fromRevision()}. The default fails closed so legacy
+     * implementations remain source-compatible without claiming atomicity;
+     * storage implementations used by {@link DefaultPlanningRuntime} must
+     * override this method.</p>
+     */
+    default void compareAndAppend(PlanRevisionRecord record, long expectedCurrentRevision) {
+        throw new UnsupportedOperationException(
+                "This PlanRevisionHistory implementation does not support atomic compare-and-append");
+    }
+
     /** Return the revision records for a plan in ascending revision order. */
     List<PlanRevisionRecord> revisions(PlanId planId);
 
