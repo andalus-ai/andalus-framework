@@ -14,10 +14,14 @@ public final class ExecutionSnapshot {
     private final Instant createdAt;
 
     public ExecutionSnapshot(UUID executionId, ExecutionState state) {
-        this.id = UUID.randomUUID();
+        this(UUID.randomUUID(), executionId, state, Instant.now());
+    }
+
+    private ExecutionSnapshot(UUID id, UUID executionId, ExecutionState state, Instant createdAt) {
+        this.id = id;
         this.executionId = executionId;
         this.state = state;
-        this.createdAt = Instant.now();
+        this.createdAt = createdAt;
     }
 
     public UUID getId() {
@@ -67,15 +71,11 @@ public final class ExecutionSnapshot {
         }
 
         public ExecutionSnapshot build() {
-            ExecutionSnapshot snapshot = new ExecutionSnapshot(executionId, state);
-            if (id != null) {
-                // Reflection would be needed to set id, or use a different constructor
-                // For simplicity, we'll use the generated id
-            }
-            if (createdAt != null) {
-                // Similarly for createdAt
-            }
-            return snapshot;
+            return new ExecutionSnapshot(
+                    id != null ? id : UUID.randomUUID(),
+                    executionId,
+                    state,
+                    createdAt != null ? createdAt : Instant.now());
         }
     }
 }
