@@ -8,6 +8,7 @@ import tech.kayys.andalus.execution.checkpoint.ExecutionCheckpoint;
 
 import java.nio.charset.StandardCharsets;
 import java.time.Instant;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.*;
@@ -24,15 +25,16 @@ class InMemoryExecutionCheckpointStoreAtomicVisibilityTest {
         AtomicBoolean writing = new AtomicBoolean(true);
         ExecutorService readers = Executors.newFixedThreadPool(4);
 
-        List<Future<?>> observations = java.util.stream.IntStream.range(0, 4)
-                .mapToObj(ignored -> readers.submit(() -> {
-                    while (writing.get()) {
-                        for (ExecutionCheckpoint checkpoint : store.list(executionId)) {
-                            assertTrue(store.get(checkpoint.checkpointId()).isPresent());
-                        }
+        List<Future<?>> observations = new ArrayList<>();
+        for (int reader = 0; reader < 4; reader++) {
+            observations.add(readers.submit(() -> {
+                while (writing.get()) {
+                    for (ExecutionCheckpoint checkpoint : store.list(executionId)) {
+                        assertTrue(store.get(checkpoint.checkpointId()).isPresent());
                     }
-                }))
-                .toList();
+                }
+            }));
+        }
 
         try {
             for (int sequence = 1; sequence <= 500; sequence++) {
