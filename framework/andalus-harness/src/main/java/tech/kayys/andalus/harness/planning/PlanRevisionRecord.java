@@ -7,8 +7,9 @@ import java.util.Objects;
 /**
  * Immutable audit record for one accepted plan revision.
  *
- * <p>The before/after plans are snapshots. Persistence and retention are delegated
- * to a {@link PlanRevisionHistory} implementation.</p>
+ * <p>The before/after plans and their calculated structural diff are snapshots.
+ * Persistence and retention are delegated to a {@link PlanRevisionHistory}
+ * implementation.</p>
  */
 public record PlanRevisionRecord(
         PlanId planId,
@@ -19,7 +20,8 @@ public record PlanRevisionRecord(
         AgentPlan revisedPlan,
         List<PlanExecutionFeedback> feedback,
         Instant recordedAt,
-        PlanRevisionPolicy revisionPolicy
+        PlanRevisionPolicy revisionPolicy,
+        PlanRevisionDiff diff
 ) {
     public PlanRevisionRecord {
         Objects.requireNonNull(planId, "planId is required");
@@ -38,6 +40,7 @@ public record PlanRevisionRecord(
         feedback = feedback == null ? List.of() : List.copyOf(feedback);
         recordedAt = recordedAt == null ? Instant.now() : recordedAt;
         Objects.requireNonNull(revisionPolicy, "revisionPolicy is required");
+        Objects.requireNonNull(diff, "diff is required");
     }
 
     /** Backwards-compatible constructor using strict completed-step preservation. */
@@ -52,7 +55,25 @@ public record PlanRevisionRecord(
             Instant recordedAt
     ) {
         this(planId, fromRevision, toRevision, reason, previousPlan, revisedPlan,
-                feedback, recordedAt, PlanRevisionPolicy.PRESERVE_COMPLETED_STEPS);
+                feedback, recordedAt, PlanRevisionPolicy.PRESERVE_COMPLETED_STEPS,
+                PlanRevisionDiffCalculator.calculate(previousPlan, revisedPlan, feedback));
+    }
+
+    /** Backwards-compatible constructor retaining an explicitly selected policy. */
+    public PlanRevisionRecord(
+            PlanId planId,
+            long fromRevision,
+            long toRevision,
+            String reason,
+            AgentPlan previousPlan,
+            AgentPlan revisedPlan,
+            List<PlanExecutionFeedback> feedback,
+            Instant recordedAt,
+            PlanRevisionPolicy revisionPolicy
+    ) {
+        this(planId, fromRevision, toRevision, reason, previousPlan, revisedPlan,
+                feedback, recordedAt, revisionPolicy,
+                PlanRevisionDiffCalculator.calculate(previousPlan, revisedPlan, feedback));
     }
 
     public static PlanRevisionRecord of(
@@ -74,6 +95,7 @@ public record PlanRevisionRecord(
     ) {
         return new PlanRevisionRecord(
                 previousPlan.id(), previousPlan.revision(), revisedPlan.revision(),
-                reason, previousPlan, revisedPlan, feedback, Instant.now(), revisionPolicy);
+                reason, previousPlan, revisedPlan, feedback, Instant.now(), revisionPolicy,
+                PlanRevisionDiffCalculator.calculate(previousPlan, revisedPlan, feedback));
     }
 }
