@@ -43,9 +43,13 @@ public final class McpSkillAdapter implements AgentSkill {
 
     @Override
     public Uni<Map<String, Object>> execute(Map<String, Object> context) {
+        return execute(context, null);
+    }
+
+    public Uni<Map<String, Object>> execute(Map<String, Object> context, tech.kayys.andalus.tool.CancellationToken cancellation) {
         long startedAt = System.currentTimeMillis();
         Map<String, Object> arguments = context == null ? Map.of() : context;
-        return client.callTool(McpToolInvocation.of(tool, arguments))
+        return client.callTool(McpToolInvocation.of(tool, arguments), cancellation)
                 .map(result -> {
                     long durationMs = result.durationMs() > 0
                             ? result.durationMs()
@@ -55,10 +59,13 @@ public final class McpSkillAdapter implements AgentSkill {
                     }
                     return successOutput(result, durationMs);
                 })
-                .onFailure().recoverWithItem(error -> failureOutput(
-                        error.getMessage() == null ? error.getClass().getSimpleName() : error.getMessage(),
-                        System.currentTimeMillis() - startedAt,
-                        Map.of()));
+                .onFailure().recoverWithItem(error -> {
+                    if (error instanceof java.util.concurrent.CancellationException) throw (java.util.concurrent.CancellationException) error;
+                    return failureOutput(
+                            error.getMessage() == null ? error.getClass().getSimpleName() : error.getMessage(),
+                            System.currentTimeMillis() - startedAt,
+                            Map.of());
+                });
     }
 
     private Map<String, Object> successOutput(McpToolCallResult result, long durationMs) {

@@ -20,6 +20,7 @@ import tech.kayys.andalus.tool.ToolContext;
 import tech.kayys.andalus.tool.ToolExecutor;
 import tech.kayys.andalus.tool.ToolInvocation;
 import tech.kayys.andalus.tool.ToolResult;
+import tech.kayys.andalus.tool.CancellationToken;
 
 import java.time.Instant;
 import java.util.Map;
@@ -96,10 +97,23 @@ public final class DefaultToolExecutionGuard implements ToolExecutionGuard {
             ToolInvocation invocation,
             ToolContext toolContext,
             ToolExecutor delegate) {
+        return execute(invocation, toolContext, delegate, null);
+    }
+
+    @Override
+    public CompletableFuture<ToolResult> execute(
+            ToolInvocation invocation,
+            ToolContext toolContext,
+            ToolExecutor delegate,
+            CancellationToken cancellation) {
 
         Objects.requireNonNull(invocation, "invocation cannot be null");
         Objects.requireNonNull(toolContext, "toolContext cannot be null");
         Objects.requireNonNull(delegate, "delegate cannot be null");
+        if (cancellation != null && cancellation.isCancellationRequested()) {
+            return CompletableFuture.failedFuture(
+                    new java.util.concurrent.CancellationException("Tool execution cancelled before governance."));
+        }
 
         PolicyEvaluationContext context = contextFactory.create(invocation, toolContext);
 
@@ -203,7 +217,7 @@ public final class DefaultToolExecutionGuard implements ToolExecutionGuard {
 
         securityEventPublisher.publish(SecurityEvents.invocationAllowed(context, "governed"));
 
-        return executeWithAuditAndQuota(invocation, toolContext, delegate, context);
+        return executeWithAuditAndQuota(invocation, toolContext, delegate, context, cancellation);
     }
 
     @Override
@@ -253,14 +267,19 @@ public final class DefaultToolExecutionGuard implements ToolExecutionGuard {
 
         securityEventPublisher.publish(SecurityEvents.invocationAllowed(context, "approved"));
 
-        return executeWithAuditAndQuota(invocation, toolContext, delegate, context);
+        return executeWithAuditAndQuota(invocation, toolContext, delegate, context, null);
     }
 
     private CompletableFuture<ToolResult> executeWithAuditAndQuota(
             ToolInvocation invocation,
             ToolContext toolContext,
             ToolExecutor delegate,
-            PolicyEvaluationContext context) {
+            PolicyEvaluationContext context,
+            CancellationToken cancellation) {
+        if (cancellation != null && cancellation.isCancellationRequested()) {
+            return CompletableFuture.failedFuture(
+                    new java.util.concurrent.CancellationException("Tool execution cancelled before delegate dispatch."));
+        }
 
         // Acquire transactional limit reservation
         LimitContext limitContext = new LimitContext(context, invocation.name(), null, null, Map.of());
@@ -283,7 +302,7 @@ public final class DefaultToolExecutionGuard implements ToolExecutionGuard {
 
         securityEventPublisher.publish(SecurityEvents.invocationStarted(context, "governed"));
 
-        return delegate.execute(invocation, toolContext).whenComplete((result, ex) -> {
+        return delegate.execute(invocation, toolContext, cancellation).whenComplete((result, ex) -> {
             long durationMs = (System.nanoTime() - startNs) / 1_000_000;
             double cost = 0.0;
             if (toolContext.attributes().get("costUsd") instanceof Number n) {

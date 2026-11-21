@@ -45,7 +45,44 @@ public final class ToolBudget {
     }
 
     /**
-     * Attempts to consume one tool call.
+     * Atomically reserves one tool invocation before dispatch.
+     *
+     * <p>Use this at the dispatch boundary so concurrent tool calls cannot all
+     * pass a non-atomic preflight check and exceed {@code maxCalls}. Duration
+     * and cost are recorded when the invocation completes.</p>
+     *
+     * @return true when a call slot was reserved; false when any accumulated
+     *         limit is already exhausted
+     */
+    public synchronized boolean tryAcquireCall() {
+        if (maxCalls != -1 && usedCalls.get() >= maxCalls) return false;
+        if (maxDurationMs != -1 && usedDurationMs.get() >= maxDurationMs) return false;
+        if (maxCostUsd != -1.0 && usedCostUsd >= maxCostUsd) return false;
+        usedCalls.incrementAndGet();
+        return true;
+    }
+
+    /**
+     * Records measured usage for a previously reserved invocation.
+     * The measurement may take the budget over its duration or cost limit;
+     * subsequent reservations will then be rejected.
+     */
+    public synchronized void recordUsage(long durationMs, double costUsd) {
+        if (durationMs < 0) throw new IllegalArgumentException("durationMs must not be negative");
+        if (costUsd < 0) throw new IllegalArgumentException("costUsd must not be negative");
+        usedDurationMs.addAndGet(durationMs);
+        usedCostUsd += costUsd;
+    }
+
+    /** Returns true when any configured accumulated limit has been reached. */
+    public synchronized boolean isExhausted() {
+        return (maxCalls != -1 && usedCalls.get() >= maxCalls)
+                || (maxDurationMs != -1 && usedDurationMs.get() >= maxDurationMs)
+                || (maxCostUsd != -1.0 && usedCostUsd >= maxCostUsd);
+    }
+
+    /**
+     * Attempts to consume one tool call and its measured usage atomically.
      * @return true if budget allows it; false if the budget is exhausted.
      */
     public synchronized boolean consume(long durationMs, double costUsd) {
