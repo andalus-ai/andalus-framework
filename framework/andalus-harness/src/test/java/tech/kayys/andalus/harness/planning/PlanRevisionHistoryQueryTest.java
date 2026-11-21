@@ -49,6 +49,46 @@ class PlanRevisionHistoryQueryTest {
                 PlanId.of("plan"), -1L, null, null, null));
     }
 
+    @Test
+    void pagesHistoryWithExclusiveStableRevisionCursor() {
+        PlanId planId = PlanId.of("plan-pages");
+        AgentPlan revision0 = plan(planId, 0, List.of(step("s0", "Step 0")));
+        AgentPlan revision1 = plan(planId, 1, List.of(step("s1", "Step 1")));
+        AgentPlan revision2 = plan(planId, 2, List.of(step("s2", "Step 2")));
+        AgentPlan revision3 = plan(planId, 3, List.of(step("s3", "Step 3")));
+        PlanRevisionRecord first = PlanRevisionRecord.of(revision0, revision1, "first", List.of());
+        PlanRevisionRecord second = PlanRevisionRecord.of(revision1, revision2, "second", List.of());
+        PlanRevisionRecord third = PlanRevisionRecord.of(revision2, revision3, "third", List.of());
+
+        InMemoryPlanRevisionHistory history = new InMemoryPlanRevisionHistory();
+        history.append(first);
+        history.append(second);
+        history.append(third);
+
+        PlanRevisionPage pageOne = history.page(PlanRevisionPageRequest.firstPage(
+                PlanRevisionQuery.forPlan(planId), 2));
+        assertEquals(List.of(first, second), pageOne.records());
+        assertEquals(2L, pageOne.nextCursor());
+        assertEquals(true, pageOne.hasMore());
+
+        PlanRevisionPage pageTwo = history.page(new PlanRevisionPageRequest(
+                PlanRevisionQuery.forPlan(planId), 2, pageOne.nextCursor()));
+        assertEquals(List.of(third), pageTwo.records());
+        assertEquals(null, pageTwo.nextCursor());
+        assertEquals(false, pageTwo.hasMore());
+    }
+
+    @Test
+    void validatesPageSizeAndCursor() {
+        PlanRevisionQuery query = PlanRevisionQuery.forPlan(PlanId.of("plan"));
+        assertThrows(IllegalArgumentException.class,
+                () -> PlanRevisionPageRequest.firstPage(query, 0));
+        assertThrows(IllegalArgumentException.class,
+                () -> PlanRevisionPageRequest.firstPage(query, PlanRevisionPageRequest.MAX_PAGE_SIZE + 1));
+        assertThrows(IllegalArgumentException.class,
+                () -> new PlanRevisionPageRequest(query, 10, -1L));
+    }
+
     private static PlanStep step(String id, String description) {
         return new PlanStep(PlanStepId.of(id), description, Optional.empty(),
                 List.of(), "", List.of(), Map.of());
