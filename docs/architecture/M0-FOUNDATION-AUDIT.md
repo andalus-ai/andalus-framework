@@ -980,3 +980,33 @@ Next implementation should be a small explicit catalog foundation:
 - Inspected the complete recursive current Gamelan repository tree: no matching ToolsFactory source path was found.
 - Inspected `DefaultAgentToolExecutor` and `DefaultToolPolicyEvaluator`: tool discovery is CDI-based and policy evaluation is fail-closed.
 - No source migration or runtime behavior changes were made. No Maven dependency resolution, build, or tests were run.
+
+
+## 23. Active built-in tools: stale ToolsFactory service descriptor
+
+### Finding
+
+Section 22 left the ToolsFactory descriptor unresolved pending inspection of the effective build composition. The current CI workflow now provides enough evidence to identify the mismatch in the checked-in configuration:
+
+- The active root reactor includes `runtime/andalus-builtin-tools`, which depends on `andalus-tool-runtime`.
+- `andalus-tool-runtime` declares dependencies on the current Framework `andalus-tool` API, runtime SPI, Gamelan plugin SPI, and Gamelan executor SDK. It does not declare an AQLI/Gollek tools SDK dependency.
+- The active Andalus CI workflow checks out Gamelan and publishes exactly `gamelan-engine-spi`, `gamelan-plugin-spi`, and `gamelan-sdk-executor-core` to Maven Local. The inspected `gamelan-sdk-executor-core` Gradle build declares only engine SPI, plugin SPI, Mutiny, SLF4J, and CDI API dependencies.
+- The active built-in module itself declares only `andalus-tool-runtime` and Jackson dependencies.
+- The built-in module's service descriptor names `tech.kayys.andalus.tools.impl.ToolsFactoryImpl` as a provider for `tech.kayys.andalus.sdk.gollek.tools.ToolsFactory`. Neither the provider nor that service contract is present in the checked-in Andalus or Gamelan source trees inspected for this audit.
+
+This is stronger than the prior source-only uncertainty: the active CI bootstrap does not publish a Gamelan tools SDK or any other declared dependency that explains the Gollek ToolsFactory service contract. The descriptor is therefore stale relative to the supported active module composition, unless an undeclared external/transitive artifact happens to inject the exact class. No such dependency is declared or established by the current build configuration.
+
+### Decision
+
+Remove the unsupported ToolsFactory service descriptor from the active built-in module. Do not add a speculative SDK dependency or recreate an undocumented factory contract.
+
+The supported built-in registration path remains the current governed `tech.kayys.andalus.tool.Tool` API with CDI discovery. A future ServiceLoader bridge must be introduced only against a documented, versioned provider SPI and must adapt discovered tools into the same governed executor path with trusted registration-time execution profiles.
+
+### Verification and limits
+
+- Inspected `runtime/andalus-builtin-tools/pom.xml`: its only direct dependencies are `andalus-tool-runtime` and Jackson.
+- Inspected `runtime/andalus-tool-runtime/pom.xml`: no AQLI/Gollek tools SDK is declared.
+- Inspected the active `.github/workflows/ci.yml`: it publishes the three named Gamelan modules to Maven Local before the Maven build.
+- Inspected `gamelan-sdk-executor-core/build.gradle.kts`: its declared API dependencies are engine SPI, plugin SPI, Mutiny, SLF4J, and CDI API.
+- Inspected the service descriptor and recursive Andalus/Gamelan source trees: no matching provider implementation was found.
+- This is a source/configuration-level conclusion. No Maven effective dependency tree or resolved JAR contents were produced, and no Maven build or tests were run in this step.
