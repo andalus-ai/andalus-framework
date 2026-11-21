@@ -761,3 +761,60 @@ Example profiles:
 - Runtime policy tests: `fee550ca1ed66cc11f5afa42187efd3df25c5f0c`
 
 Builds and tests have not been run as part of this audit update. Verify CI before treating this change as build-validated.
+
+
+## 18. Built-in tool catalog and governed-runtime integration boundary
+
+### Finding
+
+The built-in OS tool module is not currently a collection of CDI beans implementing the governed runtime's `tech.kayys.andalus.tool.Tool` contract. It implements the legacy `tech.kayys.andalus.tools.spi.Tool` contract and is exposed through the Java `ServiceLoader` descriptor:
+
+`modules/tool/andalus-tool-os/src/main/resources/META-INF/services/tech.kayys.andalus.tools.spi.Tool`
+
+The service file currently lists 14 tools. The MCP module also implements the legacy `tools.spi.Tool` contract. In contrast, `DefaultAgentToolExecutor` injects CDI `Instance<tech.kayys.andalus.tool.Tool>` and derives governance from `ToolDescriptor.executionProfile()`.
+
+These are separate interfaces, registries/discovery mechanisms, and execution contexts. No adapter or registration bridge between this ServiceLoader catalog and the governed CDI tool executor was established in the inspected source. Therefore, the profile changes in Section 17 do not automatically classify or govern the legacy ServiceLoader tools.
+
+### Inventory and intended risk classification
+
+This is the proposed classification to apply when the explicit adapter is implemented. It is not a claim that the legacy tools are already governed.
+
+| Legacy tool | Intended profile | Reason |
+|---|---|---|
+| `bash` | `SHELL` | Executes host commands |
+| `create_dir` | `FILESYSTEM` | Creates directories |
+| `edit_file` | `FILESYSTEM` | Mutates file contents |
+| `fetch_url` | `NETWORK` | Makes outbound HTTP requests |
+| `glob` | `FILESYSTEM` | Reads filesystem paths |
+| `grep` | `FILESYSTEM` | Reads and searches file contents |
+| `list_dir` | `FILESYSTEM` | Reads directory contents |
+| `move` | `FILESYSTEM` | Moves/renames filesystem entries |
+| `patch` | `FILESYSTEM` | Mutates file contents |
+| `read_file` | `FILESYSTEM` | Reads file contents |
+| `search_files` | `FILESYSTEM` | Traverses filesystem paths |
+| `think` | `READ` | Scratchpad only; no external side effects |
+| `web_search` | `NETWORK` | Makes outbound search requests |
+| `write_file` | `FILESYSTEM` | Creates/overwrites files |
+
+Filesystem reads and writes are deliberately grouped under the existing `FILESYSTEM` level for now; a later refinement may separate read-only filesystem access from mutation if the policy model needs that distinction. MCP-discovered tools must default to `CUSTOM`/deny unless a trusted local administrator supplies an explicit profile. Never trust a remote tool's self-declared metadata or model-generated tool arguments as authorization.
+
+### Required adapter design
+
+1. Keep the legacy ServiceLoader SPI working for existing consumers.
+2. Add an explicit adapter that wraps a legacy tool as a governed `tech.kayys.andalus.tool.Tool`, including safe mapping of invocation arguments, execution context, cancellation, result/error semantics and timeout behavior.
+3. Require a trusted registration-time profile for each adapter instance. The profile must be supplied by local code/configuration, not by the tool description, remote MCP metadata, or the model.
+4. Register adapted tools into the same governed CDI/runtime path as native tools. Do not create a second authorization pipeline.
+5. Ensure missing adapter metadata maps to `CUSTOM`/deny, and test that changing a tool's display name or invocation name cannot lower its risk level.
+6. Test identity propagation and policy denial across the adapter, including cancellation and error propagation.
+
+### Follow-up correction
+
+Runtime policy documentation was updated to accurately describe matching approval roles for all elevated levels, not only SHELL/SYSTEM:
+
+- Runtime policy description: `baffd92a8be82f867f588cacafeb1e5365198c61`
+
+### Scope and validation
+
+No adapter was added in this audit step because the legacy SPI source/artifact contract is not present in the inspected Runtime repository tree, and the two tool interfaces have materially different execution/context signatures. Implementing a guessed bridge here would risk breaking binary/source compatibility or bypassing governance. The next implementation task is to locate/confirm the canonical legacy SPI artifact contract and add the adapter at the correct module boundary.
+
+No builds or tests were run for this section.
