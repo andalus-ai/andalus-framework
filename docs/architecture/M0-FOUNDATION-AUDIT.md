@@ -697,3 +697,26 @@ Runtime commits:
 - GitHub source fetches verified the corrected bridge, caller-context propagation and added tests.
 - Maven compilation and tests have not been run in this environment. In particular, Quarkus CDI discovery, the policy bean set in the packaged application, and end-to-end ReAct tool invocation still require runtime verification.
 - Next bounded work: make policy-evaluator absence explicit and fail-safe; replace name-prefix capability inference with trusted metadata; then add Quarkus integration tests proving built-in policies are discovered and enforced through the actual ReAct execution path.
+
+
+## 16. Fail-closed policy composition
+
+The next implementation slice removes the two implicit fail-open paths identified in Section 15.
+
+### 16.1 Runtime behavior change
+
+- `DefaultAgentToolExecutor.evaluatePolicy(...)` previously returned ALLOW when its CDI `ToolPolicyEvaluator` was absent or unsatisfied. It now returns DENY with policy ID `runtime-policy-evaluator-required`.
+- `DefaultToolPolicyEvaluator.evaluateDetailed(...)` previously initialized its aggregate to ALLOW and returned that result when CDI discovered zero `ToolPolicy` beans. It now returns DENY with policy ID `runtime-policy-set-required` and an empty evaluation list.
+- Added `DefaultToolPolicyEvaluatorTest.deniesWhenNoPolicyBeansAreAvailable` to lock down the empty-policy-set behavior.
+- This deliberately removes implicit standalone/open execution. A future standalone mode must be explicit, named, opt-in by trusted host configuration, and must not be selected by missing CDI beans or user/model input.
+
+Runtime commits:
+- `a4e2ba590d6761197c13e867c7d387ebe987c4da` — fail closed when evaluator is absent.
+- `f781a03ddd1a92bd720266131b2374d3223ae02d` — deny when no policies are registered.
+- `395221a9328dac31119cd296a2d22d6a7752f371` — add empty-policy-set regression test.
+
+### 16.2 Verification and remaining work
+
+- Source files and the new regression test were committed directly to the Runtime default branch and fetched again for source verification.
+- No local Maven build was run. GitHub Actions for the prior commit was still in progress when inspected; its separate Javadoc job failed during dependency resolution before compiling the Runtime core module. The new fail-closed commits therefore remain unverified by a completed build.
+- This change does not yet replace tool-name-prefix capability classification. The next slice should add trusted capability metadata to the tool descriptor/registration contract, define a conservative default for unclassified tools, and migrate built-in policies to that metadata without changing public tool names.
