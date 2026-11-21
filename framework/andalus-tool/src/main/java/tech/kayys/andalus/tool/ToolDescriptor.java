@@ -41,8 +41,13 @@ public interface ToolDescriptor extends Descriptor {
         return DefaultToolOutputSchema.text();
     }
 
+    /**
+     * Trusted execution classification used by runtime governance. Implementations
+     * must explicitly opt into a less-privileged profile; the compatibility default
+     * is CUSTOM and is treated as SYSTEM by policy enforcement.
+     */
     default ToolExecutionProfile executionProfile() {
-        return ToolExecutionProfile.readOnly(ToolKind.READ);
+        return ToolExecutionProfile.modifying(ToolKind.CUSTOM);
     }
 
     default Set<String> capabilityKeys() {

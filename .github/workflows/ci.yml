@@ -43,6 +43,15 @@ jobs:
           path: _aqli
           ref: main
 
+      # AQLI settings.gradle.kts includes Suling as a composite build from ./suling.
+      # Keep it under _aqli so Gradle substitutes tech.kayys:suling:0.1.0 with the source build.
+      - name: Checkout suling (AQLI audio dependency)
+        uses: actions/checkout@v4
+        with:
+          repository: bhangun/suling
+          path: _aqli/suling
+          ref: main
+
       - name: Setup Gradle 9.4.0
         uses: gradle/actions/setup-gradle@v4
         with:
@@ -79,6 +88,10 @@ jobs:
             :sdk:aqli-sdk:publishToMavenLocal
             :sdk:aqli-sdk-local:publishToMavenLocal
             :core:aqli-core:publishToMavenLocal
+            :tokenizer:aqli-tokenizer-core:publishToMavenLocal
+            :repository:aqli-model-repo-common:publishToMavenLocal
+            :repository:aqli-model-repo-local:publishToMavenLocal
+            :repository:aqli-model-database:publishToMavenLocal
             :plugin:aqli-plugin-kernel-core:publishToMavenLocal
           )
           gradle "${TASKS[@]}" --no-daemon -x test --parallel
