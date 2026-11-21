@@ -8,7 +8,7 @@ import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
- * Thread-safe, process-local revision history for tests and embedded deployments.
+ * Thread-safe, process-local revision history with atomic per-plan appends for tests and embedded deployments.
  *
  * <p>This implementation is not durable; production runtimes should provide a
  * persistent {@link PlanRevisionHistory}.</p>
