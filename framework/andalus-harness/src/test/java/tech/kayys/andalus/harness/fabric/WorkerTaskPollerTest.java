@@ -18,7 +18,7 @@ class WorkerTaskPollerTest {
                 AssignmentConstraints.defaults());
     }
 
-    private TaskFailureDecision retry(Exception failure) {
+    private TaskFailureDecision retry(ExecutionAssignment task, Exception failure) {
         return TaskFailureDecision.retry(Duration.ZERO, "TRANSIENT", failure.getMessage());
     }
 
