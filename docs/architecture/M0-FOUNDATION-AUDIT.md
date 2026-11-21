@@ -929,3 +929,54 @@ The existing legacy OS tools can then be mapped by behavior to active implementa
 - Inspected `modules/tool/pom.xml`: its former tool modules are commented out, with an explicit removed-artifact explanation.
 - Inspected `modules/tool/andalus-tool-os/pom.xml`: the legacy OS module still exists in the tree but is not active in the parent reactor.
 - No source migration or adapter was made. No Maven dependency resolution, build, or tests were run.
+
+## 22. Active built-in tools module inventory and discovery gap
+
+### Source inventory
+
+A recursive Git tree inspection of the active `runtime/andalus-builtin-tools` module shows only four Java source classes:
+
+- `CodeGrepImpl`: a plain Java regex-based file grep helper.
+- `CodeScannerImpl`: a plain Java glob-based file scanner.
+- `PlannerImpl`: a simple in-memory task-plan helper.
+- `TaskStoreImpl`: a JSON file-backed task list helper.
+
+None of these classes implements the governed `tech.kayys.andalus.tool.Tool` contract. They have no `ToolDescriptor`, no `ToolExecutionProfile`, no CDI scope/producer, and no visible tests in this module. They are helper services, not invocable agent tools. In particular, the file scanner and grep helpers take a base directory/path directly and do not themselves establish a workspace authorization boundary.
+
+The module also packages a ServiceLoader descriptor:
+
+`META-INF/services/tech.kayys.andalus.sdk.gollek.tools.ToolsFactory`
+
+Its sole provider entry is `tech.kayys.andalus.tools.impl.ToolsFactoryImpl`. A recursive tree of the complete Andalus repository contains no `ToolsFactoryImpl.java` or corresponding class source. A recursive tree of the current Gamelan repository also contains no matching `ToolsFactoryImpl` or `ToolsFactory` source path. This does not rule out an implementation supplied by some other binary dependency, but the current source tree does not establish that provider's existence or behavior. The exact SPI artifact/provider must be resolved from the effective runtime classpath before relying on this ServiceLoader registration.
+
+### Governed execution path
+
+The runtime executor is materially better defined than the built-in catalog:
+
+- `DefaultAgentToolExecutor` discovers only CDI beans of the current `tech.kayys.andalus.tool.Tool` type through `Instance<Tool>`.
+- It resolves a tool by `descriptor().name()`, validates required input fields, derives the capability level from the trusted descriptor execution profile, and evaluates the current policy evaluator before guardrails, budget reservation, cache lookup, and invocation.
+- The executor denies when no policy evaluator is present. The default evaluator denies when no policy beans are registered.
+- A successful tool implementation must therefore be a CDI-discoverable bean (or be explicitly produced into CDI) of the current governed Tool API to enter this path.
+
+The active `andalus-builtin-tools` module currently provides no such bean. The `ToolsFactory` ServiceLoader descriptor is a separate integration surface and no bridge from its factory products into CDI `Instance<Tool>` was found in the inspected source. Do not treat ServiceLoader registration as equivalent to governed CDI registration.
+
+### Architecture decision
+
+The active built-in catalog is not yet implemented as an invocable, governed tool catalog. Do not bulk-port the retired 14-tool OS catalog or wire the legacy factory into execution speculatively.
+
+Next implementation should be a small explicit catalog foundation:
+
+1. Resolve the actual `ToolsFactory` API and provider class from the effective Maven dependency graph; remove or correct the stale service descriptor if no valid provider exists.
+2. Define the first-party built-in tool registration mechanism around CDI and the current governed `Tool` API. Keep ServiceLoader as an optional extension/discovery adapter only if a real provider contract is confirmed.
+3. Add a small, safe initial set of tools (for example, workspace-bounded read/list/search) with explicit immutable descriptors and trusted execution profiles. Do not expose arbitrary host filesystem paths.
+4. Keep writes, shell/process execution, network access, and system operations out of the initial baseline until their sandbox, authorization, budget, cancellation, and audit semantics are verified.
+5. Add Quarkus integration tests proving bean discovery, tool resolution, identity propagation, fail-closed policy behavior, and rejection of unclassified tools.
+
+### Verification
+
+- Inspected the complete recursive Andalus repository tree: the active built-in module has four Java source classes and no `ToolsFactoryImpl` source.
+- Read all four built-in helper implementations: none implements the current governed Tool API.
+- Read the module's ServiceLoader descriptor: it names `tech.kayys.andalus.tools.impl.ToolsFactoryImpl`.
+- Inspected the complete recursive current Gamelan repository tree: no matching ToolsFactory source path was found.
+- Inspected `DefaultAgentToolExecutor` and `DefaultToolPolicyEvaluator`: tool discovery is CDI-based and policy evaluation is fail-closed.
+- No source migration or runtime behavior changes were made. No Maven dependency resolution, build, or tests were run.
