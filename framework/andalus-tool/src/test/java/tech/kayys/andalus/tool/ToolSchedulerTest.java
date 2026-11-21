@@ -105,6 +105,53 @@ class ToolSchedulerTest {
     }
 
     @Test
+    void shouldPropagateParentCancellationToScheduledInvocation() throws Exception {
+        CancellationToken parent = CancellationToken.create();
+        ToolExecutionContext context = new DefaultToolExecutionContext(
+                "parent-cancel", null, null, parent, null, null, null);
+        AtomicReference<CancellationToken> received = new AtomicReference<>();
+        ToolExecutor cooperativeExecutor = new ToolExecutor() {
+            @Override
+            public CompletableFuture<ToolResult> execute(ToolInvocation inv, ToolContext ctx) {
+                return CompletableFuture.completedFuture(
+                        ToolResult.success(inv.invocationIdentifier(), "unexpected", Duration.ZERO, "cooperative"));
+            }
+
+            @Override
+            public CompletableFuture<ToolResult> execute(
+                    ToolInvocation inv, ToolContext ctx, CancellationToken cancellation) {
+                received.set(cancellation);
+                return CompletableFuture.supplyAsync(() -> {
+                    while (!cancellation.isCancellationRequested()) {
+                        try {
+                            Thread.sleep(5);
+                        } catch (InterruptedException interrupted) {
+                            Thread.currentThread().interrupt();
+                            throw new CancellationException("interrupted");
+                        }
+                    }
+                    throw new CancellationException("parent cancelled");
+                });
+            }
+        };
+
+        ToolExecutionHandle handle = scheduler.submit(
+                ToolInvocation.of(ToolId.of("parent-cooperative"), ToolArguments.empty()),
+                context,
+                cooperativeExecutor);
+        long deadline = System.nanoTime() + java.util.concurrent.TimeUnit.SECONDS.toNanos(2);
+        while (received.get() == null && System.nanoTime() < deadline) {
+            Thread.sleep(5);
+        }
+        assertThat(received.get()).isNotNull();
+
+        parent.cancel();
+
+        assertThat(handle.result().get().status()).isEqualTo(ToolResultStatus.CANCELED);
+        assertThat(received.get().isCancellationRequested()).isTrue();
+    }
+
+    @Test
     void shouldHandleManualCancellation() throws ExecutionException, InterruptedException {
         ToolInvocation invocation = ToolInvocation.of(ToolId.of("canceller"), ToolArguments.empty());
         ToolExecutionContext context = DefaultToolExecutionContext.simple();
