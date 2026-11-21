@@ -1010,3 +1010,64 @@ The supported built-in registration path remains the current governed `tech.kayy
 - Inspected `gamelan-sdk-executor-core/build.gradle.kts`: its declared API dependencies are engine SPI, plugin SPI, Mutiny, SLF4J, and CDI API.
 - Inspected the service descriptor and recursive Andalus/Gamelan source trees: no matching provider implementation was found.
 - This is a source/configuration-level conclusion. No Maven effective dependency tree or resolved JAR contents were produced, and no Maven build or tests were run in this step.
+
+
+## 24. First governed workspace tool catalog and execution-context propagation
+
+### Runtime context propagation
+
+The previous executor path evaluated policy with `AgentToolExecutionContext`, but invoked the tool with a null `ToolContext` and did not pass the cancellation token to the tool implementation. This prevented tools from safely consuming trusted execution-scoped configuration and weakened cooperative cancellation.
+
+The runtime now creates an immutable `SimpleToolContext` from the execution context:
+
+- Agent constraints are copied first, followed by trusted per-execution attributes.
+- Runtime-owned identity values (execution ID, agent ID, tenant ID, user ID, principal type, roles) are written last and cannot be shadowed by either map.
+- The executor calls `Tool.execute(invocation, toolContext, cancellation)`.
+- Cancellation is checked before dispatch and the tool API's cancellation-aware overload can observe the same execution token.
+
+A regression test verifies that trusted attributes reach the tool context and that a caller-supplied attempt to shadow the execution ID cannot override the runtime value.
+
+### Initial built-in catalog
+
+The active `runtime/andalus-builtin-tools` module now contains three CDI tools using the current governed `tech.kayys.andalus.tool.Tool` API:
+
+- `workspace.list`
+- `workspace.read`
+- `workspace.search`
+
+Each declares a trusted read-only `ToolExecutionProfile` with `ToolKind.READ`. The module generates a Jandex index so Quarkus can discover the CDI beans. It remains opt-in: an application must include `tech.kayys.andalus:andalus-builtin-tools` on its application classpath; inclusion in the root reactor alone does not install the beans into every deployment.
+
+### Workspace security boundary
+
+The tools require `andalus.workspace.root` in the trusted tool context as a Java `Path`. The current execution service sources agent constraints from the server-created `AgentDefinition`; tool arguments and prompt content cannot supply or widen the root.
+
+The shared path resolver:
+
+- Canonicalizes the configured root and requires an existing directory.
+- Rejects missing roots, non-`Path` root values, absolute requested paths, traversal, and paths whose resolved symlink target escapes the root.
+- Uses workspace-relative paths in tool results.
+- Rejects/omits symlink entries resolving outside the workspace.
+
+Resource limits are enforced: 200 directory entries; 1 MiB per file; search depth 12; 20,000 visited entries; 5,000 regular files; 32 MiB total search input; 200 matches; 1,000-character match snippets; bounded path/query/glob lengths. File reads and search input are byte-bounded rather than relying only on a pre-read file-size check.
+
+### Cache isolation correction
+
+Workspace contents depend on filesystem state and on the configured workspace root. The previous tool result cache key was based on tool name and arguments plus tenant/user identity; it did not include workspace root. Caching a workspace read could therefore leak content between two workspaces used by the same caller.
+
+The runtime now caches tool results only when the trusted descriptor profile explicitly marks the tool deterministic. Workspace tools are explicitly non-deterministic and therefore bypass result-cache lookup and storage. A regression test covers the cacheability rule.
+
+### Tests added
+
+- Runtime context propagation and identity non-shadowing.
+- Cacheability requires an explicitly deterministic profile.
+- Workspace root is mandatory and must be a `Path`.
+- Relative paths stay within the workspace; absolute and traversal paths are rejected.
+- Symlink escape is rejected (the symlink test is skipped when the environment cannot create symlinks).
+- Workspace read/list/search execute against temporary workspaces.
+- Read-only execution classification and non-deterministic cache profile.
+
+### Verification status
+
+- Source, POM, Jandex configuration, and tests are committed in the Andalus repository.
+- No local Maven build or tests were run during this implementation.
+- GitHub Actions CI was triggered by the commits; at the time of this audit update the latest workflow runs had not yet completed. Do not treat this section as evidence of a green build.
