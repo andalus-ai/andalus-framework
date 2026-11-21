@@ -113,6 +113,19 @@ class DidWbaResolverTest {
         assertTrue(document.findVerificationMethod("prefix-key-1").isEmpty());
     }
 
+    @Test
+    void separateResolversShareAtomicRevisionStateThroughStore() {
+        InMemoryTrustedDidDocumentStore sharedStore = new InMemoryTrustedDidDocumentStore();
+        DidWbaResolver firstNode = new DidWbaResolver(sharedStore);
+        DidWbaResolver secondNode = new DidWbaResolver(sharedStore);
+        DidWbaDocument newer = documentWithKey("key-2");
+
+        firstNode.register(newer, 9);
+
+        assertThrows(SecurityException.class, () -> secondNode.register(validDocument(), 8));
+        assertEquals(newer, secondNode.findRegistered(DidWbaIdentity.parse(DID)).orElseThrow());
+    }
+
     private static DidWbaDocument validDocument() {
         return documentWithKey("key-1");
     }
