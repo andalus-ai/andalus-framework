@@ -3,10 +3,6 @@ package tech.kayys.andalus.harness.learning;
 import java.util.List;
 import java.util.Optional;
 
-/** Atomic reservation boundary for evidence consumed by admitted human feedback. */
-public interface FeedbackEvidenceStore {
-    enum ReservationStatus {
-        RESERVED, ALREADY_RESERVED_BY_SAME_SIGNAL, EVIDENCE_ALREADY_CONSUMED, INVALID_REQUEST
 /**
  * Atomic reservation boundary for evidence consumed by admitted human feedback.
  *
