@@ -159,8 +159,9 @@ public class DefaultPlanningRuntime implements PlanningRuntime {
                             + String.join("; ", reconciliation.errors()));
         }
 
-        revisionHistory.append(PlanRevisionRecord.of(
-                currentPlan, revisedPlan, request.revisionReason(), request.feedback(), revisionPolicy));
+        revisionHistory.compareAndAppend(PlanRevisionRecord.of(
+                currentPlan, revisedPlan, request.revisionReason(), request.feedback(), revisionPolicy),
+                currentPlan.revision());
         return validated;
     }
 
