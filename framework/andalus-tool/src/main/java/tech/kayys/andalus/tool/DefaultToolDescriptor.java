@@ -34,7 +34,7 @@ public record DefaultToolDescriptor(
             outputSchema = DefaultToolOutputSchema.text();
         }
         if (executionProfile == null) {
-            executionProfile = ToolExecutionProfile.readOnly(ToolKind.READ);
+            executionProfile = ToolExecutionProfile.modifying(ToolKind.CUSTOM);
         }
     }
 
@@ -82,7 +82,7 @@ public record DefaultToolDescriptor(
         private Set<String> capabilities = Set.of();
         private ToolInputSchema inputSchema = DefaultToolInputSchema.empty();
         private ToolOutputSchema outputSchema = DefaultToolOutputSchema.text();
-        private ToolExecutionProfile executionProfile = ToolExecutionProfile.readOnly(ToolKind.READ);
+        private ToolExecutionProfile executionProfile = ToolExecutionProfile.modifying(ToolKind.CUSTOM);
 
         public Builder(ToolId id, String name) {
             this.id = id;

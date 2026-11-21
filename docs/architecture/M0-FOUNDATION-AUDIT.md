@@ -478,3 +478,417 @@ A repository-wide GitHub code-search pass for direct `implements` declarations f
 - The Runtime repository search found no direct `PluginRegistry` implementation. Its older `DefaultPluginWrapper` is a plugin object, not a registry; Runtime `AgentRegistry` is a separate generic registry for `AgentDefinition`.
 
 The search index may lag the default branch and searches for literal `implements` do not find indirect implementations, subclasses or dependency-injected adapters. Treat this as an inventory lead, not proof of global absence. Before M1 edits, inspect all source imports/consumers and run a clean source scan from a checkout.
+
+
+## 12. M1.1 consumer and composition-boundary follow-up — 2026-11-17
+
+This follow-up narrows the source trace using the actual inherited registry contracts and direct consumers. It also corrects two over-broad statements in section 11.
+
+### 12.1 Corrections to the initial inventory
+
+- `PluginRegistry` does not declare `register(Plugin)`; it does declare a default `unregister(String)`. `DefaultPluginRegistry.register(Plugin)` is therefore an implementation-specific operation, which explains the concrete-type check in `RuntimePluginManager`. The gap is confirmed.
+- `ToolRegistry` extends the generic `Registry<Tool>`, and that parent contract already declares `register(T)`, `unregister(ResourceId)`, lookup and enumeration operations. It is incorrect to describe ToolRegistry as lacking a registration method. The actual question is whether a production implementation is wired and used, not whether the SPI can express registration.
+- `ToolCatalog` is a separate provider-oriented abstraction with `register(ToolProvider)`, `unregister(ToolProvider)`, discovery and provider lookup. `DefaultToolCatalog` is a concrete implementation. It is not the same abstraction as the resource-oriented `ToolRegistry`.
+- The executable plugin capability registry (`tech.kayys.andalus.spi.capability.CapabilityRegistry`) does not declare mutation operations. Its `DefaultCapabilityRegistry` adds `register(capabilityId, providerId, capability)` and unregister methods. `PluginCapabilityRegistrar` consequently depends on that concrete implementation. This is a confirmed SPI gap, unlike the generic ToolRegistry contract.
+- The execution-conformance `CapabilityRegistry` is a third semantic surface already identified above: it registers `CapabilityDescriptor` values and is unrelated to provider-owned executable capability instances.
+
+### 12.2 Direct consumer trace
+
+- `AgentBuilder` accepts a `ToolRegistry`, and only queries `getToolsByCapability` when required capabilities have been supplied. It also accepts explicit tools independently. This demonstrates a direct agent-construction consumer of the resource-oriented ToolRegistry.
+- `ToolCatalog` has its own default in-memory provider list. Its registration/discovery API is internally coherent, but this pass did not find a proven adapter from ToolCatalog providers into AgentBuilder's ToolRegistry.
+- `HarnessRuntime` is currently an empty placeholder interface; it does not provide a shared ToolRegistry or other runtime services.
+- `RuntimePluginManager` appears only in its implementation and Framework tests in the indexed source search; no direct use was found in the Runtime repository. This is not proof that no indirect/CDI wiring exists, but the current evidence does not establish that the JAR plugin manager is the production Runtime's composition root.
+- `PluginCapabilityRegistrar` appears in its implementation and Framework integration tests, not in a Runtime consumer in the indexed search. The existing integration test manually sequences install, capability registration, capability routing/invocation, capability unregistration and plugin shutdown.
+- The Runtime repository search found no direct references to Framework `ToolRegistry`, `ToolProvider` or `AgentToolExecutionContext`. This is a bounded search result, not a clean-checkout import graph; indirect wiring, reflection, CDI producers and shaded/renamed types remain to be checked.
+
+### 12.3 M1.1 decisions
+
+The next implementation should not begin by expanding all SPIs. First establish which composition root is authoritative:
+
+1. Trace Runtime CDI producers, injection points and startup wiring for plugin management, capability routing, tool catalogs/registries and agent construction.
+2. Determine whether `RuntimePluginManager` is intended as the supported external-JAR path or only a standalone Framework utility.
+3. Select one supported tool-provider-to-agent-tool path, or document the two independent catalogs if both are intentionally supported.
+4. Only then add the minimal SPI operations needed for alternate implementations:
+   - plugin registration on `PluginRegistry`, with duplicate-ID semantics;
+   - provider-owned executable capability register/unregister on the executable capability SPI, preserving provider identity;
+   - no new registration method on `ToolRegistry` until its inherited `Registry<Tool>` contract and the ToolCatalog distinction have been reconciled.
+5. Make plugin activation transactional across plugin lifecycle and capability registration: initialize/start successfully, register capabilities, and roll back both on any failure. Deactivation must stop invocation admission, unregister provider capabilities, then stop the plugin in a defined order.
+6. Preserve the security boundary: tool/capability catalog membership is discoverability only. Every invocation still needs current principal, tenant and policy evaluation.
+
+### 12.4 Remaining M1.1 evidence
+
+The following cannot be established from the source files and indexed searches inspected so far:
+
+- Complete CDI bean graph and producer/injection wiring in the Runtime.
+- Complete transitive dependency/import graph for the two independent Maven reactors.
+- Whether a production ToolRegistry implementation is provided indirectly or by an external dependency.
+- Runtime agent discovery and invocation path from registered definitions/contracts to actual agent execution.
+- Whether the Framework's plugin JAR loading is enabled/configured in the deployed Runtime.
+- Clean-checkout duplicate-FQN scan, Maven dependency tree, build and tests.
+
+M1.1 is therefore **partially complete**. The evidence is sufficient to define the next narrow investigation, but not yet sufficient to edit public SPI signatures safely.
+
+
+## 13. Runtime CDI and startup-wiring trace — 2026-11-17
+
+This section records the next bounded investigation against the current Runtime default branch. It follows the M1.1 decision to identify the actual composition points before changing Framework SPIs.
+
+### 13.1 Confirmed Quarkus CDI producer surface
+
+The current Runtime tree contains the following producer classes relevant to execution and backend composition:
+
+- `runtime/andalus-runtime/.../quarkus/BackendProducer` exposes `InferenceBackend` and `WorkflowBackend` as application-scoped CDI beans. It calls the static `BackendRegistry.initialize()`, then resolves the default backend through static registry methods. Initialization exceptions are logged and swallowed before resolution continues.
+- `runtime/andalus-runtime/.../quarkus/AgentClientProducer` injects those two backend interfaces and produces an application-scoped `AgentClient` using `AgentConfig.defaults()`.
+- `runtime/andalus-runtime-core/.../execution/a2a/DurableA2AIntegrationProducer` and `.../execution/event/observability/ObservabilityPublisherProducer` are additional Runtime Core producer entry points; their full dependency graphs still need inspection.
+- The REST API has its own producer set: `ExecutionProducer`, `SecurityProducer`, `StateProducer` and `AnpProducer`. These provide API/runtime services independently of the backend producer pair.
+
+This is a distributed CDI composition surface, not yet evidence of one central runtime extension manager. The producer classes show that CDI can compose selected services, but the inspected set does not establish plugin JAR installation, executable capability registration, ToolCatalog-to-ToolRegistry adaptation, or agent-definition registration as part of application startup.
+
+### 13.2 Execution runtime entry point
+
+- `DefaultAndalusRuntime` in `andalus-runtime-core` is `@ApplicationScoped`, injects `ExecutionEngine`, and delegates execution to `executionEngine.executeAgent(agent, context)`. It maps the resulting `ExecutionResult` to `AgentResponse`.
+- This class is a runtime execution facade, not a plugin or tool composition root. Its constructor creates resource metadata; it does not register plugins, capabilities, tools or agent definitions.
+- Runtime `AgentRegistry` remains a thin `GenericRegistry<AgentDefinition>` specialization. The inspected class has no CDI annotation, producer, startup observer or direct execution integration.
+- `AndalusAgentRunner` injects `AgentExecutionService`, but the runner module is not an authoritative startup path for the main Runtime reactor: the Runtime parent POM comments out `andalus-agent-runner` with the documented reason that it is not a Quarkus application module.
+
+### 13.3 Startup and discovery evidence
+
+The Runtime repository tree contains ServiceLoader descriptors for backend providers (Gamelan and Gollek), as well as node/tool/provider descriptors in feature modules. This establishes classpath-level provider discovery surfaces for those specific SPIs. It does not establish that Framework `Plugin` JAR loading is enabled in the deployed Runtime:
+
+- Backend providers are discovered through the static `BackendRegistry` path used by `BackendProducer`.
+- Tool-related ServiceLoader descriptors include several distinct provider interfaces (for example `tech.kayys.andalus.tool.ToolProvider`, `tech.kayys.andalus.tools.spi.Tool` and Gamelan `ExecutorPlugin`). These are not interchangeable contracts.
+- The Runtime tree contains no Quarkus extension `BuildStep`/recorder module or central plugin startup observer in the targeted file inventory. Absence from this targeted inventory is not proof that no indirect or external startup hook exists.
+- The Framework `RuntimePluginManager` and `PluginCapabilityRegistrar` still have no demonstrated direct Runtime consumer in the searches performed for sections 11–12.
+
+### 13.4 Composition and compatibility risks now visible
+
+1. **Backend composition is static-registry based.** CDI exposes a default backend, but the producer delegates discovery and selection to static `BackendRegistry` methods. This is a separate mechanism from Framework `PluginRegistry` and executable `CapabilityRegistry`.
+2. **There are multiple service-provider ecosystems.** BackendProvider, node providers, ToolProvider, tools.spi.Tool and Gamelan ExecutorPlugin each have separate discovery contracts. A future integration must use explicit adapters rather than treating all discovered providers as generic plugins or tools.
+3. **CDI composition is fragmented across modules.** Runtime, Runtime Core and REST API each provide their own producer classes. A complete bean graph requires inspecting all producer method signatures, qualifiers, scopes, alternatives and injection sites; this pass has not done that.
+4. **Version coordinates need immediate reconciliation.** The inspected `runtime/andalus-runtime/pom.xml` inherits parent version `1.0.0-SNAPSHOT`, while `runtime/andalus-runtime-core/pom.xml` inherits `0.0.1`. The latter pins Framework dependencies to `${project.version}`. This is a concrete mismatch in the current source and means the Runtime reactor's artifact/version topology cannot be assumed coherent from module names alone. Resolve whether this reflects an intentional reactor split, stale POM, or active build defect before dependency graph/build conclusions.
+5. **Default security producer needs review before reuse.** The REST `SecurityProducer` supplies a `DelegationPolicy` that returns `true` for every invocation. This is a permissive default and must not be interpreted as the policy boundary for domain-product integration or exposed as production authorization without a surrounding authenticated-principal and policy enforcement layer.
+
+### 13.5 M1.1 conclusion and next evidence
+
+The current source evidence does **not** justify adding a new generic extension manager or changing the Framework registry SPIs yet. It does establish that the main Runtime currently has at least two composition styles: CDI producers backed by static ServiceLoader registries (backend path), and application-scoped execution services wired through CDI (execution path). The external-JAR plugin lifecycle/capability path remains unconnected in the inspected Runtime sources.
+
+Next, complete a producer/injection matrix across Runtime Core, Runtime, REST API and runtime feature modules; inspect the two additional Runtime Core producers and all API producers; trace the concrete `ExecutionEngine` and `AgentExecutionService` bean implementations; and reconcile the parent/version mismatch. Only after that should we decide whether to integrate the existing Framework plugin lifecycle into the Runtime, or document classpath ServiceLoader providers as the supported extension mechanism and keep external-JAR installation as a separate optional facility.
+
+**Limitations:** this is GitHub source inspection only. No Maven build, dependency tree, Quarkus Arc bean validation, startup test, CDI injection test or ServiceLoader runtime test was run. The Runtime/Framework compatibility matrix and M0 exit criteria remain open.
+
+
+## 14. Execution-engine and agent-execution wiring trace — 2026-11-17
+
+This section follows the CDI/startup inventory and traces the main Runtime execution path from the top-level runtime facade to model and tool execution. Findings are based on direct source inspection of the current Runtime default branch.
+
+### 14.1 Confirmed CDI execution chain
+
+The main agent execution path is implemented as follows:
+
+1. `DefaultAndalusRuntime` is `@ApplicationScoped` and injects `ExecutionEngine`.
+2. `DefaultExecutionEngine` is `@ApplicationScoped` and implements `ExecutionEngine`; it injects `AgentExecutionService`.
+3. `DefaultExecutionEngine.executeAgent(...)` extracts the prompt from `GraphExecutionContext`, creates a default `ExecutionBudget`, calls `executionService.create(agent, request, budget)`, and invokes `executeSync()`.
+4. `AgentExecutionService` is `@ApplicationScoped`. It assembles a `DefaultAgentExecution` with checkpoint stores, `AgentToolExecutor`, discovered `Provider` beans, model router, context planner, optional memory/cache/event services and a tool execution context.
+5. `DefaultAgentToolExecutor` is `@ApplicationScoped`; it discovers `Tool` beans and optional guardrail, policy, cache and event-ledger services through CDI `Instance<T>` injection.
+6. `DefaultAgentExecution` builds the ReAct agent, routes to a selected model provider, bridges tool execution through the executor/policy path and persists agent context through the checkpoint bridge.
+
+This establishes a real CDI-managed agent execution path. It is separate from Framework's external-JAR `RuntimePluginManager` lifecycle and does not by itself prove that plugin-provided agents/tools are registered into these CDI collections.
+
+### 14.2 Required and optional CDI dependencies
+
+The inspected source identifies these important bean requirements:
+
+| Contract / implementation | Composition evidence | Notes |
+|---|---|---|
+| `ExecutionEngine` / `DefaultExecutionEngine` | Concrete implementation is `@ApplicationScoped` | Injected by `DefaultAndalusRuntime`; no separate producer needed in the inspected path |
+| `AgentExecutionService` | Concrete class is `@ApplicationScoped` | Injected by `DefaultExecutionEngine` |
+| `CheckpointStore` (AgentContext snapshots) / `InMemoryCheckpointStore` | Concrete implementation is `@ApplicationScoped` | Separate from the execution API checkpoint store produced by REST `ExecutionProducer` |
+| `ExecutionCheckpointStore` / `InMemoryExecutionCheckpointStore` | Concrete implementation is `@ApplicationScoped` | Optional CDI `Instance` in `AgentExecutionService` |
+| `AgentToolExecutor` / `DefaultAgentToolExecutor` | Concrete implementation is `@ApplicationScoped` | Required injection in `AgentExecutionService` |
+| `ToolBudgetLedger` | Concrete class is `@ApplicationScoped` | Required injection in `AgentExecutionService`; defaults to unlimited budget when no configured budget exists |
+| `Provider` | Injected as `Instance<Provider>` and enumerated at execution creation | The inspected Runtime provider implementations are plain classes with constructor-supplied configuration; no CDI producer/bean registration for them was found in the targeted Runtime tree |
+| `ModelRouter`, `RuntimeContextPlanner` | Optional CDI instances with in-code fallbacks | Falls back to `DefaultModelRouter` and `DefaultRuntimeContextPlanner` |
+| `MemoryManager`, `ExecutionCache`, `EventLedger`, `ExecutionCheckpointStore`, `ContextProvider` | Optional CDI instances | Absence is tolerated for these optional integrations |
+| `Tool` | Enumerated through `Instance<Tool>` in `DefaultAgentToolExecutor` | Tool classes must be CDI beans or otherwise produced; ServiceLoader entries for other tool interfaces do not automatically satisfy this injection |
+
+The two checkpoint families must remain explicit. `AgentExecutionService` uses the same-package AgentContext-oriented `CheckpointStore` and `InMemoryCheckpointStore`; REST `ExecutionProducer` produces the separate `tech.kayys.andalus.execution.checkpoint.CheckpointStore` for execution-core recovery. The latter producer does not satisfy the former injection merely because both simple names are `CheckpointStore`.
+
+### 14.3 Model-provider wiring gap
+
+- `AgentExecutionService` collects every CDI-managed `Provider` bean into a list and passes it to `DefaultAgentExecution`.
+- The inspected `runtime/andalus-runtime-provider` classes (`AndalusProvider`, `AnthropicProvider`, `OpenAiProvider`, `DemoProvider`) are plain provider implementations with explicit constructor configuration; they are not annotated CDI beans.
+- The targeted Runtime tree search found no `Provider` producer or provider factory that turns configured provider instances into CDI beans.
+- Separately, `BackendProducer` exposes `InferenceBackend` and `WorkflowBackend` from the static `BackendRegistry`. Those backend interfaces are not the `tech.kayys.andalus.provider.Provider` contract consumed by the ReAct execution path.
+
+**Conclusion:** there are two distinct inference integration surfaces: the ReAct `Provider`/model-router path and the backend `InferenceBackend` ServiceLoader path. The source inspected does not show an adapter connecting them, nor a configuration-to-CDI-provider composition path for the former. Do not assume that registering a `BackendProvider` makes a ReAct `Provider` available.
+
+### 14.4 Caller identity is dropped by the default runtime facade
+
+This is a significant context-propagation gap:
+
+- `AgentExecutionService.create(..., tenantId, userId, roles)` supports an explicit authenticated caller context and rejects roles when no user identity is supplied.
+- However, `DefaultExecutionEngine.executeAgent(...)` calls only the three-argument `create(agent, request, budget)` overload. That overload delegates with null tenant/user and an empty role set.
+- `DefaultAndalusRuntime.executeSync(agent, request)` constructs a graph context from the request and calls `ExecutionEngine.executeAgent`; its public method signature carries no principal, tenant, role, capability or policy context.
+- Consequently, the default `AndalusRuntime` facade path constructs an anonymous tool execution context even when an upstream product may have authenticated the caller, unless the caller bypasses this facade and invokes the explicit `AgentExecutionService` overload through another integration.
+
+**Required direction:** introduce a trusted invocation context at the runtime boundary (or a separate overload that accepts one), populate it only from host-validated authentication/authorization context, and propagate it unchanged through `DefaultAndalusRuntime` → `ExecutionEngine` → `AgentExecutionService` → tool/capability contexts. Never accept principal or roles from model-generated prompt variables. Preserve the current anonymous overload for standalone use, with explicit semantics.
+
+### 14.5 Execution-path correctness and policy questions
+
+- `DefaultExecutionEngine` currently extracts the prompt and creates a fresh default budget; it does not propagate a caller-provided budget or security context from `GraphExecutionContext`.
+- `DefaultAgentExecution` builds the ReAct agent with `withAutoApproveTools(true)`; its listener also approves tool permission callbacks automatically in the inspected headless execution path. This must be reconciled with the policy bridge and tool policy evaluator before the path is treated as safe for untrusted or multi-tenant deployments. Approval UX and authorization policy must remain distinct.
+- `DefaultAgentToolExecutor` contains the intended tool pipeline (tool resolution, argument validation, budget checks, policy evaluation, optional guardrails, circuit breaker, retry and timeout). The complete policy-provider default behavior and production bean presence still require a separate focused audit.
+- `DefaultExecutionEngine` catches execution exceptions and maps them to a failed `ExecutionResult`, while the top-level facade maps results to `AgentResponse`. Conformance tests should verify failure identity, cancellation, timeout, budget and policy-denial propagation through the complete facade path.
+
+### 14.6 Narrow implementation sequence
+
+Before changing the public Framework plugin SPI, the next implementation work should be:
+
+1. Decide and document one supported model-provider composition path. Either make configured `Provider` implementations CDI-discoverable through a deliberate provider factory/producer, or adapt the existing backend registry to the ReAct provider contract. Do not conflate the two contracts.
+2. Add a trusted invocation-context contract to the Runtime entry path and propagate tenant/principal/roles/budget/correlation/deadline/cancellation. Keep the anonymous convenience API explicit.
+3. Make tool auto-approval a deliberate deployment policy, not a hard-coded behavior for general server execution. Ensure policy denial cannot be bypassed by an approval callback.
+4. Add Quarkus integration tests that boot the actual CDI container and prove required beans resolve, provider selection works, tools are discovered, caller identity reaches policy evaluation, and absent optional beans degrade as documented.
+5. Reconcile the Runtime parent version mismatch already recorded in section 13 before claiming reactor compatibility.
+
+**Limitations:** this is source inspection and targeted tree search. No Maven build, Quarkus startup, Arc bean validation, ServiceLoader runtime test, provider API call or end-to-end execution test was run. The provider-bean absence conclusion is bounded to the inspected Runtime tree and must be verified with a clean-checkout bean/import scan before being treated as a repository-wide proof.
+
+
+## 15. Tool policy enforcement and approval-bridge correction
+
+A focused trace of DefaultAgentToolExecutor, DefaultToolPolicyEvaluator, the built-in policies and the ReAct bridge found both a real bypass and important limits to the existing approval model.
+
+### 15.1 Confirmed policy pipeline
+
+- DefaultAgentToolExecutor.execute(invocation, context, cancellation) resolves the CDI Tool, performs its lightweight required-field validation, builds ToolPermissionContext and PolicyEvaluationContext from the immutable execution context, then evaluates policy before guardrails, budget reservation, cache lookup or actual tool execution.
+- DefaultToolPolicyEvaluator is an @ApplicationScoped bean. It discovers ToolPolicy beans, sorts them by priority, short-circuits on deny, combines approval decisions, and treats a policy exception as DENY.
+- Two built-in CDI policies are present:
+  - CapabilityLevelPolicy (priority 10) denies SHELL and SYSTEM tools unless the caller has the corresponding explicit approval role.
+  - WriteApprovalGatePolicy (priority 20) requires approval for WRITE and higher capabilities unless an explicit write-auto-approved role (or wildcard role) is present.
+- The ReAct execution path has no in-loop approval-resume mechanism. ToolPolicyBridge correctly treats WaitForApproval as a refusal rather than executing the tool; the current synchronous execution cannot safely pause for a human approver and later resume that exact invocation.
+
+### 15.2 Bypass found and corrected in Runtime
+
+DefaultAgentExecution contained two consecutive policy-bridge initializations. The first created ToolPolicyBridge, but a second conditional lambda followed it and was intended to replace it. That lambda's switch sent unknown decisions—including WaitForApproval—to directFallback, which executes the tool directly and bypasses the governed executor. The checked-in source also had the conditional expression detached from its assignment, making the block syntactically invalid Java.
+
+The Runtime correction:
+1. Removes the duplicate conditional lambda and keeps one ToolPolicyBridge.
+2. Makes the bridge call AgentToolExecutor.execute(invocation, context, cancellation) so the immutable tenant/user/roles/budget context reaches the policy evaluator; the former bridge overload omitted that context.
+3. Keeps direct fallback available only for an explicit AgentDecision.ExecuteTool.
+4. Rejects WaitForApproval, Fail, and unknown decisions without invoking direct fallback.
+5. Extends ToolPolicyBridgeTest to assert that approval-required and unexpected decisions do not execute the fallback, and that the exact execution context is passed to the governed executor.
+
+Runtime commits:
+- d7bf314289d7b3d74c4cdae68ecc71705364e1f9 — preserve execution context in tool policy bridge.
+- 574499abb06f4b29b808d4b3a7408a5ce3201fc — enforce tool approval decisions in agent execution.
+- 0be0d06481222010bd6d72a071df7704f1ef8e35 — test policy bridge identity and approval handling.
+
+### 15.3 Remaining policy and approval design gaps
+
+- DefaultAgentToolExecutor.evaluatePolicy returns ALLOW when its ToolPolicyEvaluator CDI instance is absent or unsatisfied. DefaultToolPolicyEvaluator normally exists in the Runtime core bean archive, but manually constructed/partially wired executors can silently become fail-open. Production composition should require the evaluator or use an explicit, named standalone policy mode; absence must not silently mean unrestricted access.
+- DefaultToolPolicyEvaluator with zero discovered ToolPolicy beans returns ALLOW. The built-in policies are CDI beans in Runtime core, but packaged deployments must verify that they are actually included and discovered.
+- DefaultAgentExecution still enables ReAct permission auto-approval and its listener approves the ReAct UI permission callback. After the bridge correction this does not override a ToolPolicyEvaluator DENY or WaitForApproval, because every tool call still passes through the governed executor. It is nevertheless an approval-UX shortcut, not an authorization mechanism, and should be made explicit/configurable before exposing the runtime to untrusted callers.
+- The built-in policy capability level is inferred from tool-name prefixes in DefaultAgentToolExecutor, not from a trusted capability registry or a signed/validated tool descriptor. A renamed or poorly classified tool may receive the wrong policy level. Capability classification should move to trusted tool metadata/registry semantics.
+- WriteApprovalGatePolicy can return RequireApproval, but this execution path cannot collect approval and resume. It therefore fails the call safely; a future resumable approval workflow needs a durable pending invocation, approver identity, expiry, replay/idempotency protection and re-evaluation at resume time.
+- AgentToolExecutionContext rejects wildcard roles, so the wildcard bypass branches in the built-in policies are not reachable through the standard immutable execution-context constructor. Standalone behavior should be represented by an explicit trusted execution mode, not by adding a wildcard role.
+
+### 15.4 Verification status and next work
+
+- Source changes and tests were committed directly to the Runtime repository's default branch; no PR was opened.
+- GitHub source fetches verified the corrected bridge, caller-context propagation and added tests.
+- Maven compilation and tests have not been run in this environment. In particular, Quarkus CDI discovery, the policy bean set in the packaged application, and end-to-end ReAct tool invocation still require runtime verification.
+- Next bounded work: make policy-evaluator absence explicit and fail-safe; replace name-prefix capability inference with trusted metadata; then add Quarkus integration tests proving built-in policies are discovered and enforced through the actual ReAct execution path.
+
+
+## 16. Fail-closed policy composition
+
+The next implementation slice removes the two implicit fail-open paths identified in Section 15.
+
+### 16.1 Runtime behavior change
+
+- `DefaultAgentToolExecutor.evaluatePolicy(...)` previously returned ALLOW when its CDI `ToolPolicyEvaluator` was absent or unsatisfied. It now returns DENY with policy ID `runtime-policy-evaluator-required`.
+- `DefaultToolPolicyEvaluator.evaluateDetailed(...)` previously initialized its aggregate to ALLOW and returned that result when CDI discovered zero `ToolPolicy` beans. It now returns DENY with policy ID `runtime-policy-set-required` and an empty evaluation list.
+- Added `DefaultToolPolicyEvaluatorTest.deniesWhenNoPolicyBeansAreAvailable` to lock down the empty-policy-set behavior.
+- This deliberately removes implicit standalone/open execution. A future standalone mode must be explicit, named, opt-in by trusted host configuration, and must not be selected by missing CDI beans or user/model input.
+
+Runtime commits:
+- `a4e2ba590d6761197c13e867c7d387ebe987c4da` — fail closed when evaluator is absent.
+- `f781a03ddd1a92bd720266131b2374d3223ae02d` — deny when no policies are registered.
+- `395221a9328dac31119cd296a2d22d6a7752f371` — add empty-policy-set regression test.
+
+### 16.2 Verification and remaining work
+
+- Source files and the new regression test were committed directly to the Runtime default branch and fetched again for source verification.
+- No local Maven build was run. GitHub Actions for the prior commit was still in progress when inspected; its separate Javadoc job failed during dependency resolution before compiling the Runtime core module. The new fail-closed commits therefore remain unverified by a completed build.
+- This change does not yet replace tool-name-prefix capability classification. The next slice should add trusted capability metadata to the tool descriptor/registration contract, define a conservative default for unclassified tools, and migrate built-in policies to that metadata without changing public tool names.
+
+
+## 17. Trusted tool capability classification
+
+### Finding
+
+The runtime previously inferred authorization level from invocation/tool-name prefixes and treated every unmatched name as `READ`. This made classification dependent on naming conventions rather than trusted registration metadata. It also allowed a tool with an innocuous name to receive a low-risk classification.
+
+The framework already has the appropriate metadata surface: `ToolDescriptor.executionProfile()`, whose `ToolExecutionProfile.kind()` is a `ToolKind` (`READ`, `WRITE`, `SHELL`, `NETWORK`, `SYSTEM`, or `CUSTOM`). No parallel risk taxonomy was introduced.
+
+### Changes committed
+
+- Framework `ToolDescriptor.executionProfile()` now defaults to a modifying `CUSTOM` profile instead of read-only `READ`.
+- `DefaultToolDescriptor` and its builder use the same conservative `CUSTOM` default.
+- Runtime `DefaultAgentToolExecutor` resolves policy level from the resolved tool's descriptor profile. A missing descriptor/profile and `CUSTOM` map to `SYSTEM`; a `READ` kind is only `READ` when the profile also declares `readOnly=true`.
+- Tool names and invocation names no longer determine capability level.
+- `CapabilityLevelPolicy` now requires matching explicit approval roles for `EXECUTE`, `NETWORK`, `FILESYSTEM`, `SHELL`, and `SYSTEM`. `WRITE` continues through the write-approval gate.
+
+### Compatibility and migration
+
+This is intentionally fail-closed. Existing custom descriptors that relied on the implicit read-only default will now be classified as `SYSTEM` until they declare an explicit profile. Tool authors should set a trusted profile at descriptor construction/registration time; never accept this classification from model-generated arguments, prompts, or tool-call payloads.
+
+Example profiles:
+
+- Read-only lookup: `ToolExecutionProfile.readOnly(ToolKind.READ)`
+- Write operation: `ToolExecutionProfile.modifying(ToolKind.WRITE)`
+- Network operation: `ToolExecutionProfile.modifying(ToolKind.NETWORK)`
+- Shell operation: `ToolExecutionProfile.modifying(ToolKind.SHELL)`
+- Infrastructure/system operation: `ToolExecutionProfile.modifying(ToolKind.SYSTEM)`
+
+### Commits
+
+- Framework default classification: `2d5043abfe5a44eba4d97866c49abb0cfd4824b2`
+- Framework descriptor-builder default: `bd0ed7fc272b64313b58efead0f117ff459e1422`
+- Runtime descriptor-based classification: `32f3f233e46b0dc3348945ee150b431def477402`
+- Runtime policy call-site now passes the resolved tool descriptor: `c4da9f50ac958738243e8c7e8b5499841ed23946`
+- Runtime elevated capability policy: `33a7e2005ccb1adeedc1e0f807b73b768acddc62`
+- Runtime classification tests: `d76782dcaad9d5a96aa1e4d07d89cea4a41d28c0`, `eab7f9349b3742299f5a3894e787828d04b0c0ed`
+- Runtime policy tests: `fee550ca1ed66cc11f5afa42187efd3df25c5f0c`
+
+Builds and tests have not been run as part of this audit update. Verify CI before treating this change as build-validated.
+
+
+## 18. Built-in tool catalog and governed-runtime integration boundary
+
+### Finding
+
+The built-in OS tool module is not currently a collection of CDI beans implementing the governed runtime's `tech.kayys.andalus.tool.Tool` contract. It implements the legacy `tech.kayys.andalus.tools.spi.Tool` contract and is exposed through the Java `ServiceLoader` descriptor:
+
+`modules/tool/andalus-tool-os/src/main/resources/META-INF/services/tech.kayys.andalus.tools.spi.Tool`
+
+The service file currently lists 14 tools. The MCP module also implements the legacy `tools.spi.Tool` contract. In contrast, `DefaultAgentToolExecutor` injects CDI `Instance<tech.kayys.andalus.tool.Tool>` and derives governance from `ToolDescriptor.executionProfile()`.
+
+These are separate interfaces, registries/discovery mechanisms, and execution contexts. No adapter or registration bridge between this ServiceLoader catalog and the governed CDI tool executor was established in the inspected source. Therefore, the profile changes in Section 17 do not automatically classify or govern the legacy ServiceLoader tools.
+
+### Inventory and intended risk classification
+
+This is the proposed classification to apply when the explicit adapter is implemented. It is not a claim that the legacy tools are already governed.
+
+| Legacy tool | Intended profile | Reason |
+|---|---|---|
+| `bash` | `SHELL` | Executes host commands |
+| `create_dir` | `FILESYSTEM` | Creates directories |
+| `edit_file` | `FILESYSTEM` | Mutates file contents |
+| `fetch_url` | `NETWORK` | Makes outbound HTTP requests |
+| `glob` | `FILESYSTEM` | Reads filesystem paths |
+| `grep` | `FILESYSTEM` | Reads and searches file contents |
+| `list_dir` | `FILESYSTEM` | Reads directory contents |
+| `move` | `FILESYSTEM` | Moves/renames filesystem entries |
+| `patch` | `FILESYSTEM` | Mutates file contents |
+| `read_file` | `FILESYSTEM` | Reads file contents |
+| `search_files` | `FILESYSTEM` | Traverses filesystem paths |
+| `think` | `READ` | Scratchpad only; no external side effects |
+| `web_search` | `NETWORK` | Makes outbound search requests |
+| `write_file` | `FILESYSTEM` | Creates/overwrites files |
+
+Filesystem reads and writes are deliberately grouped under the existing `FILESYSTEM` level for now; a later refinement may separate read-only filesystem access from mutation if the policy model needs that distinction. MCP-discovered tools must default to `CUSTOM`/deny unless a trusted local administrator supplies an explicit profile. Never trust a remote tool's self-declared metadata or model-generated tool arguments as authorization.
+
+### Required adapter design
+
+1. Keep the legacy ServiceLoader SPI working for existing consumers.
+2. Add an explicit adapter that wraps a legacy tool as a governed `tech.kayys.andalus.tool.Tool`, including safe mapping of invocation arguments, execution context, cancellation, result/error semantics and timeout behavior.
+3. Require a trusted registration-time profile for each adapter instance. The profile must be supplied by local code/configuration, not by the tool description, remote MCP metadata, or the model.
+4. Register adapted tools into the same governed CDI/runtime path as native tools. Do not create a second authorization pipeline.
+5. Ensure missing adapter metadata maps to `CUSTOM`/deny, and test that changing a tool's display name or invocation name cannot lower its risk level.
+6. Test identity propagation and policy denial across the adapter, including cancellation and error propagation.
+
+### Follow-up correction
+
+Runtime policy documentation was updated to accurately describe matching approval roles for all elevated levels, not only SHELL/SYSTEM:
+
+- Runtime policy description: `baffd92a8be82f867f588cacafeb1e5365198c61`
+
+### Scope and validation
+
+No adapter was added in this audit step because the legacy SPI source/artifact contract is not present in the inspected Runtime repository tree, and the two tool interfaces have materially different execution/context signatures. Implementing a guessed bridge here would risk breaking binary/source compatibility or bypassing governance. The next implementation task is to locate/confirm the canonical legacy SPI artifact contract and add the adapter at the correct module boundary.
+
+No builds or tests were run for this section.
+
+
+## 19. Legacy tool SPI contract resolution
+
+### Source-level result
+
+The adapter implementation was deliberately paused until the exact legacy interface could be verified. The repository-tree inspection establishes:
+
+- The andalus repository contains the OS and MCP implementations importing tech.kayys.andalus.tools.spi.Tool, ToolContext, and ToolResult.
+- andalus-tool-os/pom.xml declares dependencies on tech.kayys.andalus:andalus-tool:0.0.1 and tech.kayys.andalus:andalus-spi:0.0.1.
+- The checked-in andalus tree does not contain source files for the tech.kayys.andalus.tools.spi package or the andalus-tool / andalus-spi source modules that provide those coordinates.
+- The checked-in andalus-framework tree contains tech.kayys.andalus.spi.tool.Tool, but this is not the imported legacy package. Its API is materially different: it exposes getId(), getDescription(), and execute(Object); it does not define the map/context/result contract used by the legacy tools.
+- The governed API is a separate third contract: tech.kayys.andalus.tool.Tool, which accepts ToolInvocation, ToolContext, and optional CancellationToken, and returns CompletableFuture<ToolResult>.
+
+The checked-in OS implementation confirms the legacy execution shape at its call sites: id(), name(), description(), inputSchema(), and execute(Map<String,Object>, ToolContext) returning legacy ToolResult. The MCP implementation additionally exposes an asynchronous executeAsync(...) returning Mutiny Uni<ToolResult>. These observations are useful but do not replace the canonical interface definition, especially for context fields, result metadata, exceptions, cancellation, and binary compatibility.
+
+### Adapter decision
+
+Do not implement the bridge against the similarly named Framework tech.kayys.andalus.spi.tool.Tool interface, and do not copy/recreate the missing legacy API from implementation call sites.
+
+The adapter should live in a dedicated integration module that can depend on both the canonical legacy SPI artifact and the governed Framework tool API, without pulling legacy dependencies into Framework core. The exact module and dependency versions remain undecided until the legacy artifact source is located.
+
+### Required input to unblock implementation
+
+Locate the source repository or provide the source/JAR for the exact published artifacts:
+
+- tech.kayys.andalus:andalus-tool:0.0.1
+- tech.kayys.andalus:andalus-spi:0.0.1
+
+The artifact must include the canonical definitions of tech.kayys.andalus.tools.spi.Tool, ToolContext, and ToolResult, plus any related schema and async execution contracts. Once available, inspect their full semantics and then implement the adapter with trusted registration-time profiles and governed CDI registration.
+
+### Verification
+
+- Confirmed the legacy imports and call sites in BashTool and McpTool.
+- Confirmed the OS module's declared dependency coordinates and versions.
+- Confirmed neither checked-in repository tree contains the legacy package source.
+- Confirmed the Framework's similarly named tech.kayys.andalus.spi.tool.Tool is a different interface.
+- No source changes to runtime tool execution were made; no speculative adapter was introduced.
+- No Maven build or tests were run.
+
+
+## 20. Legacy SPI Maven coordinate collision
+
+### Finding
+
+A follow-up POM inspection refines Section 19. The legacy dependencies declared by the OS tool module use:
+
+- tech.kayys.andalus:andalus-tool:0.0.1
+- tech.kayys.andalus:andalus-spi:0.0.1
+
+The current Framework reactor also declares modules with those exact groupId/artifactId/version coordinates. Its andalus-tool module exposes the newer tech.kayys.andalus.tool API; andalus-spi exposes tech.kayys.andalus.spi APIs. Neither checked-in module contains tech.kayys.andalus.tools.spi.Tool, ToolContext, or ToolResult.
+
+This means the issue is more precise than a missing source repository: the same Maven coordinates are being used by the current Framework artifacts, but the legacy source contract expected by andalus-tool-os is absent from those current source trees. Depending on the deployed Maven artifact, the dependency may resolve successfully while still failing to provide the legacy package. A successful dependency resolution therefore does not establish source or binary compatibility.
+
+### Consequences
+
+1. Do not add the current Framework artifacts as a purported source of the legacy package.
+2. Do not publish a second, incompatible artifact under the same Maven coordinates.
+3. Before implementing an adapter, establish whether the legacy package exists in an older published JAR/version, an older Git revision/repository, or whether the OS/MCP tools should migrate directly to the current governed Tool API.
+4. Treat the legacy ServiceLoader descriptor as a compatibility surface that needs an explicit migration/deprecation plan, not as proof that its API is still available from current Framework artifacts.
+
+### Recommended resolution order
+
+- First inspect the exact resolved JARs used by the existing andalus build (including dependency tree and JAR contents) to determine whether a local/private repository supplies a legacy artifact despite the coordinate collision.
+- If no such artifact exists, prefer migrating built-in tools to the current governed Tool API and providing a deliberate compatibility module only if a real external consumer requires the old SPI.
+- Keep compatibility artifacts on distinct Maven coordinates or a clearly versioned compatibility line. Never silently republish different API contents under the same coordinates.
+
+### Verification
+
+- Inspected the OS module POM: it pins both dependencies to 0.0.1.
+- Inspected the Framework andalus-tool and andalus-spi POMs: both are modules in the current Framework reactor and inherit version 0.0.1.
+- Inspected current Framework Tool, ToolContext, and CancellationToken sources: they define the new governed contract and cancellation model.
+- Confirmed current source trees do not contain the legacy tools.spi package.
+- No adapter or Maven dependency changes were made. No Maven dependency resolution/build was run.
