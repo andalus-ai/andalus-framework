@@ -48,7 +48,7 @@ class PlanRevisionHistoryIntegrityValidatorTest {
     }
 
     @Test
-    void reportsWrongPlanAndOutOfOrderRecords() {
+    void reportsRecordsForWrongPlan() {
         PlanId expected = PlanId.of("expected");
         PlanId other = PlanId.of("other");
         AgentPlan expectedZero = plan(expected, 0, "zero");
