@@ -31,6 +31,8 @@ import tech.kayys.andalus.tool.schema.SchemaType;
 import java.time.Duration;
 import java.util.*;
 import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.atomic.AtomicReference;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -111,6 +113,63 @@ class GovernedToolExecutorTest {
 
         // Check action journal recorded
         assertThat(journal.history(ExecutionId.of(ctx.executionId()))).isNotEmpty();
+    }
+
+    @Test
+    void shouldForwardExecutionCancellationTokenToToolExecutor() {
+        ToolCatalog isolatedCatalog = ToolCatalog.create();
+        ToolDescriptor descriptor = DefaultToolDescriptor.builder(ToolId.of("cooperative-tool"), "Cooperative")
+                .capabilities(Set.of("cooperative.run"))
+                .inputSchema(DefaultToolInputSchema.of(Map.of()))
+                .build();
+        AtomicReference<CancellationToken> received = new AtomicReference<>();
+        ToolProvider provider = new ToolProvider() {
+            @Override
+            public Optional<ToolDescriptor> describe(ToolId id) {
+                return id.equals(descriptor.idAsToolId()) ? Optional.of(descriptor) : Optional.empty();
+            }
+
+            @Override
+            public Collection<ToolDescriptor> tools() {
+                return Set.of(descriptor);
+            }
+
+            @Override
+            public ToolExecutor executor(ToolId id) {
+                return new ToolExecutor() {
+                    @Override
+                    public CompletableFuture<ToolResult> execute(ToolInvocation invocation, ToolContext context) {
+                        return CompletableFuture.completedFuture(
+                                ToolResult.success(invocation.invocationIdentifier(), "legacy", Duration.ZERO, "Cooperative"));
+                    }
+
+                    @Override
+                    public CompletableFuture<ToolResult> execute(
+                            ToolInvocation invocation, ToolContext context, CancellationToken cancellation) {
+                        received.set(cancellation);
+                        return CompletableFuture.completedFuture(
+                                ToolResult.canceled(invocation.invocationIdentifier()));
+                    }
+                };
+            }
+        };
+        isolatedCatalog.register(provider);
+        GovernedToolExecutor governed = new GovernedToolExecutor(
+                isolatedCatalog, new DefaultToolResolver(isolatedCatalog),
+                DefaultCapabilityScope.allowAll(), null, null, null, null, null,
+                null, null, null, null);
+        CancellationToken token = CancellationToken.create();
+        ToolExecutionContext context = new DefaultToolExecutionContext(
+                "exec-cancel-propagation", DefaultHarnessIdentity.of("agent-1"), null,
+                token, null, null, Map.of());
+
+        ToolResult result = governed.execute(
+                ToolIntent.of("cooperative.run", ToolArguments.empty(), null),
+                context,
+                emittedEvents::add);
+
+        assertThat(received.get()).isSameAs(token);
+        assertThat(result.status()).isEqualTo(ToolResultStatus.CANCELED);
     }
 
     @Test

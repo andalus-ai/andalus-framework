@@ -12,6 +12,10 @@ import java.time.Duration;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
+import tech.kayys.andalus.tool.CancellationToken;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -127,6 +131,41 @@ class HttpMcpToolClientTest {
         assertThat(jsonRpcError.error()).isEqualTo("bad args");
         assertThat(missingEndpoint.success()).isFalse();
         assertThat(missingEndpoint.error()).isEqualTo("MCP HTTP endpoint is required in invocation context");
+    }
+
+    @Test
+    void cancellationAbortsInFlightHttpRequest() throws Exception {
+        CountDownLatch requestReceived = new CountDownLatch(1);
+        AtomicBoolean responseAttempted = new AtomicBoolean(false);
+        server = server(exchange -> {
+            requestReceived.countDown();
+            try {
+                Thread.sleep(5000);
+                respond(exchange, 200, "{\"jsonrpc\":\"2.0\",\"id\":\"1\",\"result\":{}}");
+                responseAttempted.set(true);
+            } catch (InterruptedException interrupted) {
+                Thread.currentThread().interrupt();
+            }
+        });
+        McpToolDescriptor tool = new McpToolDescriptor(
+                "filesystem", "read_file", "Read file", Map.of("type", "object"),
+                McpTransportContext.fromServer(McpServerConfig.http("filesystem", endpoint())));
+        CancellationToken token = CancellationToken.create();
+        CountDownLatch terminated = new CountDownLatch(1);
+        AtomicReference<Throwable> failure = new AtomicReference<>();
+
+        new HttpMcpToolClient().callTool(McpToolInvocation.of(tool, Map.of()), token)
+                .subscribe().with(result -> terminated.countDown(), error -> {
+                    failure.set(error);
+                    terminated.countDown();
+                });
+
+        assertThat(requestReceived.await(2, TimeUnit.SECONDS)).isTrue();
+        token.cancel();
+
+        assertThat(terminated.await(2, TimeUnit.SECONDS)).isTrue();
+        assertThat(failure.get()).isInstanceOf(java.util.concurrent.CancellationException.class);
+        assertThat(responseAttempted.get()).isFalse();
     }
 
     private HttpServer server(ExchangeHandler handler) throws IOException {

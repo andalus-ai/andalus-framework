@@ -2,6 +2,7 @@ package tech.kayys.andalus.agent.mcp;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.smallrye.mutiny.Uni;
+import tech.kayys.andalus.tool.CancellationToken;
 
 import java.net.http.HttpClient;
 import java.util.LinkedHashMap;
@@ -46,6 +47,21 @@ public final class HttpMcpToolClient implements McpToolClient {
                 .onFailure().recoverWithItem(error -> McpToolCallResult.failure(
                         error.getMessage() == null ? error.getClass().getSimpleName() : error.getMessage(),
                         0));
+    }
+
+    @Override
+    public Uni<McpToolCallResult> callTool(McpToolInvocation invocation, CancellationToken cancellation) {
+        if (cancellation != null && cancellation.isCancellationRequested()) {
+            return Uni.createFrom().failure(new java.util.concurrent.CancellationException("MCP tool call cancelled before dispatch."));
+        }
+        return jsonRpc.request(invocation.context(), "tools/call", Map.of(
+                        "name", invocation.toolName(), "arguments", invocation.arguments()), cancellation)
+                .map(this::toCallResult)
+                .onFailure().recoverWithUni(error -> {
+                    if (error instanceof java.util.concurrent.CancellationException) return Uni.createFrom().failure(error);
+                    return Uni.createFrom().item(McpToolCallResult.failure(
+                            error.getMessage() == null ? error.getClass().getSimpleName() : error.getMessage(), 0));
+                });
     }
 
     private List<McpToolDescriptor> toToolDescriptors(McpServerConfig server, McpHttpJsonRpcResponse response) {

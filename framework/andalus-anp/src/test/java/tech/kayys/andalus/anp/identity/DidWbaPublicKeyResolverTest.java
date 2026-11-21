@@ -67,6 +67,19 @@ class DidWbaPublicKeyResolverTest {
         assertThrows(SecurityException.class,
                 () -> DidWbaPublicKeyResolver.resolveAuthenticationKey(document, KEY_ID));
     }
+
+    @Test
+    void rejectsEd25519JwkContainingPrivateKeyMaterial() {
+        DidWbaDocument document = new DidWbaDocument(DID,
+                List.of(DidWbaVerificationMethod.jwk(KEY_ID, DID,
+                        Map.of("kty", "OKP", "crv", "Ed25519", "x", "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+                                "d", "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"))),
+                List.of("#auth-1"), Map.of());
+
+        assertThrows(SecurityException.class,
+                () -> DidWbaPublicKeyResolver.resolveAuthenticationKey(document, KEY_ID));
+    }
+
     @Test
     void resolvesEd25519Base58BtcMultibaseKey() throws Exception {
         KeyPair pair = KeyPairGenerator.getInstance("Ed25519").generateKeyPair();

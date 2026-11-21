@@ -19,7 +19,7 @@ Do not perform a flag-day deletion. First establish ownership, map consumers, ad
 | Checkpoint API A | `andalus-execution-api/.../execution/checkpoint/CheckpointStore.java` | Save/get/getLatest/list of `ExecutionCheckpoint` | Strong candidate for canonical execution checkpoint API |
 | Checkpoint API B | `andalus-state-api/.../state/checkpoint/CheckpointStore.java` | Save/get/getLatest/list of state `Checkpoint` | State-oriented representation overlaps; determine whether it is a richer envelope or separate abstraction |
 | Checkpoint API C | `andalus-runtime-spi/.../execution/CheckpointStore.java` | Save/load/history/delete of `AgentContext` | Legacy/runtime-facing contract; migrate through adapter if consumers remain |
-| Checkpoint API D | `andalus-engine/.../execution/CheckpointStore.java` | Save/restore/delete/list of `ExecutionSnapshot` | Engine-local snapshot contract; likely adapt to canonical checkpoint API |
+| Engine snapshot API | `andalus-engine/.../engine/snapshot/EngineSnapshotStore.java` | Save/restore/delete/list of `ExecutionSnapshot` | Engine-local snapshot contract with a distinct FQN; not yet implemented by an in-repository adapter |
 | Lifecycle | `andalus-execution-api/.../execution/ExecutionLifecycle.java` | CREATED, AUTHORIZING, AUTHORIZED, WAITING_OBLIGATION, RUNNING, SUSPENDED, RESUMING, COMPLETED, FAILED, CANCELLED | Explicit invocation lifecycle; preserve as canonical candidate and validate transition table |
 | Attempt/phase | `andalus-runtime-core` runtime `ExecutionPhase` and lifecycle record | Processing phase and runtime status/attempt/timestamp | Keep separate from lifecycle status; document dimensions and mapping |
 
@@ -39,7 +39,7 @@ Proposed direction:
 Proposed direction:
 - Make `andalus-execution-api` the owner of execution-resumption checkpoints if the primary semantics are attempt, sequence, payload and manifest.
 - Decide whether state-api `Checkpoint` is a domain state snapshot, an execution checkpoint envelope, or a separate state persistence abstraction. Avoid two canonical stores with nearly identical CRUD semantics.
-- Treat runtime-spi AgentContext checkpointing and engine ExecutionSnapshot storage as legacy/adaptor candidates.
+- Treat runtime-spi AgentContext checkpointing as a legacy/adaptor candidate. Keep engine `ExecutionSnapshot` storage explicitly engine-scoped unless a lossless mapping to `ExecutionCheckpoint` is proven.
 - Define atomicity, ordering, idempotency, retention, serialization format, schema versioning and corruption behavior.
 - Avoid default methods that silently return null for a checkpoint lookup; use Optional or explicit unsupported behavior.
 

@@ -4,6 +4,7 @@ import tech.kayys.andalus.tool.ToolContext;
 import tech.kayys.andalus.tool.ToolExecutor;
 import tech.kayys.andalus.tool.ToolInvocation;
 import tech.kayys.andalus.tool.ToolResult;
+import tech.kayys.andalus.tool.CancellationToken;
 
 import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
@@ -24,5 +25,13 @@ public final class GovernedToolExecutor implements ToolExecutor {
     @Override
     public CompletableFuture<ToolResult> execute(ToolInvocation invocation, ToolContext context) {
         return guard.execute(invocation, context, delegate);
+    }
+
+    @Override
+    public CompletableFuture<ToolResult> execute(
+            ToolInvocation invocation,
+            ToolContext context,
+            CancellationToken cancellation) {
+        return guard.execute(invocation, context, delegate, cancellation);
     }
 }
