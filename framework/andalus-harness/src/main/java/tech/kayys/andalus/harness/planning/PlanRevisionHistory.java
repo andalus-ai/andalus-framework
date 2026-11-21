@@ -6,12 +6,13 @@ import java.util.Objects;
 /**
  * Append-only storage contract for accepted plan revisions.
  *
- * <p>Implementations should preserve append order and reject duplicate transitions
- * where appropriate. Durable implementations belong to the runtime/infrastructure layer.</p>
+ * <p>Runtime revision acceptance uses {@link #compareAndAppend(PlanRevisionRecord, long)}
+ * so the expected-revision check and append are one atomic storage operation.
+ * Durable implementations belong to the runtime/infrastructure layer.</p>
  */
 public interface PlanRevisionHistory {
 
-    /** Append an accepted revision record. */
+    /** Append an accepted revision record for direct history maintenance. */
     void append(PlanRevisionRecord record);
 
 
