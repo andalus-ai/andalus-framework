@@ -65,6 +65,7 @@ class ToolSchedulerTest {
         ToolInvocation invocation = ToolInvocation.of(ToolId.of("cooperative"), ToolArguments.empty());
         ToolExecutionContext context = DefaultToolExecutionContext.simple();
         AtomicReference<CancellationToken> received = new AtomicReference<>();
+        AtomicReference<CancellationToken> contextToken = new AtomicReference<>();
         ToolExecutor cooperativeExecutor = new ToolExecutor() {
             @Override
             public CompletableFuture<ToolResult> execute(ToolInvocation inv, ToolContext ctx) {
@@ -76,6 +77,7 @@ class ToolSchedulerTest {
             public CompletableFuture<ToolResult> execute(
                     ToolInvocation inv, ToolContext ctx, CancellationToken cancellation) {
                 received.set(cancellation);
+                contextToken.set(((ToolExecutionContext) ctx).cancellation());
                 return CompletableFuture.supplyAsync(() -> {
                     while (!cancellation.isCancellationRequested()) {
                         try {
@@ -101,6 +103,7 @@ class ToolSchedulerTest {
 
         ToolResult result = handle.result().get();
         assertThat(received.get().isCancellationRequested()).isTrue();
+        assertThat(contextToken.get()).isSameAs(received.get());
         assertThat(result.status()).isEqualTo(ToolResultStatus.CANCELED);
     }
 
