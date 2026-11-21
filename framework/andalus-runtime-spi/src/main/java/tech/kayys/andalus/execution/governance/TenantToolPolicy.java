@@ -2,11 +2,15 @@ package tech.kayys.andalus.execution.governance;
 
 import tech.kayys.andalus.tool.ToolInvocation;
 
-import java.util.Objects;
+import java.util.LinkedHashSet;
 import java.util.Set;
 
 /**
- * Authorization policy enforcing tenant boundary.
+ * Authorization policy enforcing an explicit tenant allow-list.
+ *
+ * <p>An empty allow-list is intentionally deny-all. Tenant identifiers in the
+ * configured allow-list are trimmed once at construction; caller-supplied
+ * tenant identifiers are compared exactly and must already be canonical.</p>
  */
 public final class TenantToolPolicy implements AuthorizationPolicy {
 
@@ -19,12 +23,31 @@ public final class TenantToolPolicy implements AuthorizationPolicy {
             throw new IllegalArgumentException("policyId cannot be null or blank");
         }
         this.policyId = policyId.trim();
-        this.allowedTenants = allowedTenants == null ? Set.of() : Set.copyOf(allowedTenants);
+        this.allowedTenants = normalizeAllowedTenants(allowedTenants);
         this.priority = priority;
     }
 
+    /**
+     * Creates a single-tenant policy. A null tenant retains the historical
+     * deny-all behavior of the set-based constructor.
+     */
     public TenantToolPolicy(String policyId, String tenantId) {
         this(policyId, tenantId == null ? Set.of() : Set.of(tenantId), 50);
+    }
+
+    private static Set<String> normalizeAllowedTenants(Set<String> tenants) {
+        if (tenants == null || tenants.isEmpty()) {
+            return Set.of();
+        }
+
+        Set<String> normalized = new LinkedHashSet<>();
+        for (String tenant : tenants) {
+            if (tenant == null || tenant.isBlank()) {
+                throw new IllegalArgumentException("allowed tenant identifiers cannot be null or blank");
+            }
+            normalized.add(tenant.trim());
+        }
+        return Set.copyOf(normalized);
     }
 
     @Override
@@ -44,20 +67,15 @@ public final class TenantToolPolicy implements AuthorizationPolicy {
 
     @Override
     public PolicyDecision evaluate(ToolInvocation invocation, ToolPermissionContext context) {
-        String tenantId = context.tenantId();
-        if (tenantId == null || !allowedTenants.contains(tenantId)) {
-            return PolicyDecision.deny(
-                    PolicyDecisionReason.TENANT_NOT_AUTHORIZED,
-                    policyId,
-                    "Tenant is not authorized for this tool: " + (tenantId != null ? tenantId : "anonymous")
-            );
-        }
-        return PolicyDecision.allow(policyId, "Tenant authorized");
+        return evaluateTenant(context.tenantId());
     }
 
     @Override
     public PolicyDecision evaluate(PolicyEvaluationContext context) {
-        String tenantId = context.tenantId();
+        return evaluateTenant(context.tenantId());
+    }
+
+    private PolicyDecision evaluateTenant(String tenantId) {
         if (tenantId == null || !allowedTenants.contains(tenantId)) {
             return PolicyDecision.deny(
                     PolicyDecisionReason.TENANT_NOT_AUTHORIZED,
