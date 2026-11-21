@@ -857,3 +857,38 @@ The artifact must include the canonical definitions of tech.kayys.andalus.tools.
 - Confirmed the Framework's similarly named tech.kayys.andalus.spi.tool.Tool is a different interface.
 - No source changes to runtime tool execution were made; no speculative adapter was introduced.
 - No Maven build or tests were run.
+
+
+## 20. Legacy SPI Maven coordinate collision
+
+### Finding
+
+A follow-up POM inspection refines Section 19. The legacy dependencies declared by the OS tool module use:
+
+- tech.kayys.andalus:andalus-tool:0.0.1
+- tech.kayys.andalus:andalus-spi:0.0.1
+
+The current Framework reactor also declares modules with those exact groupId/artifactId/version coordinates. Its andalus-tool module exposes the newer tech.kayys.andalus.tool API; andalus-spi exposes tech.kayys.andalus.spi APIs. Neither checked-in module contains tech.kayys.andalus.tools.spi.Tool, ToolContext, or ToolResult.
+
+This means the issue is more precise than a missing source repository: the same Maven coordinates are being used by the current Framework artifacts, but the legacy source contract expected by andalus-tool-os is absent from those current source trees. Depending on the deployed Maven artifact, the dependency may resolve successfully while still failing to provide the legacy package. A successful dependency resolution therefore does not establish source or binary compatibility.
+
+### Consequences
+
+1. Do not add the current Framework artifacts as a purported source of the legacy package.
+2. Do not publish a second, incompatible artifact under the same Maven coordinates.
+3. Before implementing an adapter, establish whether the legacy package exists in an older published JAR/version, an older Git revision/repository, or whether the OS/MCP tools should migrate directly to the current governed Tool API.
+4. Treat the legacy ServiceLoader descriptor as a compatibility surface that needs an explicit migration/deprecation plan, not as proof that its API is still available from current Framework artifacts.
+
+### Recommended resolution order
+
+- First inspect the exact resolved JARs used by the existing andalus build (including dependency tree and JAR contents) to determine whether a local/private repository supplies a legacy artifact despite the coordinate collision.
+- If no such artifact exists, prefer migrating built-in tools to the current governed Tool API and providing a deliberate compatibility module only if a real external consumer requires the old SPI.
+- Keep compatibility artifacts on distinct Maven coordinates or a clearly versioned compatibility line. Never silently republish different API contents under the same coordinates.
+
+### Verification
+
+- Inspected the OS module POM: it pins both dependencies to 0.0.1.
+- Inspected the Framework andalus-tool and andalus-spi POMs: both are modules in the current Framework reactor and inherit version 0.0.1.
+- Inspected current Framework Tool, ToolContext, and CancellationToken sources: they define the new governed contract and cancellation model.
+- Confirmed current source trees do not contain the legacy tools.spi package.
+- No adapter or Maven dependency changes were made. No Maven dependency resolution/build was run.
