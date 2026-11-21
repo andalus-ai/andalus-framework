@@ -36,9 +36,16 @@ public class DefaultToolScheduler implements ToolScheduler, AutoCloseable {
             ToolExecutionPolicy policy
     ) {
         CompletableFuture<ToolResult> future = new CompletableFuture<>();
-        CancellationToken cancellationToken = (context != null && context.cancellation() != null)
-                ? context.cancellation()
-                : CancellationToken.create();
+        // Each scheduled invocation owns a cancellable child token. Reusing the
+        // context token directly is unsafe: contexts may expose CancellationToken.none(),
+        // whose cancel() is intentionally a no-op, and cancelling one tool must not
+        // cancel sibling work sharing the parent context.
+        CancellationToken cancellationToken = CancellationToken.create();
+        CancellationToken parentCancellation = context != null ? context.cancellation() : null;
+        CancellationToken.CancellationRegistration parentRegistration =
+                parentCancellation != null
+                        ? parentCancellation.onCancel(cancellationToken::cancel)
+                        : () -> { };
 
         Duration timeout = policy != null && policy.timeout() != null ? policy.timeout() : Duration.ofSeconds(30);
 
@@ -48,6 +55,11 @@ public class DefaultToolScheduler implements ToolScheduler, AutoCloseable {
                 future.complete(ToolResult.timeout(invocation.invocationIdentifier(), timeout));
             }
         }, timeout.toMillis(), TimeUnit.MILLISECONDS);
+
+        future.whenComplete((result, error) -> {
+            timeoutTask.cancel(false);
+            parentRegistration.close();
+        });
 
         executorService.submit(() -> {
             try {
