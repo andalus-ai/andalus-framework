@@ -3,34 +3,45 @@ package tech.kayys.andalus.anp.identity;
 import java.net.URI;
 import java.time.Duration;
 import java.util.HashSet;
-import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
-import java.util.concurrent.ConcurrentHashMap;
 
-/** Resolves DID:WBA identities through a validated local registry and optional remote fetcher. */
+/** Resolves DID:WBA identities through a trusted store and optional remote fetcher. */
 public final class DidWbaResolver {
     public static final Duration DEFAULT_FETCH_TIMEOUT = Duration.ofSeconds(3);
     public static final int DEFAULT_MAX_RESPONSE_BYTES = 1_048_576;
 
-    private final Map<String, TrustedDidDocument> registry = new ConcurrentHashMap<>();
+    private final TrustedDidDocumentStore store;
     private final DidWbaDocumentFetcher fetcher;
     private final Duration fetchTimeout;
     private final int maxResponseBytes;
 
-    /** Creates a local-only resolver. */
+    /** Creates a local-only resolver backed by an in-memory store. */
     public DidWbaResolver() {
-        this(null, DEFAULT_FETCH_TIMEOUT, DEFAULT_MAX_RESPONSE_BYTES);
+        this(new InMemoryTrustedDidDocumentStore(), null, DEFAULT_FETCH_TIMEOUT, DEFAULT_MAX_RESPONSE_BYTES);
+    }
+
+    /** Creates a resolver backed by the supplied trusted store. */
+    public DidWbaResolver(TrustedDidDocumentStore store) {
+        this(store, null, DEFAULT_FETCH_TIMEOUT, DEFAULT_MAX_RESPONSE_BYTES);
+    }
+
+    /** Creates a resolver with an optional remote fetcher and in-memory trusted store. */
+    public DidWbaResolver(DidWbaDocumentFetcher fetcher, Duration fetchTimeout, int maxResponseBytes) {
+        this(new InMemoryTrustedDidDocumentStore(), fetcher, fetchTimeout, maxResponseBytes);
     }
 
     /**
-     * Creates a resolver with an optional remote fetcher. Fetcher implementations
-     * must enforce timeout, response-size, HTTP status, and deployment egress controls.
+     * Creates a resolver with an explicit trusted store and optional remote fetcher.
+     * Fetcher implementations must enforce timeout, response-size, HTTP status,
+     * and deployment egress controls.
      */
-    public DidWbaResolver(DidWbaDocumentFetcher fetcher, Duration fetchTimeout, int maxResponseBytes) {
+    public DidWbaResolver(TrustedDidDocumentStore store, DidWbaDocumentFetcher fetcher,
+            Duration fetchTimeout, int maxResponseBytes) {
+        this.store = Objects.requireNonNull(store, "store");
         this.fetcher = fetcher;
         this.fetchTimeout = Objects.requireNonNull(fetchTimeout, "fetchTimeout");
         if (fetchTimeout.isZero() || fetchTimeout.isNegative()) {
@@ -42,25 +53,16 @@ public final class DidWbaResolver {
         this.maxResponseBytes = maxResponseBytes;
     }
 
-    /**
-     * Registers an initial locally trusted document at revision 1.
-     * Subsequent changes must use an explicit, strictly increasing revision.
-     */
+    /** Registers an initial locally trusted document at revision 1. */
     public void register(DidWbaDocument document) {
         register(document, 1);
     }
 
     /**
      * Registers a document through the explicit local trust boundary.
-     *
-     * <p>Revisions are monotonic per DID. Replaying the same document at the same
-     * revision is idempotent; changing content without increasing the revision,
-     * or attempting to move backwards, is rejected. The compute operation makes
-     * the comparison and replacement atomic within this resolver instance.
-     *
-     * <p>This method does not establish provenance by itself: callers must only
-     * invoke it after authenticating the administrator, trust anchor, or
-     * synchronization channel authorized to approve this DID update.
+     * The store must enforce revision checks atomically across runtime instances.
+     * Callers must authenticate the administrator, trust anchor, or synchronization
+     * channel authorized to approve this update before invoking this method.
      */
     public void register(DidWbaDocument document, long revision) {
         Objects.requireNonNull(document, "document");
@@ -68,37 +70,21 @@ public final class DidWbaResolver {
             throw new IllegalArgumentException("DID document revision must be positive");
         }
         validate(document);
-        registry.compute(document.id(), (did, current) -> {
-            if (current == null) {
-                return new TrustedDidDocument(document, revision);
-            }
-            if (revision < current.revision()) {
-                throw new SecurityException("Stale DID document revision rejected for " + did);
-            }
-            if (revision == current.revision()) {
-                if (current.document().equals(document)) {
-                    return current;
-                }
-                throw new SecurityException("DID document content changed without a revision increase for " + did);
-            }
-            return new TrustedDidDocument(document, revision);
-        });
+        store.register(new TrustedDidDocument(document, revision));
     }
 
-    /** Looks up a document registered through the trusted local registration boundary. */
     public Optional<DidWbaDocument> findRegistered(DidWbaIdentity identity) {
         return findRegisteredVersioned(identity).map(TrustedDidDocument::document);
     }
 
-    /** Returns the locally trusted document together with its monotonic revision. */
     public Optional<TrustedDidDocument> findRegisteredVersioned(DidWbaIdentity identity) {
         Objects.requireNonNull(identity, "identity");
-        return Optional.ofNullable(registry.get(identity.raw()));
+        return store.find(identity.raw());
     }
 
     /**
      * Resolves locally first, then optionally fetches from the DID-derived HTTPS URL.
-     * Remote documents are validated but not automatically cached or trusted for enrollment.
+     * Remote documents are validated but never automatically written to the trusted store.
      */
     public CompletionStage<Optional<DidWbaDocument>> resolve(DidWbaIdentity identity) {
         Objects.requireNonNull(identity, "identity");
