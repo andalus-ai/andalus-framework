@@ -48,6 +48,7 @@ public class DefaultToolScheduler implements ToolScheduler, AutoCloseable {
                 parentCancellation != null
                         ? parentCancellation.onCancel(cancellationToken::cancel)
                         : () -> { };
+        ToolExecutionContext executionContext = withCancellation(context, cancellationToken);
 
         Duration timeout = policy != null && policy.timeout() != null ? policy.timeout() : Duration.ofSeconds(30);
 
