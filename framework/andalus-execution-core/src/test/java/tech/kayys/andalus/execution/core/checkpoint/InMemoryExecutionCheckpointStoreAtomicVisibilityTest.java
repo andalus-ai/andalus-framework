@@ -25,7 +25,7 @@ class InMemoryExecutionCheckpointStoreAtomicVisibilityTest {
         AtomicBoolean writing = new AtomicBoolean(true);
         ExecutorService readers = Executors.newFixedThreadPool(4);
 
-        List<Future<?>> observations = new ArrayList<>();
+        List<Future<?>> observations = new java.util.ArrayList<>();
         for (int reader = 0; reader < 4; reader++) {
             observations.add(readers.submit(() -> {
                 while (writing.get()) {
