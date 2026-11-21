@@ -60,7 +60,7 @@ public final class DidWbaPublicKeyResolver {
 
     private static byte[] decodeEd25519Jwk(java.util.Map<String, Object> jwk) {
         if (!"OKP".equals(jwk.get("kty")) || !"Ed25519".equals(jwk.get("crv"))
-                || !(jwk.get("x") instanceof String x)) {
+                || jwk.containsKey("d") || !(jwk.get("x") instanceof String x)) {
             throw new SecurityException("DID JWK must be an Ed25519 OKP public key");
         }
         try {
