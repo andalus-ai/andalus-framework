@@ -16,7 +16,7 @@ public final class DidWbaResolver {
     public static final Duration DEFAULT_FETCH_TIMEOUT = Duration.ofSeconds(3);
     public static final int DEFAULT_MAX_RESPONSE_BYTES = 1_048_576;
 
-    private final Map<String, DidWbaDocument> registry = new ConcurrentHashMap<>();
+    private final Map<String, TrustedDidDocument> registry = new ConcurrentHashMap<>();
     private final DidWbaDocumentFetcher fetcher;
     private final Duration fetchTimeout;
     private final int maxResponseBytes;
@@ -42,19 +42,56 @@ public final class DidWbaResolver {
         this.maxResponseBytes = maxResponseBytes;
     }
 
-    /** Registers a locally trusted document after structural validation. */
+    /**
+     * Registers an initial locally trusted document at revision 1.
+     * Subsequent changes must use an explicit, strictly increasing revision.
+     */
     public void register(DidWbaDocument document) {
-        Objects.requireNonNull(document, "document");
-        validate(document);
-        registry.put(document.id(), document);
+        register(document, 1);
     }
 
-
     /**
-     * Looks up a document registered through the trusted local registration boundary.
-     * This method never invokes the optional remote fetcher.
+     * Registers a document through the explicit local trust boundary.
+     *
+     * <p>Revisions are monotonic per DID. Replaying the same document at the same
+     * revision is idempotent; changing content without increasing the revision,
+     * or attempting to move backwards, is rejected. The compute operation makes
+     * the comparison and replacement atomic within this resolver instance.
+     *
+     * <p>This method does not establish provenance by itself: callers must only
+     * invoke it after authenticating the administrator, trust anchor, or
+     * synchronization channel authorized to approve this DID update.
      */
+    public void register(DidWbaDocument document, long revision) {
+        Objects.requireNonNull(document, "document");
+        if (revision <= 0) {
+            throw new IllegalArgumentException("DID document revision must be positive");
+        }
+        validate(document);
+        registry.compute(document.id(), (did, current) -> {
+            if (current == null) {
+                return new TrustedDidDocument(document, revision);
+            }
+            if (revision < current.revision()) {
+                throw new SecurityException("Stale DID document revision rejected for " + did);
+            }
+            if (revision == current.revision()) {
+                if (current.document().equals(document)) {
+                    return current;
+                }
+                throw new SecurityException("DID document content changed without a revision increase for " + did);
+            }
+            return new TrustedDidDocument(document, revision);
+        });
+    }
+
+    /** Looks up a document registered through the trusted local registration boundary. */
     public Optional<DidWbaDocument> findRegistered(DidWbaIdentity identity) {
+        return findRegisteredVersioned(identity).map(TrustedDidDocument::document);
+    }
+
+    /** Returns the locally trusted document together with its monotonic revision. */
+    public Optional<TrustedDidDocument> findRegisteredVersioned(DidWbaIdentity identity) {
         Objects.requireNonNull(identity, "identity");
         return Optional.ofNullable(registry.get(identity.raw()));
     }
@@ -65,9 +102,9 @@ public final class DidWbaResolver {
      */
     public CompletionStage<Optional<DidWbaDocument>> resolve(DidWbaIdentity identity) {
         Objects.requireNonNull(identity, "identity");
-        DidWbaDocument local = registry.get(identity.raw());
-        if (local != null) {
-            return CompletableFuture.completedFuture(Optional.of(local));
+        Optional<TrustedDidDocument> local = findRegisteredVersioned(identity);
+        if (local.isPresent()) {
+            return CompletableFuture.completedFuture(local.map(TrustedDidDocument::document));
         }
         if (fetcher == null) {
             return CompletableFuture.completedFuture(Optional.empty());
