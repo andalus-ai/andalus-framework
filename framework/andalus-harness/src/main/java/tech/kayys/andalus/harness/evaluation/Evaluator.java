@@ -79,7 +79,9 @@ public interface Evaluator {
                     results, aggregateMetrics, "unspecified", "unspecified", "unspecified");
         }
         public Report {
-            if (evaluationId == null || candidateId == null || candidateVersion == null || datasetId == null || datasetVersion == null\n                    || evaluatorId == null || evaluatorId.isBlank() || evaluatorVersion == null || evaluatorVersion.isBlank()\n                    || evaluatorConfigFingerprint == null || evaluatorConfigFingerprint.isBlank())
+            if (evaluationId == null || candidateId == null || candidateVersion == null || datasetId == null || datasetVersion == null
+                    || evaluatorId == null || evaluatorId.isBlank() || evaluatorVersion == null || evaluatorVersion.isBlank()
+                    || evaluatorConfigFingerprint == null || evaluatorConfigFingerprint.isBlank())
                 throw new IllegalArgumentException("evaluation provenance is required");
             if (startedAt == null || completedAt == null || completedAt.isBefore(startedAt)) throw new IllegalArgumentException("invalid timestamps");
             results = results == null ? List.of() : List.copyOf(results);
@@ -121,7 +123,8 @@ public interface Evaluator {
                 Map<String,Double> means = new LinkedHashMap<>();
                 totals.forEach((name,a) -> means.put(name, a[0] / a[1]));
                 return new Report(request.evaluationId(), request.candidateId(), request.candidateVersion(),
-                        request.dataset().id(), request.dataset().version(), started, Instant.now(), results, means,\n                        request.evaluator().id(), request.evaluator().version(), request.evaluator().configurationFingerprint());
+                        request.dataset().id(), request.dataset().version(), started, Instant.now(), results, means,
+                        request.evaluator().id(), request.evaluator().version(), request.evaluator().configurationFingerprint());
             });
         }
     }
