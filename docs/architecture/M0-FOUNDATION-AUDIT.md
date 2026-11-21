@@ -1071,3 +1071,16 @@ The runtime now caches tool results only when the trusted descriptor profile exp
 - Source, POM, Jandex configuration, and tests are committed in the Andalus repository.
 - No local Maven build or tests were run during this implementation.
 - GitHub Actions CI was triggered by the commits; at the time of this audit update the latest workflow runs had not yet completed. Do not treat this section as evidence of a green build.
+
+
+## 24. Workspace-root trust boundary in runtime ToolContext
+
+The active `runtime/andalus-builtin-tools` module contains three CDI-discovered read-only workspace tools: `workspace.list`, `workspace.read`, and `workspace.search`. Their shared support class requires `andalus.workspace.root` to be a server-supplied `java.nio.file.Path`, canonicalizes it with `toRealPath()`, rejects absolute and traversal paths, and verifies resolved paths remain beneath the canonical root. Listing and searching also bound result sizes; file reads are capped at 1 MiB.
+
+The runtime's `DefaultAgentToolExecutor.toolContextFor(...)` previously merged agent constraints and per-execution attributes in that order. Since attributes were merged second, an attribute named `andalus.workspace.root` could override the agent's configured workspace root. This was an authority-precedence defect even though the workspace tools themselves rejected non-Path values and path escapes.
+
+The runtime now removes the workspace-root key after the general merge and restores it only when the value in the agent's constraints is a `Path`. Consequently, per-execution attributes cannot replace the workspace boundary, and string-valued configuration does not become a filesystem authority. Workspace tools continue to deny when no trusted Path is present.
+
+Trust assumption: agent constraints must be populated by a trusted application/administrator configuration path. This change does not make user-editable agent definitions trustworthy by itself. Deployments must not let untrusted users write the workspace-root constraint. A later resolver/provider SPI may replace the Path constraint when workspace ownership or tenant-to-workspace mapping needs to be dynamic.
+
+No Maven build or tests were run for this change. Required follow-up verification includes an executor-level test proving a malicious execution attribute cannot override the configured root, plus a Quarkus integration test proving the three CDI beans are discoverable and governed by the fail-closed policy evaluator.
