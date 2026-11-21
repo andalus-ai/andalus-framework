@@ -32,8 +32,8 @@ class PlanRevisionHistoryIntegrityValidatorTest {
         PlanId id = PlanId.of("integrity-plan");
         AgentPlan zero = plan(id, 0, "zero");
         AgentPlan one = plan(id, 1, "one");
-        AgentPlan divergentOne = plan(id, 1, "different-one");
-        AgentPlan two = plan(id, 2, "two");
+        AgentPlan divergentOne = plan(id, 2, "different-one");
+        AgentPlan two = plan(id, 3, "two");
 
         PlanRevisionHistoryIntegrityReport report =
                 PlanRevisionHistoryIntegrityValidator.validate(id, List.of(
