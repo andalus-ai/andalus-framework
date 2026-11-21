@@ -755,6 +755,7 @@ Example profiles:
 - Framework default classification: `2d5043abfe5a44eba4d97866c49abb0cfd4824b2`
 - Framework descriptor-builder default: `bd0ed7fc272b64313b58efead0f117ff459e1422`
 - Runtime descriptor-based classification: `32f3f233e46b0dc3348945ee150b431def477402`
+- Runtime policy call-site now passes the resolved tool descriptor: `c4da9f50ac958738243e8c7e8b5499841ed23946`
 - Runtime elevated capability policy: `33a7e2005ccb1adeedc1e0f807b73b768acddc62`
 - Runtime classification tests: `d76782dcaad9d5a96aa1e4d07d89cea4a41d28c0`, `eab7f9349b3742299f5a3894e787828d04b0c0ed`
 - Runtime policy tests: `fee550ca1ed66cc11f5afa42187efd3df25c5f0c`
