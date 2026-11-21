@@ -26,6 +26,9 @@ public final class InMemoryPlanRevisionHistory implements PlanRevisionHistory {
     @Override
     public void compareAndAppend(PlanRevisionRecord record, long expectedCurrentRevision) {
         Objects.requireNonNull(record, "record is required");
+        if (expectedCurrentRevision < 0) {
+            throw new IllegalArgumentException("expectedCurrentRevision must be non-negative");
+        }
         records.compute(record.planId(), (id, existing) -> {
             List<PlanRevisionRecord> updated = existing == null
                     ? new ArrayList<>() : new ArrayList<>(existing);
