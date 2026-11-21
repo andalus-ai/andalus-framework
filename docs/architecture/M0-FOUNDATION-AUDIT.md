@@ -892,3 +892,40 @@ This means the issue is more precise than a missing source repository: the same 
 - Inspected current Framework Tool, ToolContext, and CancellationToken sources: they define the new governed contract and cancellation model.
 - Confirmed current source trees do not contain the legacy tools.spi package.
 - No adapter or Maven dependency changes were made. No Maven dependency resolution/build was run.
+
+## 21. Active built-in tool module versus retired legacy OS tool module
+
+### Finding
+
+The Andalus root Maven reactor and tool-module parent POMs distinguish the currently supported tool path from the old ServiceLoader tool modules:
+
+- The root `andalus-parent` reactor actively includes `runtime/andalus-tool-runtime` and `runtime/andalus-builtin-tools`.
+- `runtime/andalus-builtin-tools/pom.xml` depends on `andalus-tool-runtime:0.0.1`, making it the current built-in implementation module boundary.
+- `runtime/andalus-tool-runtime/pom.xml` depends on the current `andalus-tool:0.0.1` API and runtime SPI, and includes Quarkus Arc.
+- In contrast, `modules/tool/pom.xml` has its former child modules commented out. Its comment explicitly says they depend on packages from the removed `andalus-tool-execution` artifact, including `tools.spi`.
+- The old `modules/tool/andalus-tool-os` module is not an active child of the current reactor. Its POM still declares the legacy-looking `andalus-tool` and `andalus-spi` coordinates, but that does not make it a supported implementation path.
+
+### Architecture decision
+
+Do not revive or migrate the retired `modules/tool/andalus-tool-os` module as the next implementation step.
+
+The current implementation target is the active `runtime/andalus-builtin-tools` module, using the current governed `tech.kayys.andalus.tool.Tool` contract supplied by `andalus-tool-runtime`. The legacy OS/MCP module should be treated as retired compatibility material unless a real external consumer is identified.
+
+Before modifying source, inventory the actual classes, descriptors, CDI discovery configuration, and tests under `runtime/andalus-builtin-tools`. For each built-in tool, verify:
+
+1. It implements the current governed Tool API rather than the legacy `tools.spi.Tool`.
+2. Its descriptor supplies an explicit trusted execution profile; unclassified tools must remain conservative.
+3. Its CDI registration reaches `DefaultAgentToolExecutor` and therefore the fail-closed policy evaluator.
+4. Tool execution receives the immutable caller/tenant context and cancellation signal.
+5. Read, write, shell, network, and system behavior is tested at the policy boundary, not only in tool unit tests.
+
+The existing legacy OS tools can then be mapped by behavior to active implementations, and any genuinely missing functionality can be ported individually. Do not infer that all fourteen old tools need to be recreated.
+
+### Verification
+
+- Inspected the root `pom.xml`: both current runtime tool modules are active reactor modules.
+- Inspected `runtime/andalus-builtin-tools/pom.xml`: it depends on `andalus-tool-runtime`.
+- Inspected `runtime/andalus-tool-runtime/pom.xml`: it depends on the current `andalus-tool` API and Quarkus Arc.
+- Inspected `modules/tool/pom.xml`: its former tool modules are commented out, with an explicit removed-artifact explanation.
+- Inspected `modules/tool/andalus-tool-os/pom.xml`: the legacy OS module still exists in the tree but is not active in the parent reactor.
+- No source migration or adapter was made. No Maven dependency resolution, build, or tests were run.
