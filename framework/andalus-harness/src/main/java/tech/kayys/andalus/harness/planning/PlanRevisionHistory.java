@@ -37,4 +37,29 @@ public interface PlanRevisionHistory {
                                 == query.completedWorkReplaced())
                 .toList();
     }
+
+    /**
+     * Return one stable page of revision records.
+     *
+     * <p>The default implementation filters the ordered search result in memory.
+     * Storage-backed implementations should override this method to apply the
+     * query, exclusive revision cursor, and page limit in the storage engine.
+     * The cursor is the last returned {@code toRevision}; callers pass it back
+     * as {@code afterRevisionExclusive} to continue without repeating records.</p>
+     */
+    default PlanRevisionPage page(PlanRevisionPageRequest request) {
+        Objects.requireNonNull(request, "request is required");
+        List<PlanRevisionRecord> matching = search(request.query()).stream()
+                .filter(record -> request.afterRevisionExclusive() == null
+                        || record.toRevision() > request.afterRevisionExclusive())
+                .limit((long) request.pageSize() + 1)
+                .toList();
+        boolean hasMore = matching.size() > request.pageSize();
+        List<PlanRevisionRecord> pageRecords = hasMore
+                ? matching.subList(0, request.pageSize()) : matching;
+        Long nextCursor = hasMore
+                ? pageRecords.get(pageRecords.size() - 1).toRevision() : null;
+        return new PlanRevisionPage(pageRecords, nextCursor, hasMore);
+    }
+
 }
