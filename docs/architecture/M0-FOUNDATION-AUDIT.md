@@ -720,3 +720,43 @@ Runtime commits:
 - Source files and the new regression test were committed directly to the Runtime default branch and fetched again for source verification.
 - No local Maven build was run. GitHub Actions for the prior commit was still in progress when inspected; its separate Javadoc job failed during dependency resolution before compiling the Runtime core module. The new fail-closed commits therefore remain unverified by a completed build.
 - This change does not yet replace tool-name-prefix capability classification. The next slice should add trusted capability metadata to the tool descriptor/registration contract, define a conservative default for unclassified tools, and migrate built-in policies to that metadata without changing public tool names.
+
+
+## 17. Trusted tool capability classification
+
+### Finding
+
+The runtime previously inferred authorization level from invocation/tool-name prefixes and treated every unmatched name as `READ`. This made classification dependent on naming conventions rather than trusted registration metadata. It also allowed a tool with an innocuous name to receive a low-risk classification.
+
+The framework already has the appropriate metadata surface: `ToolDescriptor.executionProfile()`, whose `ToolExecutionProfile.kind()` is a `ToolKind` (`READ`, `WRITE`, `SHELL`, `NETWORK`, `SYSTEM`, or `CUSTOM`). No parallel risk taxonomy was introduced.
+
+### Changes committed
+
+- Framework `ToolDescriptor.executionProfile()` now defaults to a modifying `CUSTOM` profile instead of read-only `READ`.
+- `DefaultToolDescriptor` and its builder use the same conservative `CUSTOM` default.
+- Runtime `DefaultAgentToolExecutor` resolves policy level from the resolved tool's descriptor profile. A missing descriptor/profile and `CUSTOM` map to `SYSTEM`; a `READ` kind is only `READ` when the profile also declares `readOnly=true`.
+- Tool names and invocation names no longer determine capability level.
+- `CapabilityLevelPolicy` now requires matching explicit approval roles for `EXECUTE`, `NETWORK`, `FILESYSTEM`, `SHELL`, and `SYSTEM`. `WRITE` continues through the write-approval gate.
+
+### Compatibility and migration
+
+This is intentionally fail-closed. Existing custom descriptors that relied on the implicit read-only default will now be classified as `SYSTEM` until they declare an explicit profile. Tool authors should set a trusted profile at descriptor construction/registration time; never accept this classification from model-generated arguments, prompts, or tool-call payloads.
+
+Example profiles:
+
+- Read-only lookup: `ToolExecutionProfile.readOnly(ToolKind.READ)`
+- Write operation: `ToolExecutionProfile.modifying(ToolKind.WRITE)`
+- Network operation: `ToolExecutionProfile.modifying(ToolKind.NETWORK)`
+- Shell operation: `ToolExecutionProfile.modifying(ToolKind.SHELL)`
+- Infrastructure/system operation: `ToolExecutionProfile.modifying(ToolKind.SYSTEM)`
+
+### Commits
+
+- Framework default classification: `2d5043abfe5a44eba4d97866c49abb0cfd4824b2`
+- Framework descriptor-builder default: `bd0ed7fc272b64313b58efead0f117ff459e1422`
+- Runtime descriptor-based classification: `32f3f233e46b0dc3348945ee150b431def477402`
+- Runtime elevated capability policy: `33a7e2005ccb1adeedc1e0f807b73b768acddc62`
+- Runtime classification tests: `d76782dcaad9d5a96aa1e4d07d89cea4a41d28c0`, `eab7f9349b3742299f5a3894e787828d04b0c0ed`
+- Runtime policy tests: `fee550ca1ed66cc11f5afa42187efd3df25c5f0c`
+
+Builds and tests have not been run as part of this audit update. Verify CI before treating this change as build-validated.
