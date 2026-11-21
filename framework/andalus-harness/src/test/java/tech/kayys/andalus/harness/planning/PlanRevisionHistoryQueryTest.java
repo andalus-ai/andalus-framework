@@ -1,6 +1,9 @@
 package tech.kayys.andalus.harness.planning;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import java.time.Instant;
@@ -69,13 +72,13 @@ class PlanRevisionHistoryQueryTest {
                 PlanRevisionQuery.forPlan(planId), 2));
         assertEquals(List.of(first, second), pageOne.records());
         assertEquals(2L, pageOne.nextCursor());
-        assertEquals(true, pageOne.hasMore());
+        assertTrue(pageOne.hasMore());
 
         PlanRevisionPage pageTwo = history.page(new PlanRevisionPageRequest(
                 PlanRevisionQuery.forPlan(planId), 2, pageOne.nextCursor()));
         assertEquals(List.of(third), pageTwo.records());
-        assertEquals(null, pageTwo.nextCursor());
-        assertEquals(false, pageTwo.hasMore());
+        assertNull(pageTwo.nextCursor());
+        assertFalse(pageTwo.hasMore());
     }
 
     @Test
