@@ -1,6 +1,7 @@
 package tech.kayys.andalus.execution.governance;
 
 import java.util.List;
+import java.util.Set;
 
 /**
  * Immutable snapshot of who is invoking a tool and in what execution context.
@@ -19,10 +20,22 @@ public record ToolPermissionContext(
         String executionId,
         List<String> roles,
         String toolName,
-        ToolCapabilityLevel level
+        ToolCapabilityLevel level,
+        Set<String> permissions
 ) {
     public ToolPermissionContext {
         roles = roles != null ? List.copyOf(roles) : List.of();
+        permissions = permissions != null ? Set.copyOf(permissions) : Set.of();
+    }
+
+    /** Backwards-compatible constructor for role-only callers. */
+    public ToolPermissionContext(String tenantId, String userId, String executionId,
+                                 List<String> roles, String toolName, ToolCapabilityLevel level) {
+        this(tenantId, userId, executionId, roles, toolName, level, Set.of());
+    }
+
+    public boolean hasPermission(String permission) {
+        return permission != null && !permission.isBlank() && permissions.contains(permission.trim());
     }
 
     public boolean hasRole(String role) {
