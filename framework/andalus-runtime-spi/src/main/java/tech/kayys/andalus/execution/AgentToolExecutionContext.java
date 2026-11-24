@@ -27,6 +27,7 @@ import tech.kayys.andalus.execution.governance.ToolBudget;
  * @param principalType kind of principal executing the agent
  * @param principalId stable principal identifier (required except for anonymous)
  * @param roles effective roles; wildcard roles are not implicitly added
+ * @param permissions effective concrete permission claims
  * @param executionBudget resource limits for this execution
  * @param toolBudget shared, execution-scoped tool accounting budget
  * @param constraints immutable agent/runtime constraints
@@ -60,9 +61,6 @@ public record AgentToolExecutionContext(
         attributes = attributes == null ? Map.of() : Map.copyOf(attributes);
         createdAt = Objects.requireNonNullElseGet(createdAt, Instant::now);
 
-        if (roles.stream().anyMatch(role -> role == null || role.isBlank() || "*".equals(role.trim()))) {
-            throw new IllegalArgumentException("roles must not contain blank or wildcard entries");
-        }
         if (roles.stream().anyMatch(role -> role == null || role.isBlank() || "*".equals(role.trim()))) {
             throw new IllegalArgumentException("roles must not contain blank or wildcard entries");
         }
