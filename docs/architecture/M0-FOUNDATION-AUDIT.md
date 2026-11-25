@@ -1105,3 +1105,53 @@ Runtime implementation commits:
 - `5d9db5a` — AgentExecutionService CDI resolver integration tests (authenticated identity mapping and invalid resolver output fail-closed)
 
 No Maven build or tests were run during this change. CI results must be checked before treating the new SPI as verified.
+
+
+## 26. Current-source reconciliation and CI baseline — 2026-11-25
+
+This section supersedes earlier lifecycle/checkpoint observations where the current source has since changed. It is a targeted source reconciliation, not a complete repository-wide build or test audit.
+
+### 26.1 Framework execution contracts
+
+- The graph-specific contract is currently `GraphExecutionContext` in `framework/andalus-engine`; invocation-level `ExecutionContext` remains in `andalus-execution-api`. The earlier duplicate-FQN finding is historical and should not be repeated as a current defect.
+- `DefaultExecutionContext.transition` now validates transitions through `ExecutionLifecycleTransitions.isAllowed` and applies them using a compare-and-set loop. Repeating the current state is idempotent; illegal transitions throw.
+- `InMemoryExecutionCheckpointStore.save` now synchronizes sequence validation, duplicate checkpoint-ID insertion and history append per execution. Reads use the same history monitor to avoid observing a partially published save. This is an in-process concurrency guarantee only; the adapter remains non-durable.
+- The engine snapshot port is `EngineSnapshotStore` in `tech.kayys.andalus.engine.snapshot`, not a duplicate `tech.kayys.andalus.execution.CheckpointStore`.
+
+### 26.2 Runtime lifecycle and checkpoint reconciliation
+
+Current Runtime source paths inspected:
+- `runtime/andalus-runtime-core/src/main/java/tech/kayys/andalus/execution/DefaultAgentExecution.java`
+- `runtime/andalus-runtime-core/src/main/java/tech/kayys/andalus/execution/DefaultExecutionStateStore.java`
+- `runtime/andalus-runtime-core/src/main/java/tech/kayys/andalus/execution/AgentExecutionService.java`
+- `runtime/andalus-runtime-core/src/main/java/tech/kayys/andalus/execution/InMemoryExecutionCheckpointStore.java`
+- `runtime/andalus-runtime-core/src/main/java/tech/kayys/andalus/execution/InMemoryCheckpointStore.java`
+- `runtime/andalus-runtime-core/src/main/java/tech/kayys/andalus/execution/SimpleGraphExecutionContext.java`
+
+Current findings:
+
+1. Runtime `complete` and `fail` now arbitrate terminal outcomes inside the per-execution state-map computation, validate transitions and ignore late callbacks after CANCELLED or COMPLETED. This supersedes the earlier finding that `fail` directly bypassed transition validation.
+2. `DefaultAgentExecution` now creates an execution cancellation token, passes it to the ReAct agent and governed tool bridge, and completes the caller-facing future exceptionally when cancellation wins. Provider-stream interruption and tool-side no-post-cancel effects still require provider-specific and race tests.
+3. `pause()` still changes status and writes checkpoints without proving the active ReAct/model/tool operation has reached a safe point. `resume()` changes PAUSED to RUNNING but does not demonstrate restoration and continuation from a defined checkpoint phase. These APIs must not be described as durable cooperative pause/resume yet.
+4. Runtime still writes both the Runtime lifecycle `ExecutionCheckpointStore` and the Framework Runtime-SPI AgentContext `CheckpointStore`. `AgentExecutionService.resume` still restores AgentContext from the latter. The two writes are sequential, not one atomic authoritative checkpoint transaction.
+5. Runtime `InMemoryExecutionCheckpointStore` appends records without the Framework adapter's duplicate-ID or monotonic-sequence checks. It is process-local. The AgentContext `InMemoryCheckpointStore` is also process-local and separately tracks cache references.
+6. `DefaultAgentExecution` still substitutes an in-memory lifecycle checkpoint store when no store is injected. Deployments requiring process-restart durability must not treat this fallback as durable.
+7. `SimpleGraphExecutionContext` is used for a linear AgentRequest path and returns null for graph and current-node methods. This is a typed-boundary design gap; a future correction should preserve existing consumers and avoid inventing graph values for linear execution.
+
+### 26.3 CI and verification baseline
+
+- A local checkout could not be performed in this environment because DNS resolution for `github.com` failed. Consequently no local Maven dependency tree, clean reactor build or test suite was run here.
+- The Framework default-branch `CI — Build & Test` run `45578553532` failed while compiling the checked-out Aljabr tokenizer module: `WordPieceTokenizer.java:40` could not resolve `com.fasterxml.jackson.annotation.JsonInclude$Include`. This is a CI baseline failure in the nested Aljabr build path, not a failure caused by the documentation changes in this PR. [Workflow run](https://github.com/andalus-ai/andalus-framework/actions/runs/45578553532).
+- The Runtime default-branch `CI — Build & Test` run `45614122587` failed before Maven execution because the Maven Wrapper could not download Apache Maven 3.9.6 from Maven Central. This is an environment/bootstrap failure, not evidence of a source compilation failure. [Workflow run](https://github.com/andalus-ai/andalus/actions/runs/45614122587).
+- The Runtime parent POM's release repository points to `maven.pkg.github.com/andalus-ai/andalus`, but its snapshot repository still points to the obsolete `maven.pkg.github.com/workkayys/andalus`. This is a confirmed publishing configuration defect, independent of the earlier Aljabr bootstrap failure. A focused correction is proposed in [Runtime PR #171](https://github.com/andalus-ai/andalus/pull/171).
+- The Framework PR's targeted contract build completed successfully; its full CI was still running at the time of this update. Runtime PR CI was also still running.
+
+### 26.4 Updated M0 status
+
+M0 remains **in progress**. The current source map now distinguishes historical defects from resolved source changes, but the following exit requirements remain open:
+- Complete cross-repository FQN/import/implementation/consumer search from a clean checkout.
+- Resolve the Framework/Runtime Maven dependency graphs and verify artifact provenance.
+- Reconcile the Framework and Runtime checkpoint writers/readers/serializers and define one authoritative recovery path.
+- Add or run pause/resume/cancellation race and process-restart tests.
+- Establish reproducible green Framework and Runtime CI baselines.
+- Approve the smallest M1 change set only after these evidence gaps are closed.
