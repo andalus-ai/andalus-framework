@@ -1084,3 +1084,23 @@ The runtime now removes the workspace-root key after the general merge and resto
 Trust assumption: agent constraints must be populated by a trusted application/administrator configuration path. This change does not make user-editable agent definitions trustworthy by itself. Deployments must not let untrusted users write the workspace-root constraint. A later resolver/provider SPI may replace the Path constraint when workspace ownership or tenant-to-workspace mapping needs to be dynamic.
 
 No Maven build or tests were run for this change. Required follow-up verification includes an executor-level test proving a malicious execution attribute cannot override the configured root, plus a Quarkus integration test proving the three CDI beans are discoverable and governed by the fail-closed policy evaluator.
+
+
+## 25. Identity-based workspace resolution SPI
+
+The runtime now defines an application-owned `WorkspaceResolver` contract and a minimal `WorkspaceRequest`. The request contains principal type, tenant ID, principal ID, user ID, and agent ID; it deliberately excludes roles, permissions, prompt content, and arbitrary request attributes. This keeps workspace selection separate from the caller's authorization grants and model-controlled inputs.
+
+`AgentExecutionService` optionally discovers a resolver through CDI. For both new executions and resumed executions, it asks the resolver for the workspace using the trusted `AgentCallerContext` and selected agent identity. A returned path is canonicalized with `toRealPath()` and must resolve to an existing directory before being placed in the immutable tool execution constraints under `andalus.workspace.root`.
+
+The resolver is the sole authority for runtime filesystem access. Agent-definition constraints and caller attributes cannot independently grant a workspace path. If no resolver exists, the resolver returns no mapping, or resolution fails, the workspace root is omitted; the three workspace tools consequently deny access while unrelated agent execution can continue. Resolver failures are logged without granting fallback filesystem access.
+
+The application owns tenant/principal-to-workspace mapping and must enforce its isolation rules. This SPI validates that the returned path is a canonical directory but does not itself provide OS-level sandboxing, prevent time-of-check/time-of-use races in a mutable filesystem, or isolate hostile processes. Those controls remain required before adding write, shell, or process tools.
+
+Runtime implementation commits:
+- `397ecfa` — `WorkspaceRequest`
+- `20eae1c` — `WorkspaceResolver`
+- `2e4d44f` — canonical path validation
+- `a1ecd4c` — CDI resolution and trusted constraint propagation
+- `1118e50` — resolver validation tests
+
+No Maven build or tests were run during this change. CI results must be checked before treating the new SPI as verified.
