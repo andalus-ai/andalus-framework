@@ -1102,5 +1102,6 @@ Runtime implementation commits:
 - `2e4d44f` — canonical path validation
 - `a1ecd4c` — CDI resolution and trusted constraint propagation
 - `1118e50` — resolver validation tests
+- `5d9db5a` — AgentExecutionService CDI resolver integration tests (authenticated identity mapping and invalid resolver output fail-closed)
 
 No Maven build or tests were run during this change. CI results must be checked before treating the new SPI as verified.
