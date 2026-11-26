@@ -980,3 +980,178 @@ Next implementation should be a small explicit catalog foundation:
 - Inspected the complete recursive current Gamelan repository tree: no matching ToolsFactory source path was found.
 - Inspected `DefaultAgentToolExecutor` and `DefaultToolPolicyEvaluator`: tool discovery is CDI-based and policy evaluation is fail-closed.
 - No source migration or runtime behavior changes were made. No Maven dependency resolution, build, or tests were run.
+
+
+## 23. Active built-in tools: stale ToolsFactory service descriptor
+
+### Finding
+
+Section 22 left the ToolsFactory descriptor unresolved pending inspection of the effective build composition. The current CI workflow now provides enough evidence to identify the mismatch in the checked-in configuration:
+
+- The active root reactor includes `runtime/andalus-builtin-tools`, which depends on `andalus-tool-runtime`.
+- `andalus-tool-runtime` declares dependencies on the current Framework `andalus-tool` API, runtime SPI, Gamelan plugin SPI, and Gamelan executor SDK. It does not declare an AQLI/Gollek tools SDK dependency.
+- The active Andalus CI workflow checks out Gamelan and publishes exactly `gamelan-engine-spi`, `gamelan-plugin-spi`, and `gamelan-sdk-executor-core` to Maven Local. The inspected `gamelan-sdk-executor-core` Gradle build declares only engine SPI, plugin SPI, Mutiny, SLF4J, and CDI API dependencies.
+- The active built-in module itself declares only `andalus-tool-runtime` and Jackson dependencies.
+- The built-in module's service descriptor names `tech.kayys.andalus.tools.impl.ToolsFactoryImpl` as a provider for `tech.kayys.andalus.sdk.gollek.tools.ToolsFactory`. Neither the provider nor that service contract is present in the checked-in Andalus or Gamelan source trees inspected for this audit.
+
+This is stronger than the prior source-only uncertainty: the active CI bootstrap does not publish a Gamelan tools SDK or any other declared dependency that explains the Gollek ToolsFactory service contract. The descriptor is therefore stale relative to the supported active module composition, unless an undeclared external/transitive artifact happens to inject the exact class. No such dependency is declared or established by the current build configuration.
+
+### Decision
+
+Remove the unsupported ToolsFactory service descriptor from the active built-in module. Do not add a speculative SDK dependency or recreate an undocumented factory contract.
+
+The supported built-in registration path remains the current governed `tech.kayys.andalus.tool.Tool` API with CDI discovery. A future ServiceLoader bridge must be introduced only against a documented, versioned provider SPI and must adapt discovered tools into the same governed executor path with trusted registration-time execution profiles.
+
+### Verification and limits
+
+- Inspected `runtime/andalus-builtin-tools/pom.xml`: its only direct dependencies are `andalus-tool-runtime` and Jackson.
+- Inspected `runtime/andalus-tool-runtime/pom.xml`: no AQLI/Gollek tools SDK is declared.
+- Inspected the active `.github/workflows/ci.yml`: it publishes the three named Gamelan modules to Maven Local before the Maven build.
+- Inspected `gamelan-sdk-executor-core/build.gradle.kts`: its declared API dependencies are engine SPI, plugin SPI, Mutiny, SLF4J, and CDI API.
+- Inspected the service descriptor and recursive Andalus/Gamelan source trees: no matching provider implementation was found.
+- This is a source/configuration-level conclusion. No Maven effective dependency tree or resolved JAR contents were produced, and no Maven build or tests were run in this step.
+
+
+## 24. First governed workspace tool catalog and execution-context propagation
+
+### Runtime context propagation
+
+The previous executor path evaluated policy with `AgentToolExecutionContext`, but invoked the tool with a null `ToolContext` and did not pass the cancellation token to the tool implementation. This prevented tools from safely consuming trusted execution-scoped configuration and weakened cooperative cancellation.
+
+The runtime now creates an immutable `SimpleToolContext` from the execution context:
+
+- Agent constraints are copied first, followed by trusted per-execution attributes.
+- Runtime-owned identity values (execution ID, agent ID, tenant ID, user ID, principal type, roles) are written last and cannot be shadowed by either map.
+- The executor calls `Tool.execute(invocation, toolContext, cancellation)`.
+- Cancellation is checked before dispatch and the tool API's cancellation-aware overload can observe the same execution token.
+
+A regression test verifies that trusted attributes reach the tool context and that a caller-supplied attempt to shadow the execution ID cannot override the runtime value.
+
+### Initial built-in catalog
+
+The active `runtime/andalus-builtin-tools` module now contains three CDI tools using the current governed `tech.kayys.andalus.tool.Tool` API:
+
+- `workspace.list`
+- `workspace.read`
+- `workspace.search`
+
+Each declares a trusted read-only `ToolExecutionProfile` with `ToolKind.READ`. The module generates a Jandex index so Quarkus can discover the CDI beans. It remains opt-in: an application must include `tech.kayys.andalus:andalus-builtin-tools` on its application classpath; inclusion in the root reactor alone does not install the beans into every deployment.
+
+### Workspace security boundary
+
+The tools require `andalus.workspace.root` in the trusted tool context as a Java `Path`. The current execution service sources agent constraints from the server-created `AgentDefinition`; tool arguments and prompt content cannot supply or widen the root.
+
+The shared path resolver:
+
+- Canonicalizes the configured root and requires an existing directory.
+- Rejects missing roots, non-`Path` root values, absolute requested paths, traversal, and paths whose resolved symlink target escapes the root.
+- Uses workspace-relative paths in tool results.
+- Rejects/omits symlink entries resolving outside the workspace.
+
+Resource limits are enforced: 200 directory entries; 1 MiB per file; search depth 12; 20,000 visited entries; 5,000 regular files; 32 MiB total search input; 200 matches; 1,000-character match snippets; bounded path/query/glob lengths. File reads and search input are byte-bounded rather than relying only on a pre-read file-size check.
+
+### Cache isolation correction
+
+Workspace contents depend on filesystem state and on the configured workspace root. The previous tool result cache key was based on tool name and arguments plus tenant/user identity; it did not include workspace root. Caching a workspace read could therefore leak content between two workspaces used by the same caller.
+
+The runtime now caches tool results only when the trusted descriptor profile explicitly marks the tool deterministic. Workspace tools are explicitly non-deterministic and therefore bypass result-cache lookup and storage. A regression test covers the cacheability rule.
+
+### Tests added
+
+- Runtime context propagation and identity non-shadowing.
+- Cacheability requires an explicitly deterministic profile.
+- Workspace root is mandatory and must be a `Path`.
+- Relative paths stay within the workspace; absolute and traversal paths are rejected.
+- Symlink escape is rejected (the symlink test is skipped when the environment cannot create symlinks).
+- Workspace read/list/search execute against temporary workspaces.
+- Read-only execution classification and non-deterministic cache profile.
+
+### Verification status
+
+- Source, POM, Jandex configuration, and tests are committed in the Andalus repository.
+- No local Maven build or tests were run during this implementation.
+- GitHub Actions CI was triggered by the commits; at the time of this audit update the latest workflow runs had not yet completed. Do not treat this section as evidence of a green build.
+
+
+## 24. Workspace-root trust boundary in runtime ToolContext
+
+The active `runtime/andalus-builtin-tools` module contains three CDI-discovered read-only workspace tools: `workspace.list`, `workspace.read`, and `workspace.search`. Their shared support class requires `andalus.workspace.root` to be a server-supplied `java.nio.file.Path`, canonicalizes it with `toRealPath()`, rejects absolute and traversal paths, and verifies resolved paths remain beneath the canonical root. Listing and searching also bound result sizes; file reads are capped at 1 MiB.
+
+The runtime's `DefaultAgentToolExecutor.toolContextFor(...)` previously merged agent constraints and per-execution attributes in that order. Since attributes were merged second, an attribute named `andalus.workspace.root` could override the agent's configured workspace root. This was an authority-precedence defect even though the workspace tools themselves rejected non-Path values and path escapes.
+
+The runtime now removes the workspace-root key after the general merge and restores it only when the value in the agent's constraints is a `Path`. Consequently, per-execution attributes cannot replace the workspace boundary, and string-valued configuration does not become a filesystem authority. Workspace tools continue to deny when no trusted Path is present.
+
+Trust assumption: agent constraints must be populated by a trusted application/administrator configuration path. This change does not make user-editable agent definitions trustworthy by itself. Deployments must not let untrusted users write the workspace-root constraint. A later resolver/provider SPI may replace the Path constraint when workspace ownership or tenant-to-workspace mapping needs to be dynamic.
+
+No Maven build or tests were run for this change. Required follow-up verification includes an executor-level test proving a malicious execution attribute cannot override the configured root, plus a Quarkus integration test proving the three CDI beans are discoverable and governed by the fail-closed policy evaluator.
+
+
+## 25. Identity-based workspace resolution SPI
+
+The runtime now defines an application-owned `WorkspaceResolver` contract and a minimal `WorkspaceRequest`. The request contains principal type, tenant ID, principal ID, user ID, and agent ID; it deliberately excludes roles, permissions, prompt content, and arbitrary request attributes. This keeps workspace selection separate from the caller's authorization grants and model-controlled inputs.
+
+`AgentExecutionService` optionally discovers a resolver through CDI. For both new executions and resumed executions, it asks the resolver for the workspace using the trusted `AgentCallerContext` and selected agent identity. A returned path is canonicalized with `toRealPath()` and must resolve to an existing directory before being placed in the immutable tool execution constraints under `andalus.workspace.root`.
+
+The resolver is the sole authority for runtime filesystem access. Agent-definition constraints and caller attributes cannot independently grant a workspace path. If no resolver exists, the resolver returns no mapping, or resolution fails, the workspace root is omitted; the three workspace tools consequently deny access while unrelated agent execution can continue. Resolver failures are logged without granting fallback filesystem access.
+
+The application owns tenant/principal-to-workspace mapping and must enforce its isolation rules. This SPI validates that the returned path is a canonical directory but does not itself provide OS-level sandboxing, prevent time-of-check/time-of-use races in a mutable filesystem, or isolate hostile processes. Those controls remain required before adding write, shell, or process tools.
+
+Runtime implementation commits:
+- `397ecfa` — `WorkspaceRequest`
+- `20eae1c` — `WorkspaceResolver`
+- `2e4d44f` — canonical path validation
+- `a1ecd4c` — CDI resolution and trusted constraint propagation
+- `1118e50` — resolver validation tests
+- `5d9db5a` — AgentExecutionService CDI resolver integration tests (authenticated identity mapping and invalid resolver output fail-closed)
+
+No Maven build or tests were run during this change. CI results must be checked before treating the new SPI as verified.
+
+
+## 26. Current-source reconciliation and CI baseline — 2026-11-25
+
+This section supersedes earlier lifecycle/checkpoint observations where the current source has since changed. It is a targeted source reconciliation, not a complete repository-wide build or test audit.
+
+### 26.1 Framework execution contracts
+
+- The graph-specific contract is currently `GraphExecutionContext` in `framework/andalus-engine`; invocation-level `ExecutionContext` remains in `andalus-execution-api`. The earlier duplicate-FQN finding is historical and should not be repeated as a current defect.
+- `DefaultExecutionContext.transition` now validates transitions through `ExecutionLifecycleTransitions.isAllowed` and applies them using a compare-and-set loop. Repeating the current state is idempotent; illegal transitions throw.
+- `InMemoryExecutionCheckpointStore.save` now synchronizes sequence validation, duplicate checkpoint-ID insertion and history append per execution. Reads use the same history monitor to avoid observing a partially published save. This is an in-process concurrency guarantee only; the adapter remains non-durable.
+- The engine snapshot port is `EngineSnapshotStore` in `tech.kayys.andalus.engine.snapshot`, not a duplicate `tech.kayys.andalus.execution.CheckpointStore`.
+
+### 26.2 Runtime lifecycle and checkpoint reconciliation
+
+Current Runtime source paths inspected:
+- `runtime/andalus-runtime-core/src/main/java/tech/kayys/andalus/execution/DefaultAgentExecution.java`
+- `runtime/andalus-runtime-core/src/main/java/tech/kayys/andalus/execution/DefaultExecutionStateStore.java`
+- `runtime/andalus-runtime-core/src/main/java/tech/kayys/andalus/execution/AgentExecutionService.java`
+- `runtime/andalus-runtime-core/src/main/java/tech/kayys/andalus/execution/InMemoryExecutionCheckpointStore.java`
+- `runtime/andalus-runtime-core/src/main/java/tech/kayys/andalus/execution/InMemoryCheckpointStore.java`
+- `runtime/andalus-runtime-core/src/main/java/tech/kayys/andalus/execution/SimpleGraphExecutionContext.java`
+
+Current findings:
+
+1. Runtime `complete` and `fail` now arbitrate terminal outcomes inside the per-execution state-map computation, validate transitions and ignore late callbacks after CANCELLED or COMPLETED. This supersedes the earlier finding that `fail` directly bypassed transition validation.
+2. `DefaultAgentExecution` now creates an execution cancellation token, passes it to the ReAct agent and governed tool bridge, and completes the caller-facing future exceptionally when cancellation wins. Provider-stream interruption and tool-side no-post-cancel effects still require provider-specific and race tests.
+3. `pause()` still changes status and writes checkpoints without proving the active ReAct/model/tool operation has reached a safe point. `resume()` changes PAUSED to RUNNING but does not demonstrate restoration and continuation from a defined checkpoint phase. These APIs must not be described as durable cooperative pause/resume yet.
+4. Runtime still writes both the Runtime lifecycle `ExecutionCheckpointStore` and the Framework Runtime-SPI AgentContext `CheckpointStore`. `AgentExecutionService.resume` still restores AgentContext from the latter. The two writes are sequential, not one atomic authoritative checkpoint transaction.
+5. Runtime `InMemoryExecutionCheckpointStore` appends records without the Framework adapter's duplicate-ID or monotonic-sequence checks. It is process-local. The AgentContext `InMemoryCheckpointStore` is also process-local and separately tracks cache references.
+6. `DefaultAgentExecution` still substitutes an in-memory lifecycle checkpoint store when no store is injected. Deployments requiring process-restart durability must not treat this fallback as durable.
+7. `SimpleGraphExecutionContext` is used for a linear AgentRequest path and returns null for graph and current-node methods. This is a typed-boundary design gap; a future correction should preserve existing consumers and avoid inventing graph values for linear execution.
+
+### 26.3 CI and verification baseline
+
+- A local checkout could not be performed in this environment because DNS resolution for `github.com` failed. Consequently no local Maven dependency tree, clean reactor build or test suite was run here.
+- The Framework default-branch `CI — Build & Test` run `45578553532` failed while compiling the checked-out Aljabr tokenizer module: `WordPieceTokenizer.java:40` could not resolve `com.fasterxml.jackson.annotation.JsonInclude$Include`. This is a CI baseline failure in the nested Aljabr build path, not a failure caused by the documentation changes in this PR. [Workflow run](https://github.com/andalus-ai/andalus-framework/actions/runs/45578553532).
+- The Runtime default-branch `CI — Build & Test` run `45614122587` failed before Maven execution because the Maven Wrapper could not download Apache Maven 3.9.6 from Maven Central. This is an environment/bootstrap failure, not evidence of a source compilation failure. [Workflow run](https://github.com/andalus-ai/andalus/actions/runs/45614122587).
+- The Runtime parent POM's release repository points to `maven.pkg.github.com/andalus-ai/andalus`, but its snapshot repository still points to the obsolete `maven.pkg.github.com/workkayys/andalus`. This is a confirmed publishing configuration defect, independent of the earlier Aljabr bootstrap failure. A focused correction is proposed in [Runtime PR #171](https://github.com/andalus-ai/andalus/pull/171).
+- The Framework PR's targeted contract build completed successfully; its full CI was still running at the time of this update. Runtime PR CI was also still running.
+
+### 26.4 Updated M0 status
+
+M0 remains **in progress**. The current source map now distinguishes historical defects from resolved source changes, but the following exit requirements remain open:
+- Complete cross-repository FQN/import/implementation/consumer search from a clean checkout.
+- Resolve the Framework/Runtime Maven dependency graphs and verify artifact provenance.
+- Reconcile the Framework and Runtime checkpoint writers/readers/serializers and define one authoritative recovery path.
+- Add or run pause/resume/cancellation race and process-restart tests.
+- Establish reproducible green Framework and Runtime CI baselines.
+- Approve the smallest M1 change set only after these evidence gaps are closed.

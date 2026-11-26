@@ -1,20 +1,20 @@
 # Contract Consumer and Implementation Map — Framework
 
-Status: first-pass source map from the `docs/development-guidelines-and-agents` branch. This is not yet a complete repository-wide reference graph.
+Status: refreshed targeted source map as of 2026-11-25. This is not yet a complete repository-wide reference graph; see [M0 Foundation Audit](M0-FOUNDATION-AUDIT.md) for the chronological evidence and limitations.
 
 ## 1. ExecutionContext contracts
 
 | Contract | Definition | Confirmed consumer/implementation | Assessment |
 |---|---|---|---|
 | Invocation context | `framework/andalus-execution-api/.../execution/ExecutionContext.java` | `framework/andalus-execution-core/.../DefaultExecutionContext.java` implements it | Used for metadata, cancellation, security snapshot and invocation lifecycle |
-| Graph/node context | `framework/andalus-engine/.../execution/ExecutionContext.java` | `framework/andalus-engine/.../ExecutionEngine.java` uses it in agent/workflow/skill method signatures | Separate graph execution abstraction despite identical FQN |
+| Graph/node context | `framework/andalus-engine/.../execution/GraphExecutionContext.java` | `ExecutionEngine` uses it in agent/workflow/skill method signatures | Distinct graph execution scope; the earlier duplicate-FQN declaration has been renamed in current source |
 | Plugin execution context | `framework/andalus-plugin/.../plugin/execution/ExecutionContext.java` | No consumers inspected | Separate package and role; not a duplicate FQN |
 | Tool execution context | `framework/andalus-tool/.../ToolExecutionContext.java` | `DefaultToolExecutionContext.java` | Explicitly tool-scoped; keep distinct |
 | Model execution context | `framework/andalus-harness/.../ModelExecutionContext.java` | `DefaultModelExecutionContext.java` | Explicitly model-scoped; keep distinct |
 
-### Important implementation mismatch
+### Current lifecycle implementation
 
-The execution API documentation says invalid lifecycle transitions should be rejected. However, `DefaultExecutionContext.transition` currently performs `lifecycle.set(next)` without validating the transition. This is a direct contract/implementation mismatch. The transition matrix should be centralized and tested before adding new lifecycle states.
+`DefaultExecutionContext.transition` currently validates the requested transition through `ExecutionLifecycleTransitions.isAllowed` and applies it with a compare-and-set loop. Repeating the current state is idempotent; an illegal transition throws `IllegalStateException`. This source-level correction supersedes the historical mismatch reported in earlier inventory notes. Remaining work is to run the conformance tests and map the separate `ExecutionStateMachine`, `ExecutionLifecycleState` and harness durable lifecycle abstractions to their consumers.
 
 ## 2. Checkpoint contracts
 
@@ -38,9 +38,9 @@ The ADR should decide whether one is the canonical durable execution envelope an
 ## 3. Build/dependency observations
 
 - Runtime-core directly declares dependencies on `andalus-execution-api`, `andalus-runtime-spi` and `andalus-engine`.
-- `andalus-engine` declares its own same-package graph `ExecutionContext` and `ExecutionEngine` contract.
+- `andalus-engine` declares `GraphExecutionContext` for graph/node execution and `ExecutionEngine` consumes that type.
 - `andalus-execution-core` depends on `andalus-execution-api` and provides the invocation-context implementation.
-- The duplicate `ExecutionContext` FQN was a cross-artifact concern, not two declarations in one source module. The separate engine/runtime `CheckpointStore` FQN collision was removed by renaming the engine-local port to `EngineSnapshotStore` under `tech.kayys.andalus.engine.snapshot`.
+- The former duplicate `ExecutionContext` FQN is resolved in current Framework source by the `GraphExecutionContext` rename. The engine-local snapshot port is now `EngineSnapshotStore` under `tech.kayys.andalus.engine.snapshot`, distinct from the invocation checkpoint API and Runtime-SPI AgentContext checkpoint contract. Checkpoint payload semantics still overlap and require explicit migration ownership.
 
 A resolved Maven dependency tree and clean build are required to establish the actual compiler/classloader behavior.
 
@@ -81,14 +81,21 @@ A proposed decision record captures the separation of invocation and graph execu
 
 ## 7. Recommended decisions before source migration
 
-1. Name the graph context distinctly, e.g. `GraphExecutionContext`, and reserve `ExecutionContext` for invocation-level context only if that ownership decision is approved.
+1. Preserve the current separation: `ExecutionContext` is invocation-scoped and `GraphExecutionContext` is graph-scoped. Complete consumer and binary-compatibility scans; do not repeat the rename.
 2. Continue resolving checkpoint ownership and recovery semantics using ADR-0002; do not conflate engine snapshots, execution checkpoint envelopes, state checkpoints and AgentContext snapshots. The engine-local port has been given a distinct FQN; its runtime implementation and migration compatibility remain unverified.
 3. Deprecate old contracts only after adapters and compatibility tests exist.
-4. Enforce lifecycle transitions in `DefaultExecutionContext`.
-5. Make checkpoint sequence writes atomic per execution and define duplicate/idempotency behavior.
+4. Keep the existing atomic transition validation in `DefaultExecutionContext` and add/run conformance tests for every legal and illegal transition.
+5. Preserve the existing per-execution synchronized sequence/duplicate handling in the Framework in-memory checkpoint adapter; add/run concurrency tests and verify equivalent guarantees in durable adapters.
 6. Add cross-module contract tests and build checks that detect duplicate public FQNs across Maven artifacts.
 
-## 8. Scope and limitations
+## 8. Current source corrections — 2026-11-25
+
+- Current graph APIs use `GraphExecutionContext`; the old duplicate-FQN graph declaration is historical.
+- Current `DefaultExecutionContext` enforces the transition table atomically; the earlier direct-set mismatch is historical.
+- The Framework in-memory execution checkpoint store synchronizes per-execution sequence validation and append. This is an in-process concurrency guarantee, not crash durability.
+- `ExecutionStateMachine` and `ExecutionLifecycleState` are additional lifecycle/control abstractions whose complete consumer relationship remains open.
+
+## 9. Scope and limitations
 
 This is a targeted source map, not a complete static-analysis report. The repository search connector did not provide a reliable complete code-reference index for these queries. All "not yet confirmed" items must be resolved by local grep/IDE indexing or a full source checkout before destructive API changes.
 
