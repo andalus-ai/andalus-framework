@@ -1,6 +1,7 @@
 package tech.kayys.andalus.execution.governance;
 
 import java.util.List;
+import java.util.Set;
 
 /**
  * Immutable snapshot of who is invoking a tool and in what execution context.
@@ -12,6 +13,7 @@ import java.util.List;
  * @param roles       Roles granted to this principal (e.g. "admin", "readonly", "approved").
  * @param toolName    The tool being invoked.
  * @param level       The capability level required by the tool.
+ * @param permissions Explicit permission claims granted to this principal.
  */
 public record ToolPermissionContext(
         String tenantId,
@@ -19,10 +21,29 @@ public record ToolPermissionContext(
         String executionId,
         List<String> roles,
         String toolName,
-        ToolCapabilityLevel level
+        ToolCapabilityLevel level,
+        Set<String> permissions
 ) {
     public ToolPermissionContext {
         roles = roles != null ? List.copyOf(roles) : List.of();
+        permissions = permissions != null ? Set.copyOf(permissions) : Set.of();
+        if (roles.stream().anyMatch(role -> role == null || role.isBlank() || "*".equals(role.trim()))) {
+            throw new IllegalArgumentException("roles must not contain blank or wildcard entries");
+        }
+        if (permissions.stream().anyMatch(permission -> permission == null || permission.isBlank()
+                || "*".equals(permission.trim()))) {
+            throw new IllegalArgumentException("permissions must not contain blank or wildcard entries");
+        }
+    }
+
+    /** Backwards-compatible constructor for role-only callers. */
+    public ToolPermissionContext(String tenantId, String userId, String executionId,
+                                 List<String> roles, String toolName, ToolCapabilityLevel level) {
+        this(tenantId, userId, executionId, roles, toolName, level, Set.of());
+    }
+
+    public boolean hasPermission(String permission) {
+        return permission != null && !permission.isBlank() && permissions.contains(permission.trim());
     }
 
     public boolean hasRole(String role) {
@@ -35,6 +56,6 @@ public record ToolPermissionContext(
 
     /** Convenience: standalone/dev context with no tenant or user. */
     public static ToolPermissionContext standalone(String executionId, String toolName, ToolCapabilityLevel level) {
-        return new ToolPermissionContext(null, null, executionId, List.of("*"), toolName, level);
+        return new ToolPermissionContext(null, null, executionId, List.of(), toolName, level);
     }
 }

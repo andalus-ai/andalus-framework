@@ -49,6 +49,7 @@ public class PlanAndSolveAgent extends BaseReActAgent {
 
     @Override
     public void send(String userInput, AndalusAgentListener listener) {
+        throwIfCancelled();
         if (memory != null) memory.addMessage(ChatMessage.userText(userInput));
 
         listener.onTextDelta("\n[PlanAndSolve] Phase 1: Planning\n");
@@ -62,6 +63,7 @@ public class PlanAndSolveAgent extends BaseReActAgent {
         listener.onTextDelta("\n[PlanAndSolve] Phase 3: Reflecting\n");
         runReflectionPhase(userInput, solution, listener, 0);
 
+        throwIfCancelled();
         listener.onDone("stop");
     }
 
@@ -70,7 +72,7 @@ public class PlanAndSolveAgent extends BaseReActAgent {
     private String runPhase(String systemPrompt, AndalusAgentListener listener, String phaseName) {
         StringBuilder buf = new StringBuilder();
         try {
-            provider.streamChat(currentHistory(), systemPrompt, List.of(), 0.3, 2048, event -> {
+            streamChatCancellable(currentHistory(), systemPrompt, List.of(), 0.3, 2048, event -> {
                 if (event instanceof StreamEvent.TextDelta td) {
                     listener.onTextDelta(td.text());
                     buf.append(td.text());
@@ -87,6 +89,7 @@ public class PlanAndSolveAgent extends BaseReActAgent {
     }
 
     private String runSolvingPhase(String userInput, String plan, AndalusAgentListener listener, int stepCount) {
+        throwIfCancelled();
         if (stepCount >= MAX_STEPS_PER_SUBPLAN) {
             listener.onError("Max solving steps exceeded.");
             return null;
@@ -94,7 +97,7 @@ public class PlanAndSolveAgent extends BaseReActAgent {
         StringBuilder buf = new StringBuilder();
         AtomicReference<String> pendingTool = new AtomicReference<>();
         try {
-            provider.streamChat(currentHistory(), basePrompt() + SOLVER_PREFIX + plan,
+            streamChatCancellable(currentHistory(), basePrompt() + SOLVER_PREFIX + plan,
                 buildToolSpecs(), 0.5, 4096, event -> {
                 if (event instanceof StreamEvent.TextDelta td) {
                     listener.onTextDelta(td.text());
@@ -130,6 +133,7 @@ public class PlanAndSolveAgent extends BaseReActAgent {
     // -------------------------------------------------------------------------
 
     private void invokeTool(StreamEvent.ToolUseEnd toolEnd, String toolName, AndalusAgentListener listener) {
+        if (isCancellationRequested()) return;
         if (toolName == null) return;
         Tool tool = tools.stream().filter(t -> t.descriptor().name().equals(toolName))
             .findFirst().orElse(null);
@@ -138,7 +142,7 @@ public class PlanAndSolveAgent extends BaseReActAgent {
         ToolInvocation inv = buildInvocation(toolName, args);
         try {
             ToolResult result = toolExecutor != null
-                ? toolExecutor.executeViaPolicy(inv, () -> safeDirect(tool, inv))
+                ? toolExecutor.executeViaPolicy(inv, () -> safeDirect(tool, inv), cancellationToken)
                 : safeDirect(tool, inv);
             listener.onToolResult(toolEnd.id(), toolName, result);
             if (memory != null) {
@@ -153,7 +157,7 @@ public class PlanAndSolveAgent extends BaseReActAgent {
     }
 
     private ToolResult safeDirect(Tool tool, ToolInvocation inv) {
-        try { return tool.execute(inv, null).get(); }
+        try { return tool.execute(inv, null, cancellationToken).get(); }
         catch (Exception e) { throw new RuntimeException(e); }
     }
 

@@ -4,6 +4,7 @@ import tech.kayys.andalus.agent.AndalusAgentListener;
 import tech.kayys.andalus.provider.ChatMessage;
 import tech.kayys.andalus.provider.StreamEvent;
 import tech.kayys.andalus.provider.ToolSpec;
+import tech.kayys.andalus.provider.ProviderStreamHandle;
 import tech.kayys.andalus.tool.Tool;
 import tech.kayys.andalus.tool.ToolInvocation;
 import tech.kayys.andalus.tool.ToolResult;
@@ -17,6 +18,11 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.CancellationException;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 
@@ -34,8 +40,23 @@ import java.util.stream.Collectors;
  */
 public class ReActAgent extends BaseReActAgent {
 
+    private final AtomicBoolean cancellationReported = new AtomicBoolean(false);
+
+    private boolean stopIfCancelled(AndalusAgentListener listener) {
+        if (cancellationToken == null || !cancellationToken.isCancellationRequested()) {
+            return false;
+        }
+        if (cancellationReported.compareAndSet(false, true)) {
+            listener.onError("Execution cancelled.");
+        }
+        return true;
+    }
+
     @Override
     public void send(String userInput, AndalusAgentListener listener) {
+        if (stopIfCancelled(listener)) {
+            return;
+        }
         if (memory != null) {
             memory.addMessage(ChatMessage.userText(userInput));
         }
@@ -47,6 +68,10 @@ public class ReActAgent extends BaseReActAgent {
     // -------------------------------------------------------------------------
 
     private void executeLoop(String userInput, AndalusAgentListener listener, int stepCount) {
+        if (stopIfCancelled(listener)) {
+            return;
+        }
+
         // --- Budget guard ---
         int maxSteps = 25;
         if (stepCount >= maxSteps) {
@@ -73,7 +98,11 @@ public class ReActAgent extends BaseReActAgent {
         AtomicReference<String> currentToolName = new AtomicReference<>();
 
         try {
-            provider.streamChat(history, effectiveSystemPrompt, toolSpecs, 0.7, 4096, event -> {
+            ProviderStreamHandle stream = provider.streamChatCancellable(
+                    history, effectiveSystemPrompt, toolSpecs, 0.7, 4096, event -> {
+                if (stopIfCancelled(listener)) {
+                    return;
+                }
                 if (event instanceof StreamEvent.TextDelta textEvent) {
                     listener.onTextDelta(textEvent.text());
 
@@ -89,9 +118,49 @@ public class ReActAgent extends BaseReActAgent {
                     listener.onDone(stopEvent.reason());
                 }
             });
+
+            // Polling keeps this synchronous agent API compatible while allowing
+            // the execution thread to interrupt the provider worker on cancellation.
+            while (true) {
+                if (stopIfCancelled(listener)) {
+                    stream.cancel();
+                    return;
+                }
+                try {
+                    stream.completion().toCompletableFuture().get(50, TimeUnit.MILLISECONDS);
+                    break;
+                } catch (TimeoutException waiting) {
+                    // Re-check the execution-scoped cancellation signal.
+                } catch (InterruptedException interrupted) {
+                    // Nested ReAct iterations run from provider callbacks. Propagate
+                    // interruption down to the currently active nested provider stream.
+                    stream.cancel();
+                    throw interrupted;
+                } catch (CancellationException cancelled) {
+                    stopIfCancelled(listener);
+                    return;
+                } catch (ExecutionException failed) {
+                    Throwable cause = failed.getCause();
+                    if (cause instanceof CancellationException && stopIfCancelled(listener)) {
+                        return;
+                    }
+                    if (cause instanceof IOException io) {
+                        throw io;
+                    }
+                    if (cause instanceof InterruptedException interrupted) {
+                        throw interrupted;
+                    }
+                    throw new IOException("Provider stream failed.", cause);
+                }
+            }
+            stopIfCancelled(listener);
         } catch (IOException | InterruptedException e) {
-            Thread.currentThread().interrupt();
-            listener.onError("Model communication error: " + e.getMessage());
+            if (e instanceof InterruptedException) {
+                Thread.currentThread().interrupt();
+            }
+            if (!stopIfCancelled(listener)) {
+                listener.onError("Model communication error: " + e.getMessage());
+            }
         }
     }
 
@@ -105,6 +174,10 @@ public class ReActAgent extends BaseReActAgent {
             String userInput,
             AndalusAgentListener listener,
             int stepCount) {
+
+        if (stopIfCancelled(listener)) {
+            return;
+        }
 
         if (toolName == null) {
             listener.onError("Received ToolUseEnd without a preceding ToolUseStart.");
@@ -128,6 +201,10 @@ public class ReActAgent extends BaseReActAgent {
         try {
             ToolResult result = executeToolViaPolicy(matchingTool, invocation);
 
+            if (stopIfCancelled(listener)) {
+                return;
+            }
+
             listener.onToolResult(toolEnd.id(), toolName, result);
 
             // Append the tool result to conversation history.
@@ -146,7 +223,9 @@ public class ReActAgent extends BaseReActAgent {
             executeLoop(userInput, listener, stepCount + 1);
 
         } catch (Exception e) {
-            listener.onError("Tool execution failed [" + toolName + "]: " + e.getMessage());
+            if (!stopIfCancelled(listener)) {
+                listener.onError("Tool execution failed [" + toolName + "]: " + e.getMessage());
+            }
         }
     }
 
@@ -156,20 +235,24 @@ public class ReActAgent extends BaseReActAgent {
      * and headless scenarios where no CDI container is present.
      */
     private ToolResult executeToolViaPolicy(Tool tool, ToolInvocation invocation) throws Exception {
+        if (cancellationToken != null && cancellationToken.isCancellationRequested()) {
+            throw new java.util.concurrent.CancellationException("Execution cancelled before tool dispatch.");
+        }
         if (toolExecutor != null) {
             return toolExecutor.executeViaPolicy(invocation, () -> {
                 try {
                     return tool.execute(
                             invocation,
-                            toolContext
+                            toolContext,
+                            cancellationToken
                     ).get();
                 } catch (Exception e) {
                     throw new RuntimeException(e);
                 }
-            });
+            }, cancellationToken);
         }
         // Fallback: direct execution (no policy, no retry, no CB).
-        return tool.execute(invocation, toolContext).get();
+        return tool.execute(invocation, toolContext, cancellationToken).get();
     }
 
     // -------------------------------------------------------------------------

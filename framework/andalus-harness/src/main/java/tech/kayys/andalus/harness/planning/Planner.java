@@ -18,7 +18,7 @@ import java.util.concurrent.CompletionStage;
  *       expressed as {@link PlanningResult#failed(String)}.</li>
  *   <li>The default {@link #revise(PlanRevisionRequest)} implementation re-plans
  *       from scratch using the revision request goal/context; override for
- *       incremental revision strategies.</li>
+ *       incremental revision strategies. Incremental planners can consume\n *       {@link PlanRevisionRequest#replanningGuidance()} to preserve successful\n *       work and target failed or dependency-affected steps.</li>
  * </ul>
  */
 public interface Planner {

@@ -5,7 +5,6 @@ import tech.kayys.andalus.security.delegation.DelegationAudience;
 import tech.kayys.andalus.security.delegation.DelegationConstraints;
 import tech.kayys.andalus.security.delegation.DelegationContext;
 import tech.kayys.andalus.security.delegation.DelegationId;
-import tech.kayys.andalus.security.identity.Principal;
 
 import java.time.Instant;
 import java.util.HashMap;
@@ -18,6 +17,9 @@ public final class DefaultSecurityContextPropagator implements SecurityContextPr
     private final long defaultTtlSeconds;
 
     public DefaultSecurityContextPropagator(long defaultTtlSeconds) {
+        if (defaultTtlSeconds <= 0) {
+            throw new IllegalArgumentException("defaultTtlSeconds must be positive");
+        }
         this.defaultTtlSeconds = defaultTtlSeconds;
     }
 
@@ -31,7 +33,16 @@ public final class DefaultSecurityContextPropagator implements SecurityContextPr
 
         DelegationConstraints constraints = request.constraints() != null
                 ? request.constraints()
-                : DelegationConstraints.unrestricted();
+                : DelegationConstraints.empty();
+
+        if (!constraints.canDelegate()) {
+            throw new SecurityException("Delegation denied: no remaining hops or delegated capabilities");
+        }
+
+        String tenantId = request.source().tenant().tenantId();
+        if (tenantId == null || tenantId.isBlank()) {
+            throw new SecurityException("Delegation denied: a tenant-scoped source context is required");
+        }
 
         DelegationAudience audience = DelegationAudience.of(request.targetAgentId());
 
@@ -42,7 +53,8 @@ public final class DefaultSecurityContextPropagator implements SecurityContextPr
                 constraints.decrementHop(),
                 now,
                 now.plusSeconds(defaultTtlSeconds),
-                Optional.empty()
+                Optional.empty(),
+                Optional.of(tenantId)
         );
 
         Map<String, Object> propagatedAttributes = new HashMap<>(request.source().attributes());

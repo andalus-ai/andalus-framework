@@ -44,21 +44,42 @@ public class InMemoryExecutionCheckpointStore implements CheckpointStore {
 
     @Override
     public Optional<ExecutionCheckpoint> get(String checkpointId) {
-        return Optional.ofNullable(byId.get(checkpointId));
+        ExecutionCheckpoint checkpoint = byId.get(checkpointId);
+        if (checkpoint == null) {
+            return Optional.empty();
+        }
+        List<ExecutionCheckpoint> history = byExecution.get(checkpoint.executionId());
+        if (history == null) {
+            return Optional.empty();
+        }
+        // save() publishes the ID index before appending to history while holding
+        // this monitor. Readers use the same monitor to avoid observing a partial commit.
+        synchronized (history) {
+            return history.stream()
+                    .filter(candidate -> candidate.checkpointId().equals(checkpointId))
+                    .findFirst();
+        }
     }
 
     @Override
     public Optional<ExecutionCheckpoint> getLatest(String executionId) {
         List<ExecutionCheckpoint> history = byExecution.get(executionId);
-        if (history == null || history.isEmpty()) {
+        if (history == null) {
             return Optional.empty();
         }
-        return Optional.of(history.get(history.size() - 1));
+        synchronized (history) {
+            return history.isEmpty() ? Optional.empty() : Optional.of(history.get(history.size() - 1));
+        }
     }
 
     @Override
     public List<ExecutionCheckpoint> list(String executionId) {
         List<ExecutionCheckpoint> history = byExecution.get(executionId);
-        return history == null ? List.of() : List.copyOf(history);
+        if (history == null) {
+            return List.of();
+        }
+        synchronized (history) {
+            return List.copyOf(history);
+        }
     }
 }

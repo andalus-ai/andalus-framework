@@ -20,6 +20,12 @@ import java.util.ArrayList;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.function.BiConsumer;
 import java.util.function.Supplier;
+import java.util.function.Consumer;
+import java.util.concurrent.CancellationException;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
+import java.io.IOException;
 
 /**
  * A base implementation of a Reasoning and Acting (ReAct) agent.
@@ -34,6 +40,10 @@ public abstract class BaseReActAgent implements Agent {
     protected Path workspace;
 
     protected tech.kayys.andalus.tool.ToolContext toolContext;
+
+    /** Cooperative cancellation signal shared with the owning execution. */
+    protected tech.kayys.andalus.tool.CancellationToken cancellationToken =
+            tech.kayys.andalus.tool.CancellationToken.none();
     
     protected BudgetedContextCompiler contextCompiler;
     protected ContextPlanner contextPlanner;
@@ -60,6 +70,24 @@ public abstract class BaseReActAgent implements Agent {
     public interface ToolExecutorBridge {
         /** Returns a ToolResult or throws on failure. */
         ToolResult executeViaPolicy(ToolInvocation invocation, Supplier<ToolResult> directFallback) throws Exception;
+
+        /**
+         * Cancellation-aware policy execution hook. Policy executors should override
+         * this method to propagate cancellation into queued or active governed work.
+         */
+        default ToolResult executeViaPolicy(
+                ToolInvocation invocation,
+                Supplier<ToolResult> directFallback,
+                tech.kayys.andalus.tool.CancellationToken cancellation) throws Exception {
+            if (cancellation != null && cancellation.isCancellationRequested()) {
+                throw new java.util.concurrent.CancellationException("Tool execution cancelled before dispatch.");
+            }
+            ToolResult result = executeViaPolicy(invocation, directFallback);
+            if (cancellation != null && cancellation.isCancellationRequested()) {
+                throw new java.util.concurrent.CancellationException("Tool execution cancelled.");
+            }
+            return result;
+        }
     }
 
     /** Functional bridge for saving a checkpoint after each step. */
@@ -136,6 +164,78 @@ public abstract class BaseReActAgent implements Agent {
 
     public void setToolExecutor(ToolExecutorBridge toolExecutor) {
         this.toolExecutor = toolExecutor;
+    }
+
+    /**
+     * Runs a provider stream through the cancellable provider contract and waits
+     * synchronously for completion to preserve the existing agent API.
+     *
+     * <p>Cancellation is polled while waiting, and the provider handle is
+     * cancelled before returning control to the caller. Event delivery is
+     * suppressed once the execution token has been cancelled.</p>
+     */
+    protected void streamChatCancellable(
+            List<ChatMessage> messages,
+            String prompt,
+            List<tech.kayys.andalus.provider.ToolSpec> toolSpecs,
+            double temperature,
+            int maxTokens,
+            Consumer<tech.kayys.andalus.provider.StreamEvent> onEvent)
+            throws IOException, InterruptedException {
+        throwIfCancelled();
+        tech.kayys.andalus.provider.ProviderStreamHandle stream =
+                provider.streamChatCancellable(messages, prompt, toolSpecs, temperature, maxTokens, event -> {
+                    if (!isCancellationRequested()) {
+                        onEvent.accept(event);
+                    }
+                });
+        try {
+            while (true) {
+                if (isCancellationRequested()) {
+                    stream.cancel();
+                    throw new CancellationException("Agent execution cancelled.");
+                }
+                try {
+                    stream.completion().toCompletableFuture().get(50, TimeUnit.MILLISECONDS);
+                    return;
+                } catch (TimeoutException waiting) {
+                    // Re-check cancellation without busy-waiting.
+                } catch (ExecutionException failed) {
+                    Throwable cause = failed.getCause();
+                    if (cause instanceof IOException io) throw io;
+                    if (cause instanceof InterruptedException interrupted) throw interrupted;
+                    if (cause instanceof CancellationException cancelled) throw cancelled;
+                    if (cause instanceof RuntimeException runtime) throw runtime;
+                    throw new IOException("Provider stream failed.", cause);
+                }
+            }
+        } catch (InterruptedException interrupted) {
+            stream.cancel();
+            throw interrupted;
+        } finally {
+            if (isCancellationRequested()) {
+                stream.cancel();
+            }
+        }
+    }
+
+    /** Returns whether the owning execution has requested cancellation. */
+    protected boolean isCancellationRequested() {
+        return cancellationToken != null && cancellationToken.isCancellationRequested();
+    }
+
+    /** Fails fast at an agent phase or tool-dispatch boundary after cancellation. */
+    protected void throwIfCancelled() {
+        if (isCancellationRequested()) {
+            throw new CancellationException("Agent execution cancelled.");
+        }
+    }
+
+    /** Sets the execution-scoped cancellation signal. */
+    public void setCancellationToken(tech.kayys.andalus.tool.CancellationToken cancellationToken) {
+        this.cancellationToken = cancellationToken != null
+                ? cancellationToken
+                : tech.kayys.andalus.tool.CancellationToken.none();
     }
 
     public void setToolContext(
