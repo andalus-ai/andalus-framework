@@ -423,12 +423,18 @@ public final class AgentContext implements Resource {
     // ============================================================================
     
     /**
-     * Gets all metadata.
+     * Gets the context's application metadata map.
      *
-     * @return An unmodifiable map of metadata
+     * <p>This is distinct from {@link #metadata()}, which returns the
+     * {@link Resource} metadata descriptor for this context.</p>
+     *
+     * @return an unmodifiable view of the context metadata
      */
-    
-    
+    public Map<String, String> contextMetadata() {
+        return Collections.unmodifiableMap(metadata);
+    }
+
+
     /**
      * Gets a metadata value.
      *
