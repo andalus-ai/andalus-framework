@@ -60,6 +60,7 @@ class ExecutionPipelineTest {
                 MessagePayload.text("hello")
         );
         AgentInvocation invocation = factory.root(request, security);
+        authorize(invocation);
 
         AgentResult result = pipeline.execute(invocation).toCompletableFuture().get();
 
@@ -108,6 +109,7 @@ class ExecutionPipelineTest {
                 MessagePayload.text("hello")
         );
         AgentInvocation invocation = factory.root(request, security);
+        authorize(invocation);
         pipeline.execute(invocation).toCompletableFuture().get();
 
         assertEquals(2, callOrder.get());
@@ -126,10 +128,39 @@ class ExecutionPipelineTest {
                 MessagePayload.text("hello")
         );
         AgentInvocation invocation = factory.root(request, security);
+        authorize(invocation);
 
         assertThrows(Exception.class,
                 () -> pipeline.execute(invocation).toCompletableFuture().get()
         );
         assertEquals(ExecutionLifecycle.FAILED, invocation.context().lifecycle());
+    }
+
+    @Test
+    void rejectsInvocationThatHasNotBeenAuthorized() {
+        AtomicInteger terminalCalls = new AtomicInteger();
+        AgentInvocationHandler terminal = invocation -> {
+            terminalCalls.incrementAndGet();
+            return CompletableFuture.completedFuture(
+                    AgentResult.of(AgentResponse.success(MessagePayload.text("should not run")))
+            );
+        };
+        ExecutionPipeline pipeline = new DefaultExecutionPipeline(interceptorPipeline, terminal);
+
+        AgentRequest request = AgentRequest.of(
+                AgentRef.local("agent-1", "Test", "rt-1"),
+                CapabilityId.of("cap.test"),
+                MessagePayload.text("hello")
+        );
+        AgentInvocation invocation = factory.root(request, security);
+
+        assertThrows(IllegalStateException.class, () -> pipeline.execute(invocation));
+        assertEquals(0, terminalCalls.get());
+        assertEquals(ExecutionLifecycle.CREATED, invocation.context().lifecycle());
+    }
+
+    private void authorize(AgentInvocation invocation) {
+        invocation.context().transition(ExecutionLifecycle.AUTHORIZING);
+        invocation.context().transition(ExecutionLifecycle.AUTHORIZED);
     }
 }

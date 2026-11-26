@@ -18,6 +18,11 @@
 
     <dependencies>
         <dependency>
+            <groupId>tech.kayys.andalus</groupId>
+            <artifactId>andalus-execution-api</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
             <groupId>jakarta.enterprise</groupId>
             <artifactId>jakarta.enterprise.cdi-api</artifactId>
             <version>4.0.1</version>
@@ -41,6 +46,11 @@
             <groupId>tech.kayys.andalus</groupId>
             <artifactId>andalus-event</artifactId>
             <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.junit.jupiter</groupId>
+            <artifactId>junit-jupiter</artifactId>
+            <scope>test</scope>
         </dependency>
     </dependencies>
 </project>

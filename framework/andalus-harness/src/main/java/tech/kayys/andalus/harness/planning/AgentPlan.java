@@ -1,6 +1,7 @@
 package tech.kayys.andalus.harness.planning;
 
 import java.time.Instant;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -37,8 +38,26 @@ public record AgentPlan(
 
     public AgentPlan revise(List<PlanStep> newSteps, String reason) {
         Map<String, Object> newMetadata = new HashMap<>(metadata);
-        if (reason != null && !reason.isBlank()) {
-            newMetadata.put("revision_reason", reason);
+        String normalizedReason = reason == null ? "" : reason;
+        Object existingHistory = metadata.get("revision_history");
+        List<PlanRevisionHistoryEntry> history = new ArrayList<>();
+        if (existingHistory instanceof List<?> entries) {
+            for (Object entry : entries) {
+                if (!(entry instanceof PlanRevisionHistoryEntry historyEntry)) {
+                    throw new IllegalStateException("revision_history contains an unsupported entry");
+                }
+                history.add(historyEntry);
+            }
+        } else if (existingHistory != null) {
+            throw new IllegalStateException("revision_history must be a list");
+        }
+        history.add(new PlanRevisionHistoryEntry(
+                revision, revision + 1, normalizedReason, Instant.now(),
+                steps.stream().map(PlanStep::id).toList(),
+                (newSteps == null ? List.<PlanStep>of() : newSteps).stream().map(PlanStep::id).toList()));
+        newMetadata.put("revision_history", List.copyOf(history));
+        if (!normalizedReason.isBlank()) {
+            newMetadata.put("revision_reason", normalizedReason);
         }
         newMetadata.put("previous_revision", revision);
         return new AgentPlan(

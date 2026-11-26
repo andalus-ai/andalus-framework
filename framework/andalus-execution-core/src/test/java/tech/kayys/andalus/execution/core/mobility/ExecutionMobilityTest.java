@@ -89,7 +89,8 @@ class ExecutionMobilityTest {
         boolean renewed = leaseManager.renewLease(execId, "worker-A", Duration.ofMinutes(10));
         assertTrue(renewed);
 
-        // Acquire lease for new holder (simulating migration/handoff)
+        // Explicitly release the current holder before handing ownership to another worker.
+        leaseManager.releaseLease(execId, "worker-A");
         ExecutionLease lease2 = leaseManager.acquireLease(execId, "worker-B", Duration.ofMinutes(5));
         assertEquals(2L, lease2.fencingToken().generation());
         assertEquals("worker-B", lease2.holderId());
@@ -127,7 +128,10 @@ class ExecutionMobilityTest {
         ExecutionDurableState sStaleSeq = new ExecutionDurableState(identity, ExecutionStatus.RUNNING, cursor, 1L, "sha256:0", null);
         assertThrows(IllegalStateException.class, () -> stateStore.save(sStaleSeq, token1));
 
-        // 4. Token generation incremented by new lease
+        // 4. Release the current holder before transferring ownership.
+        leaseManager.releaseLease(execId, "runtime-A");
+
+        // Token generation increments when the next holder acquires the lease.
         ExecutionLease lease2 = leaseManager.acquireLease(execId, "runtime-B", Duration.ofMinutes(5));
         FencingToken token2 = lease2.fencingToken();
         assertTrue(token2.generation() > token1.generation());

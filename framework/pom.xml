@@ -17,10 +17,7 @@
     <description>Andalus Framework Parent</description>
 
 
-    <properties>
-        <maven.compiler.source>25</maven.compiler.source>
-        <maven.compiler.target>25</maven.compiler.target>
-    </properties>
+    
 
     <dependencyManagement>
         <dependencies>
@@ -53,7 +50,9 @@
         <module>andalus-a2a</module>
         <module>andalus-rag</module>
         <module>andalus-configuration</module>
+        <module>andalus-inference-api</module>
         <module>andalus-harness</module>
+        <module>andalus-taskqueue-postgres</module>
         <module>andalus-core</module>
         <module>andalus-database</module>
         <module>andalus-plugin</module>
@@ -75,6 +74,8 @@
         <module>andalus-orchestration</module>
         <module>andalus-project</module>
         <module>andalus-provider</module>
+        <module>andalus-inference-provider-bridge</module>
+        <module>andalus-inference-provider-bridge-quarkus</module>
         <module>andalus-registry</module>
         <module>andalus-resilience</module>
         <module>andalus-runtime-spi</module>

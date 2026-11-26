@@ -10,6 +10,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.CancellationException;
+import java.util.concurrent.atomic.AtomicReference;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -112,6 +114,49 @@ class ToolExecutionGuardTest {
         // Step 3: executeApproved succeeds
         ToolResult result = guard.executeApproved(approvalId, invocation("fs.write"), toolContext(), echoExecutor()).get();
         assertEquals("result-fs.write", result.getOutputs().get("output"));
+    }
+
+    @Test
+    void governedExecutorForwardsCancellationTokenToDelegate() throws Exception {
+        ToolPolicy allowPolicy = new DefaultToolPolicy(List.of());
+        DefaultToolPolicyEvaluator evaluator = new DefaultToolPolicyEvaluator(List.of(allowPolicy));
+        DefaultToolExecutionGuard guard = new DefaultToolExecutionGuard(contextFactory, evaluator, approvalService, bindingValidator);
+        AtomicReference<CancellationToken> received = new AtomicReference<>();
+        ToolExecutor delegate = new ToolExecutor() {
+            @Override
+            public CompletableFuture<ToolResult> execute(ToolInvocation invocation, ToolContext context) {
+                return CompletableFuture.completedFuture(SimpleToolResult.success(Map.of("output", "ok")));
+            }
+
+            @Override
+            public CompletableFuture<ToolResult> execute(
+                    ToolInvocation invocation, ToolContext context, CancellationToken cancellation) {
+                received.set(cancellation);
+                return CompletableFuture.completedFuture(SimpleToolResult.success(Map.of("output", "ok")));
+            }
+        };
+
+        CancellationToken token = CancellationToken.create();
+        GovernedToolExecutor governed = new GovernedToolExecutor(delegate, guard);
+        governed.execute(invocation("fs.read"), toolContext(), token).get();
+
+        assertSame(token, received.get());
+    }
+
+    @Test
+    void governedExecutorRejectsAlreadyCancelledBeforePolicyDispatch() {
+        ToolPolicy allowPolicy = new DefaultToolPolicy(List.of());
+        DefaultToolPolicyEvaluator evaluator = new DefaultToolPolicyEvaluator(List.of(allowPolicy));
+        DefaultToolExecutionGuard guard = new DefaultToolExecutionGuard(contextFactory, evaluator, approvalService, bindingValidator);
+        GovernanceTestToolExecutor delegate = new GovernanceTestToolExecutor();
+        CancellationToken token = CancellationToken.create();
+        token.cancel();
+
+        GovernedToolExecutor governed = new GovernedToolExecutor(delegate, guard);
+        CompletableFuture<ToolResult> result = governed.execute(invocation("fs.read"), toolContext(), token);
+
+        assertThrows(CancellationException.class, result::join);
+        assertEquals(0, delegate.invocationCount());
     }
 
     @Test
