@@ -244,7 +244,7 @@ class PlanningRuntimeTest {
                 Map.of());
         AgentPlan revised = new AgentPlan(
                 original.id(), original.executionId(), original.goalId(), 1L,
-                PlanStatus.PROPOSED, List.of(), original.createdAt(), Map.of());
+                PlanStatus.PROPOSED, List.of(PlanStep.of("Replacement step")), original.createdAt(), Map.of());
 
         PlannerRegistry registry = new PlannerRegistry();
         registry.register(revisionPlannerReturning(revised));
