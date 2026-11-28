@@ -250,7 +250,8 @@ class LearningSignalRuntimeTest {
 
         assertThat(comparison.regressed()).isTrue();
         assertThat(comparison.passRateDelta()).isEqualTo(-0.5);
-        assertThat(comparison.metricDeltas()).containsEntry("quality", -0.2);
+        assertThat(comparison.metricDeltas().get("quality"))
+                .isCloseTo(-0.2, org.assertj.core.data.Offset.offset(1.0e-9));
         assertThat(comparison.reasons()).hasSize(2);
     }
 

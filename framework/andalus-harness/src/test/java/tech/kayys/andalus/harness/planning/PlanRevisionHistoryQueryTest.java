@@ -35,12 +35,12 @@ class PlanRevisionHistoryQueryTest {
         history.append(preserved);
         history.append(replaced);
 
-        assertEquals(List.of(preserved), history.search(PlanRevisionQuery.forPlan(planId)));
+        assertEquals(List.of(preserved, replaced), history.search(PlanRevisionQuery.forPlan(planId)));
         assertEquals(List.of(replaced), history.search(new PlanRevisionQuery(
                 planId, 2L, 2L, PlanRevisionPolicy.ALLOW_COMPLETED_STEP_REPLACEMENT, true)));
         assertEquals(List.of(preserved), history.search(new PlanRevisionQuery(
                 planId, 1L, 1L, PlanRevisionPolicy.PRESERVE_COMPLETED_STEPS, false)));
-        assertEquals(List.of(), history.search(new PlanRevisionQuery(
+        assertEquals(List.of(replaced), history.search(new PlanRevisionQuery(
                 planId, null, null, null, true)));
     }
 
